@@ -1,0 +1,87 @@
+# Models (tidak perlu di-upload karena auto-download)
+models/
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Output results (tidak perlu di-upload)
+storages/
+output/
+results/
+inference_results/
+detection_images/
+segmentation_images/
+
+# Camera captures (tidak perlu di-upload)
+camera_captures/
+captures/
+temp_images/
+
+# Virtual environment (tidak perlu di-upload)
+myenv/
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# GitHub token (security)
+.github_token*
+*.token
