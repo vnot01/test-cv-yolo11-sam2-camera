@@ -27,13 +27,13 @@ frame_count = 0
 start_time = time.time()
 
 # Paths
-CAPTURE_DIR = Path("/home/my/mycv/storages/images/camera_captures")
-OUTPUT_DIR = Path("/home/my/mycv/storages/images/output")
-CAMERA_YOLO_DIR = Path("/home/my/mycv/storages/images/output/camera_yolo")
-RESULTS_DIR = Path("/home/my/mycv/storages/images/output/camera_yolo/results")
-INFERENCE_LOG_DIR = Path("/home/my/mycv/storages/images/output/camera_yolo/results/inference")
-DETECTION_IMAGES_DIR = Path("/home/my/mycv/storages/images/output/camera_yolo/results/images")
-YOLO_SCRIPT = Path("/home/my/mycv/cv-camera/camera_yolo_inference.py")
+CAPTURE_DIR = Path("../storages/images/camera_captures")
+OUTPUT_DIR = Path("../storages/images/output")
+CAMERA_YOLO_DIR = Path("../storages/images/output/camera_yolo")
+RESULTS_DIR = Path("../storages/images/output/camera_yolo/results")
+INFERENCE_LOG_DIR = Path("../storages/images/output/camera_yolo/results/inference")
+DETECTION_IMAGES_DIR = Path("../storages/images/output/camera_yolo/results/images")
+YOLO_SCRIPT = Path("./camera_yolo_inference.py")
 
 def init_camera():
     """Initialize camera"""
@@ -98,7 +98,7 @@ def run_yolo_inference(image_path):
         # Run YOLO script with image path as argument
         result = subprocess.run([
             sys.executable, str(YOLO_SCRIPT), str(image_path)
-        ], capture_output=True, text=True, cwd="/home/my/mycv")
+        ], capture_output=True, text=True, cwd="../cv-camera/")
         
         if result.returncode == 0:
             print("✅ YOLO inference completed successfully")

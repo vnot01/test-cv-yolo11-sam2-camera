@@ -31,10 +31,10 @@ def check_and_download_models():
         
         try:
             # Jalankan script download
-            download_script = Path("/home/my/mycv/download_yolo11n.py")
+            download_script = Path("../download_yolo11n.py")
             if download_script.exists():
                 result = subprocess.run([sys.executable, str(download_script)], 
-                                      capture_output=True, text=True, cwd="/home/my/mycv")
+                                      capture_output=True, text=True, cwd="./")
                 if result.returncode == 0:
                     print("✅ Model berhasil didownload")
                 else:

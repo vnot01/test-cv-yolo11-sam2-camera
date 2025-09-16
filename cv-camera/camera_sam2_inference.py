@@ -13,7 +13,7 @@ from pathlib import Path
 
 def check_and_download_models():
     """Check if models exist, download if not"""
-    models_dir = Path("/home/my/mycv/models")
+    models_dir = Path("../models")
     models_dir.mkdir(exist_ok=True)
     
     # Check YOLO models
@@ -43,10 +43,10 @@ def check_and_download_models():
         print("📥 Memulai download YOLO model...")
         
         try:
-            download_script = Path("/home/my/mycv/download_yolo11n.py")
+            download_script = Path("../download_yolo11n.py")
             if download_script.exists():
                 result = subprocess.run([sys.executable, str(download_script)], 
-                                      capture_output=True, text=True, cwd="/home/my/mycv")
+                                      capture_output=True, text=True, cwd="./")
                 if result.returncode == 0:
                     print("✅ YOLO model berhasil didownload")
                 else:
@@ -101,9 +101,9 @@ def download_with_progress(url, filepath):
 def process_camera_image_with_sam2(image_path):
     """Process captured camera image with YOLO + SAM2"""
     # Configuration
-    YOLO_MODEL_PATH = "/home/my/mycv/models/best.pt"
-    SAM2_MODEL_PATH = "/home/my/mycv/models/sam2.1_b.pt"
-    OUTPUT_FOLDER = "/home/my/mycv/storages/images/output/camera_sam2/results/images"
+    YOLO_MODEL_PATH = "../models/best.pt"
+    SAM2_MODEL_PATH = "../models/sam2.1_b.pt"
+    OUTPUT_FOLDER = "../storages/images/output/camera_sam2/results/images"
     
     # Check and download models if needed
     if not check_and_download_models():

@@ -13,7 +13,7 @@ from pathlib import Path
 
 def check_and_download_models():
     """Check if models exist, download if not"""
-    models_dir = Path("/home/my/mycv/models")
+    models_dir = Path("../models")
     models_dir.mkdir(exist_ok=True)
     
     models_to_check = ["best.pt", "yolo11n.pt"]
@@ -30,10 +30,10 @@ def check_and_download_models():
         
         try:
             # Jalankan script download
-            download_script = Path("/home/my/mycv/download_yolo11n.py")
+            download_script = Path("../download_yolo11n.py")
             if download_script.exists():
                 result = subprocess.run([sys.executable, str(download_script)], 
-                                      capture_output=True, text=True, cwd="/home/my/mycv")
+                                      capture_output=True, text=True, cwd="./")
                 if result.returncode == 0:
                     print("✅ Model berhasil didownload")
                 else:
@@ -51,8 +51,8 @@ def check_and_download_models():
 def process_camera_image(image_path):
     """Process captured camera image with YOLO"""
     # Configuration
-    MODEL_PATH = "/home/my/mycv/models/best.pt"
-    OUTPUT_FOLDER = "/home/my/mycv/storages/images/output/camera_yolo/results/images"
+    MODEL_PATH = "../models/best.pt"
+    OUTPUT_FOLDER = "../storages/images/output/camera_yolo/results/images"
     
     # Check and download models if needed
     if not check_and_download_models():

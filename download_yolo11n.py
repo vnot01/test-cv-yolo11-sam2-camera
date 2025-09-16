@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script untuk mendownload model YOLO v11n ke folder mycv/models
+Script untuk mendownload model YOLO v11n ke folder ../models
 """
 
 import os
@@ -52,7 +52,7 @@ def download_model(model_name, description="", custom_url=None):
         print(f"   {description}")
     
     # Buat direktori models jika belum ada
-    models_dir = Path("/home/my/mycv/models")
+    models_dir = Path("../models")
     models_dir.mkdir(parents=True, exist_ok=True)
     print(f"📁 Direktori models: {models_dir}")
     
@@ -113,6 +113,6 @@ def download_models():
 if __name__ == "__main__":
     success = download_models()
     if success:
-        print("\n🎉 Download selesai! Model YOLO tersedia di /home/my/mycv/models/")
+        print("\n🎉 Download selesai! Model YOLO tersedia di ../models/")
     else:
         print("\n❌ Download gagal. Periksa koneksi internet dan virtual environment.")

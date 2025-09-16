@@ -88,9 +88,12 @@ Swap:           19Gi          0B        19Gi
 
 ### 3. Python Virtual Environment Setup
 
-#### Create Virtual Environment
+#### if New Create Virtual Environment
 
 ```bash
+# Go to Directory
+cd test-cv-yolo11-sam2-camera/
+
 # Create virtual environment
 python3 -m venv myenv
 
@@ -404,7 +407,19 @@ cd test-cv-yolo11-sam2-camera
 source myenv/bin/activate
 
 # Install dependencies (if not already installed)
-pip install -r requirements.txt
+source myenv/bin/activate
+
+# Install PyTorch 2.5.0 for Jetson Platform 6.1
+pip install https://github.com/ultralytics/assets/releases/download/v0.0.0/torch-2.5.0a0+872d972e41.nv24.08-cp310-cp310-linux_aarch64.whl
+
+# Install TorchVision 0.20.0 for Jetson Platform 6.1
+pip install https://github.com/ultralytics/assets/releases/download/v0.0.0/torchvision-0.20.0a0+afc54f7-cp310-cp310-linux_aarch64.whl
+
+pip install ultralytics==8.3.199
+
+pip install numpy==1.26.4 # (Optional)
+
+pip install -r requirements.txt # (Optional)
 ```
 
 ### 2. Test Camera
@@ -436,6 +451,9 @@ python3 batch_yolo11_inference.py
 ### 4. Camera + AI Integration
 
 ```bash
+# Install Flask for Web
+pip install flask
+
 # Camera + YOLO integration
 cd cv-camera
 python3 camera_yolo_integration.py
