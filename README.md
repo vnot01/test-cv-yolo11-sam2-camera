@@ -321,35 +321,8 @@ export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 export OMP_NUM_THREADS=4
 export MKL_NUM_THREADS=4
 ```
-
-## 📁 Project Structure
-
-### 🏠 **Root Directory Structure**
-```
-/home/my/
-├── Github Integration/           # GitHub tools and documentation (separate from project)
-│   ├── README.md                    # Complete GitHub integration guide
-│   ├── init-project.sh             # Initialize new GitHub project
-│   ├── setup-git-account.sh        # Multi-account Git setup
-│   └── switch-account.sh           # Switch between Git accounts
-├── 📁 test-cv-yolo11-sam2-camera/  # Main project directory
-│   ├── 📁 camera/                   # Camera functionality scripts
-│   ├── 📁 cv-camera/                # Camera + AI integration
-│   ├── 📁 test/                     # AI inference scripts
-│   ├── 📁 models/                   # AI model files
-│   ├── 📁 storages/                 # Data storage
-│   ├── 📁 myenv/                    # Python virtual environment
-│   ├── 📁 docs/                     # Documentation
-│   ├── download_yolo11n.py          # Model download script
-│   ├── requirements.txt             # Python dependencies
-│   ├── requirements.backups         # Backup requirements
-│   ├── .gitignore                   # Git ignore rules
-│   └── README.md                    # This documentation
-├── 📁 models/                       # Shared models (outside project)
-└── 📁 storages/                     # Shared storage (outside project)
-```
-
-### 📂 **Detailed Project Structure**
+----
+## 📁 **Project Structure**
 ```
 test-cv-yolo11-sam2-camera/
 ├── 📁 camera/                       # Camera functionality scripts
@@ -408,22 +381,6 @@ test-cv-yolo11-sam2-camera/
 ├── requirements.backups            # Backup requirements files
 ├── .gitignore                      # Git ignore rules
 └── README.md                       # This documentation
-```
-
-### 🔗 **GitHub Integration Structure**
-```
-Github Integration/
-├── README.md                       # Complete GitHub integration guide
-│   ├── Authentication Methods      # Personal Access Token, GitHub CLI, SSH
-│   ├── Multi-Account Management    # Switch between GitHub accounts
-│   ├── Project Initialization      # Create new GitHub projects
-│   ├── Setup Scripts              # Automated setup tools
-│   ├── Security Best Practices     # Token and key management
-│   ├── Troubleshooting            # Common issues and solutions
-│   └── API Usage                  # GitHub API examples
-├── init-project.sh                # Initialize new GitHub project
-├── setup-git-account.sh           # Multi-account Git setup
-└── switch-account.sh              # Switch between Git accounts
 ```
 
 ### 🎯 **Keuntungan Struktur Baru**
