@@ -324,6 +324,32 @@ export MKL_NUM_THREADS=4
 
 ## 📁 Project Structure
 
+### 🏠 **Root Directory Structure**
+```
+/home/my/
+├── Github Integration/           # GitHub tools and documentation (separate from project)
+│   ├── README.md                    # Complete GitHub integration guide
+│   ├── init-project.sh             # Initialize new GitHub project
+│   ├── setup-git-account.sh        # Multi-account Git setup
+│   └── switch-account.sh           # Switch between Git accounts
+├── 📁 test-cv-yolo11-sam2-camera/  # Main project directory
+│   ├── 📁 camera/                   # Camera functionality scripts
+│   ├── 📁 cv-camera/                # Camera + AI integration
+│   ├── 📁 test/                     # AI inference scripts
+│   ├── 📁 models/                   # AI model files
+│   ├── 📁 storages/                 # Data storage
+│   ├── 📁 myenv/                    # Python virtual environment
+│   ├── 📁 docs/                     # Documentation
+│   ├── download_yolo11n.py          # Model download script
+│   ├── requirements.txt             # Python dependencies
+│   ├── requirements.backups         # Backup requirements
+│   ├── .gitignore                   # Git ignore rules
+│   └── README.md                    # This documentation
+├── 📁 models/                       # Shared models (outside project)
+└── 📁 storages/                     # Shared storage (outside project)
+```
+
+### 📂 **Detailed Project Structure**
 ```
 test-cv-yolo11-sam2-camera/
 ├── 📁 camera/                       # Camera functionality scripts
@@ -347,8 +373,9 @@ test-cv-yolo11-sam2-camera/
 ├── 📁 test/                        # AI inference scripts
 │   ├── simple_yolo11_inference.py  # Single image YOLO inference
 │   ├── batch_yolo11_inference.py   # Batch YOLO processing
-│   └── simple_sam2_inference.py    # SAM2 segmentation script
-├── 📁 models/                      # AI model files
+│   ├── simple_sam2_inference.py    # SAM2 segmentation script
+│   └── requirements.txt            # Test-specific dependencies
+├── 📁 models/                      # AI model files (auto-downloaded)
 │   ├── best.pt                     # Custom trained YOLO model
 │   ├── yolo11n.pt                  # YOLO11 nano model
 │   ├── sam2.1_b.pt                 # SAM2.1 base model
@@ -361,7 +388,13 @@ test-cv-yolo11-sam2-camera/
 │       ├── camera_captures/        # Camera captured images
 │       └── output/                 # AI processing results
 │           ├── camera_yolo/        # YOLO detection results
+│           │   └── results/
+│           │       ├── inference/  # Inference logs
+│           │       └── images/     # Detection images
 │           ├── camera_sam2/        # SAM2 segmentation results
+│           │   └── results/
+│           │       ├── inference/  # Inference logs
+│           │       └── images/     # Segmentation images
 │           ├── yolo11/             # YOLO11 test results
 │           └── sam2/               # SAM2 test results
 ├── 📁 myenv/                       # Python virtual environment
@@ -371,9 +404,58 @@ test-cv-yolo11-sam2-camera/
 ├── 📁 docs/                        # Documentation
 │   └── 1.md                        # PyTorch installation guide
 ├── download_yolo11n.py             # Model download script
-├── requirements.txt                # Python dependencies
+├── requirements.txt                # Main Python dependencies
+├── requirements.backups            # Backup requirements files
+├── .gitignore                      # Git ignore rules
 └── README.md                       # This documentation
 ```
+
+### 🔗 **GitHub Integration Structure**
+```
+Github Integration/
+├── README.md                       # Complete GitHub integration guide
+│   ├── Authentication Methods      # Personal Access Token, GitHub CLI, SSH
+│   ├── Multi-Account Management    # Switch between GitHub accounts
+│   ├── Project Initialization      # Create new GitHub projects
+│   ├── Setup Scripts              # Automated setup tools
+│   ├── Security Best Practices     # Token and key management
+│   ├── Troubleshooting            # Common issues and solutions
+│   └── API Usage                  # GitHub API examples
+├── init-project.sh                # Initialize new GitHub project
+├── setup-git-account.sh           # Multi-account Git setup
+└── switch-account.sh              # Switch between Git accounts
+```
+
+### 🎯 **Keuntungan Struktur Baru**
+
+#### **1. Separation of Concerns**
+- **GitHub Integration** terpisah dari project - bisa digunakan untuk project lain
+- **Project test-cv-yolo11-sam2-camera** bersih tanpa dokumentasi GitHub
+- **Models dan storages** bisa di-share antar project
+
+#### **2. Reusability**
+- **GitHub Integration** bisa digunakan untuk project baru
+- **Scripts setup** bisa di-reuse untuk project lain
+- **Documentation** terpusat dan mudah di-maintain
+
+#### **3. Organization**
+- **Clear separation** antara tools dan project
+- **Modular structure** untuk maintainability
+- **Easy navigation** dengan struktur yang jelas
+
+#### **4. Scalability**
+- **Easy to add** project baru
+- **Consistent structure** across projects
+- **Centralized tools** untuk semua project
+
+### 📋 **File Organization Benefits**
+
+| Component | Location | Purpose | Reusability |
+|-----------|----------|---------|-------------|
+| **GitHub Integration** | `/home/my/Github Integration/` | Tools & documentation | ✅ All projects |
+| **Main Project** | `/home/my/test-cv-yolo11-sam2-camera/` | CV system | ❌ Project specific |
+| **Shared Models** | `/home/my/models/` | AI models | ✅ All projects |
+| **Shared Storage** | `/home/my/storages/` | Data storage | ✅ All projects |
 
 ## System Information
 
@@ -1146,7 +1228,7 @@ This project is provided as-is for educational and development purposes.
 
 **Last Updated**: September 2024  
 **Tested On**: NVIDIA Jetson Orin Nano with Ubuntu 22.04 LTS  
-**Jetson Platform**: 6.1  
+**Jetson Platform**: 6.1
 **Python Version**: 3.10.12  
 **PyTorch Version**: 2.5.0a0+872d972e41.nv24.08  
 **Ultralytics Version**: 8.3.199
