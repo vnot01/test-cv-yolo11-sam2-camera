@@ -1,0 +1,118 @@
+{
+  "update": {
+    "auto_update_enabled": false,
+    "update_check_interval": 3600,
+    "update_channel": "stable",
+    "backup_before_update": true,
+    "rollback_on_failure": true,
+    "update_timeout": 1800,
+    "max_rollback_versions": 5,
+    "update_sources": {
+      "github": {
+        "enabled": true,
+        "repository": "vnot01/test-cv-yolo11-sam2-camera",
+        "branch": "main",
+        "api_token": "",
+        "check_releases": true,
+        "check_commits": false
+      },
+      "local": {
+        "enabled": true,
+        "path": "./updates",
+        "auto_scan": true,
+        "scan_interval": 300
+      }
+    },
+    "update_strategies": {
+      "in_place_update": {
+        "enabled": true,
+        "priority": 1,
+        "description": "Update files in place"
+      },
+      "blue_green_deployment": {
+        "enabled": false,
+        "priority": 2,
+        "description": "Blue-green deployment strategy"
+      },
+      "rolling_update": {
+        "enabled": false,
+        "priority": 3,
+        "description": "Rolling update strategy"
+      }
+    },
+    "update_validation": {
+      "pre_update_checks": [
+        "service_health",
+        "configuration_validity",
+        "backup_availability"
+      ],
+      "post_update_checks": [
+        "service_health",
+        "configuration_validity",
+        "performance_metrics",
+        "data_integrity"
+      ],
+      "validation_timeout": 300,
+      "retry_attempts": 3
+    },
+    "update_notifications": {
+      "enabled": true,
+      "channels": {
+        "email": {
+          "enabled": false,
+          "smtp_server": "",
+          "smtp_port": 587,
+          "username": "",
+          "password": "",
+          "from_address": "",
+          "to_addresses": []
+        },
+        "webhook": {
+          "enabled": false,
+          "url": "",
+          "timeout": 30,
+          "retry_attempts": 3
+        },
+        "log": {
+          "enabled": true,
+          "log_file": "logs/update.log",
+          "log_level": "INFO"
+        }
+      }
+    },
+    "update_scheduling": {
+      "enabled": false,
+      "schedule": "0 2 * * *",
+      "timezone": "UTC",
+      "maintenance_window": {
+        "enabled": true,
+        "start_time": "02:00",
+        "end_time": "04:00",
+        "timezone": "UTC"
+      }
+    },
+    "update_rollback": {
+      "enabled": true,
+      "automatic_rollback": {
+        "enabled": true,
+        "triggers": {
+          "health_check_failure": {
+            "enabled": true,
+            "max_failures": 3,
+            "time_window": 300
+          },
+          "performance_degradation": {
+            "enabled": true,
+            "response_time_threshold": 10.0,
+            "time_window": 300
+          }
+        }
+      },
+      "manual_rollback": {
+        "enabled": true,
+        "max_rollback_versions": 5,
+        "rollback_timeout": 600
+      }
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "deployment": {
+    "environments": {
+      "development": {
+        "name": "Development",
+        "description": "Development environment for testing and development",
+        "api_url": "http://localhost:8000",
+        "debug_mode": true,
+        "log_level": "DEBUG",
+        "auto_restart": true,
+        "backup_enabled": false,
+        "monitoring_enabled": true
+      },
+      "staging": {
+        "name": "Staging",
+        "description": "Staging environment for pre-production testing",
+        "api_url": "http://172.28.233.83:8001",
+        "debug_mode": false,
+        "log_level": "INFO",
+        "auto_restart": true,
+        "backup_enabled": true,
+        "monitoring_enabled": true
+      },
+      "production": {
+        "name": "Production",
+        "description": "Production environment for live deployment",
+        "api_url": "http://172.28.233.83:8001",
+        "debug_mode": false,
+        "log_level": "WARNING",
+        "auto_restart": true,
+        "backup_enabled": true,
+        "monitoring_enabled": true
+      }
+    },
+    "deployment_settings": {
+      "timeout": 300,
+      "retry_attempts": 3,
+      "backup_before_deploy": true,
+      "validate_after_deploy": true,
+      "rollback_on_failure": true,
+      "health_check_interval": 30,
+      "health_check_timeout": 60
+    },
+    "service_settings": {
+      "service_name": "myrvm-integration",
+      "user": "my",
+      "group": "my",
+      "working_directory": "/home/my/test-cv-yolo11-sam2-camera/myrvm-integration",
+      "environment_file": "/home/my/test-cv-yolo11-sam2-camera/myrvm-integration/.env",
+      "restart_policy": "always",
+      "restart_sec": 3,
+      "start_limit_burst": 5,
+      "start_limit_interval": 60
+    },
+    "validation_checks": {
+      "file_checks": [
+        "config/base_config.json",
+        "config/development_config.json",
+        "config/staging_config.json",
+        "config/production_config.json",
+        "main/enhanced_jetson_main.py",
+        "api-client/myrvm_api_client.py"
+      ],
+      "service_checks": [
+        "systemctl is-active myrvm-integration",
+        "curl -f http://localhost:5002/health"
+      ],
+      "dependency_checks": [
+        "python3 --version",
+        "pip list | grep -E '(requests|opencv|numpy)'"
+      ]
+    },
+    "rollback_settings": {
+      "enabled": true,
+      "max_rollback_versions": 5,
+      "rollback_timeout": 600,
+      "auto_rollback_triggers": {
+        "high_error_rate": {
+          "enabled": true,
+          "threshold": 0.1,
+          "time_window": 300
+        },
+        "service_failure": {
+          "enabled": true,
+          "max_failures": 3,
+          "time_window": 180
+        }
+      }
+    }
+  }
+}

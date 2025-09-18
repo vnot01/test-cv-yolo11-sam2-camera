@@ -1,0 +1,111 @@
+{
+  "rollback": {
+    "auto_rollback_enabled": true,
+    "rollback_timeout": 600,
+    "max_rollback_attempts": 3,
+    "rollback_triggers": {
+      "high_error_rate": {
+        "enabled": true,
+        "threshold": 0.1,
+        "time_window": 300,
+        "description": "Trigger rollback if error rate exceeds 10% in 5 minutes"
+      },
+      "service_failure": {
+        "enabled": true,
+        "max_failures": 3,
+        "time_window": 180,
+        "description": "Trigger rollback if service fails 3 times in 3 minutes"
+      },
+      "performance_degradation": {
+        "enabled": true,
+        "response_time_threshold": 10.0,
+        "time_window": 300,
+        "description": "Trigger rollback if response time exceeds 10 seconds in 5 minutes"
+      },
+      "resource_exhaustion": {
+        "enabled": true,
+        "memory_threshold": 0.95,
+        "cpu_threshold": 0.95,
+        "disk_threshold": 0.90,
+        "description": "Trigger rollback if system resources are exhausted"
+      },
+      "health_check_failure": {
+        "enabled": true,
+        "max_failures": 5,
+        "time_window": 300,
+        "description": "Trigger rollback if health checks fail 5 times in 5 minutes"
+      }
+    },
+    "rollback_strategies": {
+      "configuration_rollback": {
+        "enabled": true,
+        "priority": 1,
+        "description": "Rollback configuration files to previous version"
+      },
+      "service_rollback": {
+        "enabled": true,
+        "priority": 2,
+        "description": "Rollback service files to previous version"
+      },
+      "data_rollback": {
+        "enabled": true,
+        "priority": 3,
+        "description": "Rollback data to previous version"
+      },
+      "full_system_rollback": {
+        "enabled": true,
+        "priority": 4,
+        "description": "Full system rollback to previous version"
+      }
+    },
+    "rollback_validation": {
+      "health_check_timeout": 60,
+      "validation_checks": [
+        "service_health",
+        "configuration_validity",
+        "data_integrity",
+        "performance_metrics"
+      ],
+      "validation_timeout": 300,
+      "retry_attempts": 3
+    },
+    "rollback_notifications": {
+      "enabled": true,
+      "channels": {
+        "email": {
+          "enabled": false,
+          "smtp_server": "",
+          "smtp_port": 587,
+          "username": "",
+          "password": "",
+          "from_address": "",
+          "to_addresses": []
+        },
+        "webhook": {
+          "enabled": false,
+          "url": "",
+          "timeout": 30,
+          "retry_attempts": 3
+        },
+        "log": {
+          "enabled": true,
+          "log_file": "logs/rollback.log",
+          "log_level": "WARNING"
+        }
+      }
+    },
+    "rollback_history": {
+      "enabled": true,
+      "max_history_entries": 100,
+      "history_file": "rollbacks/rollback_history.json",
+      "retention_days": 30
+    },
+    "rollback_monitoring": {
+      "enabled": true,
+      "monitor_interval": 60,
+      "alert_on_rollback": true,
+      "metrics_collection": true,
+      "performance_tracking": true
+    }
+  }
+}
