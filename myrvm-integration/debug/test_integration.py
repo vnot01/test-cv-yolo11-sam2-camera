@@ -14,10 +14,13 @@ import subprocess
 
 # Add parent directories to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent / "api-client"))
+sys.path.append(str(Path(__file__).parent.parent / "services"))
+sys.path.append(str(Path(__file__).parent.parent / "debug"))
 
-from api_client.myrvm_api_client import MyRVMAPIClient
-from services.detection_service import DetectionService
-from debug.system_monitor import SystemMonitor
+from myrvm_api_client import MyRVMAPIClient
+from detection_service import DetectionService
+from system_monitor import SystemMonitor
 
 class IntegrationTester:
     """Integration testing tool"""
