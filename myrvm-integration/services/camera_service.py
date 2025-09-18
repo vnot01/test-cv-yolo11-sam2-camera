@@ -79,7 +79,7 @@ class CameraService:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'camera_service_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'camera_service_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -174,7 +174,7 @@ class CameraService:
                 return None
             
             # Generate filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = now().strftime("%Y%m%d_%H%M%S")
             filename = f"camera_capture_{timestamp}.jpg"
             
             # Save image
@@ -225,7 +225,7 @@ class CameraService:
                 'image_path': image_path,
                 'detections': detection_results.get('detections', []),
                 'status': 'processed',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now().isoformat()
             }
             
             # Upload to platform
@@ -276,6 +276,7 @@ class CameraService:
         while self.is_running:
             try:
                 # Get image from queue
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
                 image_path = self.processing_queue.get(timeout=1)
                 
                 # Process image
@@ -309,7 +310,7 @@ class CameraService:
             
             # Start service
             self.is_running = True
-            self.stats['start_time'] = datetime.now()
+            self.stats['start_time'] = now()
             
             # Start worker threads
             self.capture_thread = threading.Thread(target=self.capture_worker)
@@ -348,7 +349,7 @@ class CameraService:
         """Get service status"""
         uptime = 0
         if self.stats['start_time']:
-            uptime = (datetime.now() - self.stats['start_time']).total_seconds()
+            uptime = (now() - self.stats['start_time']).total_seconds()
         
         return {
             'is_running': self.is_running,
@@ -362,7 +363,7 @@ class CameraService:
         """Get processing statistics"""
         uptime = 0
         if self.stats['start_time']:
-            uptime = (datetime.now() - self.stats['start_time']).total_seconds()
+            uptime = (now() - self.stats['start_time']).total_seconds()
         
         return {
             'uptime_seconds': uptime,

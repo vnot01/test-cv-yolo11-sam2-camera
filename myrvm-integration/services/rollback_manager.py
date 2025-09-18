@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 import psutil
 
 class RollbackManager:
@@ -149,7 +150,7 @@ class RollbackManager:
             "rollback_type": rollback_type,
             "status": status,
             "trigger": trigger,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": now().isoformat(),
             "details": details
         }
         self.rollback_history.append(record)
@@ -328,7 +329,7 @@ class RollbackManager:
             config_dir = self.project_root / "config"
             if config_dir.exists():
                 # Backup current config
-                current_backup = self.rollback_dir / f"config_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                current_backup = self.rollback_dir / f"config_backup_{now().strftime('%Y%m%d_%H%M%S')}"
                 shutil.copytree(config_dir, current_backup)
                 
                 # Remove current config
@@ -389,7 +390,7 @@ class RollbackManager:
                 source_dir = self.project_root / service_dir
                 if source_dir.exists():
                     # Backup current
-                    current_backup = self.rollback_dir / f"{service_dir}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    current_backup = self.rollback_dir / f"{service_dir}_backup_{now().strftime('%Y%m%d_%H%M%S')}"
                     shutil.copytree(source_dir, current_backup)
                     
                     # Remove current
@@ -668,6 +669,7 @@ class RollbackManager:
 def main():
     """Main function for testing."""
     import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
     
     # Load configuration
     config_path = Path(__file__).parent.parent / "config" / "development_config.json"

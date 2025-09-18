@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
 import psutil
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 class BackupMonitor:
     """Backup monitoring and alerting system"""
@@ -66,7 +67,7 @@ class BackupMonitor:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'backup_monitor_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'backup_monitor_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -219,7 +220,7 @@ class BackupMonitor:
             recent_failures = 0
             for backup in failed_backups:
                 backup_time = datetime.fromisoformat(backup.get('timestamp', ''))
-                if datetime.now() - backup_time < timedelta(hours=24):
+                if now() - backup_time < timedelta(hours=24):
                     recent_failures += 1
             
             self.monitoring_data['backup_status'] = {
@@ -484,7 +485,7 @@ class BackupMonitor:
                 'rules_count': len(self.monitoring_rules),
                 'enabled_rules': sum(1 for r in self.monitoring_rules.values() if r.get('enabled', True)),
                 'callbacks_count': len(self.monitoring_callbacks),
-                'last_update': datetime.now().isoformat()
+                'last_update': now().isoformat()
             }
         except Exception as e:
             self.logger.error(f"Error getting monitoring status: {e}")

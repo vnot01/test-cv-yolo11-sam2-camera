@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
 import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 import psutil
 
 class StartupManager:
@@ -321,7 +322,7 @@ class StartupManager:
                         "description": description,
                         "status": "completed",
                         "duration": duration,
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": now().isoformat()
                     })
                     
                     return True
@@ -335,7 +336,7 @@ class StartupManager:
                         "description": description,
                         "status": "failed",
                         "duration": time.time() - start_time,
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": now().isoformat()
                     })
                     
                     if critical:
@@ -359,7 +360,7 @@ class StartupManager:
                 "status": "error",
                 "duration": time.time() - start_time,
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": now().isoformat()
             })
             
             if critical:
@@ -400,7 +401,7 @@ class StartupManager:
                 "description": "Complete service startup",
                 "status": "completed",
                 "duration": total_duration,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": now().isoformat()
             })
             
             self.is_starting = False
@@ -436,12 +437,13 @@ class StartupManager:
         return {
             "health_status": health_status,
             "startup_status": status,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": now().isoformat()
         }
 
 def main():
     """Main function for testing."""
     import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
     
     # Load configuration
     config_path = Path(__file__).parent.parent / "config" / "development_config.json"

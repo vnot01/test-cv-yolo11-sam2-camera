@@ -67,7 +67,7 @@ class MemoryManager:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'memory_manager_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'memory_manager_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -122,6 +122,7 @@ class MemoryManager:
                 if (buffer.shape == (height, width, channels) and 
                     buffer.dtype == np.uint8):
                     # Found suitable buffer, remove from pool
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
                     buffer = self.image_pool.pop(i)
                     self.stats['pool_hits'] += 1
                     self.logger.debug(f"Reused image buffer: {width}x{height}x{channels}")
@@ -155,6 +156,7 @@ class MemoryManager:
             for i, buffer in enumerate(self.numpy_pool):
                 if buffer.shape == shape and buffer.dtype == dtype:
                     # Found suitable buffer, remove from pool
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
                     buffer = self.numpy_pool.pop(i)
                     self.stats['pool_hits'] += 1
                     self.logger.debug(f"Reused numpy buffer: {shape}, {dtype}")
@@ -219,7 +221,7 @@ class MemoryManager:
                 
                 if memory_usage:
                     # Add to history
-                    memory_usage['timestamp'] = datetime.now().isoformat()
+                    memory_usage['timestamp'] = now().isoformat()
                     self.memory_history.append(memory_usage)
                     
                     # Keep only recent history
@@ -251,7 +253,7 @@ class MemoryManager:
         """Start memory monitoring"""
         if not self.is_monitoring:
             self.is_monitoring = True
-            self.stats['start_time'] = datetime.now()
+            self.stats['start_time'] = now()
             self.monitor_thread = threading.Thread(target=self.monitor_memory)
             self.monitor_thread.start()
             self.logger.info("Memory monitoring started")
@@ -268,7 +270,7 @@ class MemoryManager:
         """Get memory management statistics"""
         uptime = 0
         if self.stats['start_time']:
-            uptime = (datetime.now() - self.stats['start_time']).total_seconds()
+            uptime = (now() - self.stats['start_time']).total_seconds()
         
         current_memory = self.get_memory_usage()
         

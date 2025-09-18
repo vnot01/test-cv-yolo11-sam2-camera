@@ -104,7 +104,7 @@ class JetsonMain:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'jetson_main_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'jetson_main_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -192,6 +192,7 @@ class JetsonMain:
     
     def capture_image(self) -> Optional[str]:
         """Capture image from camera"""
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
         if not self.camera or not self.camera.isOpened():
             return None
         
@@ -201,7 +202,7 @@ class JetsonMain:
                 return None
             
             # Save captured image
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = now().strftime("%Y%m%d_%H%M%S")
             filename = f"jetson_capture_{timestamp}.jpg"
             filepath = Path("../storages/images/camera_captures") / filename
             filepath.parent.mkdir(parents=True, exist_ok=True)
@@ -249,7 +250,7 @@ class JetsonMain:
             results_data = {
                 'rvm_id': self.current_rvm_id,
                 'image_path': image_path,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'detections': results.get('detection', {}).get('detections', []),
                 'segments': results.get('segmentation', {}).get('segments', []),
                 'processing_time': results.get('total_time', 0)

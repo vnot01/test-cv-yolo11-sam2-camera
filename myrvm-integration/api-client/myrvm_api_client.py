@@ -11,6 +11,13 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+import sys
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
+
+from utils.timezone_manager import get_timezone_manager, now, format_datetime
 
 class MyRVMAPIClient:
     """API Client for MyRVM Platform communication"""
@@ -61,7 +68,7 @@ class MyRVMAPIClient:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'api_client_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'api_client_{format_datetime(now(), "%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         

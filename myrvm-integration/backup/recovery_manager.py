@@ -65,7 +65,7 @@ class RecoveryManager:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'recovery_manager_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'recovery_manager_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -178,7 +178,7 @@ class RecoveryManager:
                 'backup_file': backup_file,
                 'target_timestamp': target_timestamp,
                 'duration': recovery_duration,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'rto_minutes': procedure.get('rto_minutes', 60),
                 'rpo_minutes': procedure.get('rpo_minutes', 15)
             }
@@ -266,6 +266,7 @@ class RecoveryManager:
         """Recover database from backup"""
         try:
             self.logger.info(f"Recovering database from {backup_file}")
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             
             # This is a placeholder for database recovery
             # In a real implementation, you would:
@@ -294,9 +295,10 @@ class RecoveryManager:
         """Recover configuration from backup"""
         try:
             self.logger.info(f"Recovering configuration from {backup_file}")
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             
             # Extract backup file
-            extracted_dir = self.temp_recovery_dir / f"config_recovery_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            extracted_dir = self.temp_recovery_dir / f"config_recovery_{now().strftime('%Y%m%d_%H%M%S')}"
             extracted_dir.mkdir(exist_ok=True)
             
             # Process backup file (decompress and decrypt if needed)
@@ -336,9 +338,10 @@ class RecoveryManager:
         """Recover logs from backup"""
         try:
             self.logger.info(f"Recovering logs from {backup_file}")
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             
             # Extract backup file
-            extracted_dir = self.temp_recovery_dir / f"logs_recovery_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            extracted_dir = self.temp_recovery_dir / f"logs_recovery_{now().strftime('%Y%m%d_%H%M%S')}"
             extracted_dir.mkdir(exist_ok=True)
             
             # Process backup file
@@ -380,9 +383,10 @@ class RecoveryManager:
         """Recover application from backup"""
         try:
             self.logger.info(f"Recovering application from {backup_file}")
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             
             # Extract backup file
-            extracted_dir = self.temp_recovery_dir / f"app_recovery_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            extracted_dir = self.temp_recovery_dir / f"app_recovery_{now().strftime('%Y%m%d_%H%M%S')}"
             extracted_dir.mkdir(exist_ok=True)
             
             # Process backup file
@@ -425,6 +429,7 @@ class RecoveryManager:
         """Recover full system from backup"""
         try:
             self.logger.info(f"Recovering full system from {backup_file}")
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             
             # Full system recovery involves multiple components
             recovery_results = {}

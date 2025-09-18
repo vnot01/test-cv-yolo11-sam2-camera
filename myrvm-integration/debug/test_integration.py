@@ -60,7 +60,7 @@ class IntegrationTester:
             'test_name': test_name,
             'success': success,
             'message': message,
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'details': details or {}
         }
         self.test_results.append(result)
@@ -252,6 +252,7 @@ class IntegrationTester:
         # Test MyRVM Platform connectivity
         try:
             import requests
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             response = requests.get("http://localhost:8000/api/health", timeout=5)
             if response.status_code == 200:
                 self._record_test("MyRVM Platform Connectivity", True, "MyRVM Platform reachable")
@@ -292,7 +293,7 @@ class IntegrationTester:
         self.logger.info(f"Duration: {duration:.2f} seconds")
         
         # Save results
-        results_file = Path("../logs") / f"integration_test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        results_file = Path("../logs") / f"integration_test_results_{now().strftime('%Y%m%d_%H%M%S')}.json"
         results_file.parent.mkdir(exist_ok=True)
         
         with open(results_file, 'w') as f:
@@ -303,7 +304,7 @@ class IntegrationTester:
                     'failed_tests': failed_tests,
                     'success_rate': (passed_tests/total_tests)*100,
                     'duration': duration,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': now().isoformat()
                 },
                 'results': self.test_results
             }, f, indent=2)

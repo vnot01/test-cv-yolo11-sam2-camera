@@ -83,12 +83,12 @@
     "update_scheduling": {
       "enabled": false,
       "schedule": "0 2 * * *",
-      "timezone": "UTC",
+      "timezone": "Asia/Jakarta",
       "maintenance_window": {
         "enabled": true,
         "start_time": "02:00",
         "end_time": "04:00",
-        "timezone": "UTC"
+        "timezone": "Asia/Jakarta"
       }
     },
     "update_rollback": {

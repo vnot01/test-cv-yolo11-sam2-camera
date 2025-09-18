@@ -16,13 +16,14 @@ def health_check():
     try:
         # Import main service
         from enhanced_jetson_main import EnhancedJetsonMain
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
         
         # Check if service is running
         # This is a simplified check - in production, you'd want more comprehensive checks
         
         return {
             'status': 'healthy',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'service': 'myrvm-integration'
         }
         
@@ -30,7 +31,7 @@ def health_check():
         return {
             'status': 'unhealthy',
             'error': str(e),
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'service': 'myrvm-integration'
         }
 

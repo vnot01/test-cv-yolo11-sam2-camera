@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -151,7 +152,7 @@ class E2ETestFramework:
                 "passed_tests": passed_tests,
                 "failed_tests": failed_tests,
                 "success_rate": (passed_tests / total_tests * 100) if total_tests > 0 else 0,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": now().isoformat()
             },
             "results": self.test_results
         }
@@ -160,7 +161,7 @@ class E2ETestFramework:
     
     def save_report(self, report):
         """Save test report."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = now().strftime("%Y%m%d_%H%M%S")
         filename = f"e2e_test_report_{timestamp}.json"
         report_path = self.results_dir / filename
         
@@ -173,6 +174,7 @@ class E2ETestFramework:
 def main():
     """Main function."""
     import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
     
     # Load configuration
     config_path = Path(__file__).parent.parent / "config" / "development_config.json"

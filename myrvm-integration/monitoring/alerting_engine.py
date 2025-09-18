@@ -68,7 +68,7 @@ class AlertingEngine:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'alerting_engine_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'alerting_engine_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -317,7 +317,7 @@ class AlertingEngine:
                 'rule_name': rule_name,
                 'severity': rule['severity'],
                 'message': rule['message'],
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'metric_path': rule['metric'],
                 'metric_value': self._get_metric_value(metrics, rule['metric']),
                 'threshold': rule['threshold'],
@@ -349,9 +349,10 @@ class AlertingEngine:
             if rule_name in self.active_alerts:
                 alert_data = self.active_alerts[rule_name]
                 alert_data['status'] = 'cleared'
-                alert_data['cleared_at'] = datetime.now().isoformat()
+                alert_data['cleared_at'] = now().isoformat()
                 
                 # Remove from active alerts
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
                 del self.active_alerts[rule_name]
                 
                 # Add to history
@@ -369,7 +370,7 @@ class AlertingEngine:
     def _generate_alert_id(self, rule_name: str, metrics: Dict) -> str:
         """Generate unique alert ID"""
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = now().strftime("%Y%m%d_%H%M%S")
             metric_value = self._get_metric_value(metrics, self.alert_rules[rule_name]['metric'])
             data = f"{rule_name}_{timestamp}_{metric_value}"
             return hashlib.md5(data.encode()).hexdigest()[:12]
@@ -389,7 +390,7 @@ class AlertingEngine:
             alert_time = datetime.fromisoformat(alert['timestamp'])
             cooldown_end = alert_time + timedelta(seconds=cooldown)
             
-            return datetime.now() < cooldown_end
+            return now() < cooldown_end
             
         except Exception as e:
             self.logger.error(f"Error checking alert cooldown: {e}")
@@ -483,7 +484,7 @@ Environment: {self.config.get('environment', 'unknown')}
                 'alert': alert_data,
                 'system': 'myrvm-integration',
                 'environment': self.config.get('environment', 'unknown'),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now().isoformat()
             }
             
             # Send webhook

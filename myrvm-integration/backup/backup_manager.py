@@ -18,6 +18,7 @@ from typing import Dict, Any, List, Optional, Callable
 import hashlib
 import schedule
 from cryptography.fernet import Fernet
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 class BackupManager:
     """Central backup management system"""
@@ -91,7 +92,7 @@ class BackupManager:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'backup_manager_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'backup_manager_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -252,7 +253,7 @@ class BackupManager:
                 end_time = time.time()
                 
                 backup_result['duration'] = end_time - start_time
-                backup_result['timestamp'] = datetime.now().isoformat()
+                backup_result['timestamp'] = now().isoformat()
                 backup_result['strategy'] = strategy_name
                 
                 # Store backup result
@@ -302,11 +303,11 @@ class BackupManager:
             # In a real implementation, you would connect to your database
             # and create a backup dump
             
-            backup_file = self.database_backup_dir / f"database_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
+            backup_file = self.database_backup_dir / f"database_backup_{now().strftime('%Y%m%d_%H%M%S')}.sql"
             
             # Create a dummy database backup file for demonstration
             with open(backup_file, 'w') as f:
-                f.write(f"-- Database backup created at {datetime.now().isoformat()}\n")
+                f.write(f"-- Database backup created at {now().isoformat()}\n")
                 f.write("-- This is a placeholder for actual database backup\n")
             
             # Apply compression and encryption
@@ -331,7 +332,7 @@ class BackupManager:
         """Backup configuration files"""
         try:
             config_dir = Path(__file__).parent.parent / 'config'
-            backup_file = self.config_backup_dir / f"config_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tar"
+            backup_file = self.config_backup_dir / f"config_backup_{now().strftime('%Y%m%d_%H%M%S')}.tar"
             
             # Create tar archive of config directory
             with tarfile.open(backup_file, 'w') as tar:
@@ -360,7 +361,7 @@ class BackupManager:
         """Backup log files"""
         try:
             logs_dir = Path(__file__).parent.parent / 'logs'
-            backup_file = self.log_backup_dir / f"logs_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tar"
+            backup_file = self.log_backup_dir / f"logs_backup_{now().strftime('%Y%m%d_%H%M%S')}.tar"
             
             # Create tar archive of logs directory
             with tarfile.open(backup_file, 'w') as tar:
@@ -389,7 +390,7 @@ class BackupManager:
         """Backup application files"""
         try:
             app_dir = Path(__file__).parent.parent
-            backup_file = self.app_backup_dir / f"app_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tar"
+            backup_file = self.app_backup_dir / f"app_backup_{now().strftime('%Y%m%d_%H%M%S')}.tar"
             
             # Create tar archive of application directory (excluding backups and logs)
             with tarfile.open(backup_file, 'w') as tar:
@@ -460,7 +461,7 @@ class BackupManager:
             strategy_config = self.backup_strategies[strategy_name]
             retention_days = strategy_config.get('retention_days', 30)
             
-            cutoff_date = datetime.now() - timedelta(days=retention_days)
+            cutoff_date = now() - timedelta(days=retention_days)
             
             # Get backup directory for strategy
             if strategy_name == 'database':

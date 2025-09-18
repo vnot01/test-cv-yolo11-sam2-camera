@@ -53,7 +53,7 @@ class ServiceManager:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'service_manager_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'service_manager_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -332,7 +332,7 @@ WantedBy=multi-user.target
                 'process_info': process_info,
                 'is_running': self.is_service_running(),
                 'service_file_exists': self.service_file.exists(),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now().isoformat()
             }
             
         except Exception as e:
@@ -404,13 +404,14 @@ def health_check():
     try:
         # Import main service
         from enhanced_jetson_main import EnhancedJetsonMain
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
         
         # Check if service is running
         # This is a simplified check - in production, you'd want more comprehensive checks
         
         return {
             'status': 'healthy',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'service': 'myrvm-integration'
         }
         
@@ -418,7 +419,7 @@ def health_check():
         return {
             'status': 'unhealthy',
             'error': str(e),
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'service': 'myrvm-integration'
         }
 

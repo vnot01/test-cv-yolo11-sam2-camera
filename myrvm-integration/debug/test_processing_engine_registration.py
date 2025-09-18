@@ -10,6 +10,7 @@ import json
 import time
 from pathlib import Path
 from datetime import datetime
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 # Add parent directories to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -209,7 +210,7 @@ def main():
     log_file.parent.mkdir(exist_ok=True)
     
     with open(log_file, 'a') as f:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = now().strftime("%Y-%m-%d %H:%M:%S")
         f.write(f"\n[{timestamp}] Processing Engine Test Results:\n")
         f.write(f"  Total Tests: {total_tests}\n")
         f.write(f"  Passed: {passed_tests}\n")

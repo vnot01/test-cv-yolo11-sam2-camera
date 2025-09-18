@@ -160,7 +160,7 @@ def test_upload_detection_results(base_url, token, engine_id=28):
             }
         ],
         'status': 'processed',
-        'timestamp': datetime.now().isoformat()
+        'timestamp': now().isoformat()
     }
     
     headers = {'Authorization': f'Bearer {token}'}
@@ -187,6 +187,7 @@ def test_upload_detection_results(base_url, token, engine_id=28):
 def main():
     """Main test function"""
     print("🚀 MyRVM Platform - Advanced Endpoints Test from Jetson Orin")
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
     print("=" * 70)
     
     base_url = "http://172.28.233.83:8001"
@@ -244,7 +245,7 @@ def main():
     log_file.parent.mkdir(exist_ok=True)
     
     with open(log_file, 'a') as f:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = now().strftime("%Y-%m-%d %H:%M:%S")
         f.write(f"\n[{timestamp}] Advanced Endpoints Test Results:\n")
         f.write(f"  Total Tests: {total_tests}\n")
         f.write(f"  Passed: {passed_tests}\n")

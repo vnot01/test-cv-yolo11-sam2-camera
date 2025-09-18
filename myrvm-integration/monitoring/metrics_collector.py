@@ -16,6 +16,7 @@ import psutil
 import GPUtil
 from collections import defaultdict, deque
 import statistics
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 class MetricsCollector:
     """Comprehensive metrics collection system"""
@@ -63,7 +64,7 @@ class MetricsCollector:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'metrics_collector_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'metrics_collector_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -86,7 +87,7 @@ class MetricsCollector:
     def _initialize_metrics(self):
         """Initialize metrics structure"""
         self.current_metrics = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'system': {},
             'application': {},
             'business': {},
@@ -128,7 +129,7 @@ class MetricsCollector:
                         self._collect_gpu_metrics()
                     
                     # Update timestamp
-                    self.current_metrics['timestamp'] = datetime.now().isoformat()
+                    self.current_metrics['timestamp'] = now().isoformat()
                     
                     # Store in history
                     self._store_metrics_history()

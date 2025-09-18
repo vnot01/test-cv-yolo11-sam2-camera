@@ -11,6 +11,7 @@ import time
 import os
 from pathlib import Path
 from datetime import datetime
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 # Add parent directories to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -93,7 +94,7 @@ def test_upload_detection_results(base_url, token, engine_id):
         'image_path': '/storages/images/output/camera_yolo/results/images/detection_20250918_150800.jpg',
         'processing_time': 1.5,
         'model_version': 'yolo11n.pt',
-        'timestamp': datetime.now().isoformat()
+        'timestamp': now().isoformat()
     }
     
     headers = {'Authorization': f'Bearer {token}'}
@@ -261,7 +262,7 @@ def main():
     log_file.parent.mkdir(exist_ok=True)
     
     with open(log_file, 'a') as f:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = now().strftime("%Y-%m-%d %H:%M:%S")
         f.write(f"\n[{timestamp}] Integration Test Results:\n")
         f.write(f"  Total Tests: {total_tests}\n")
         f.write(f"  Passed: {passed_tests}\n")

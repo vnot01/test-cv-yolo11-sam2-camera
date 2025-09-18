@@ -62,7 +62,7 @@ class EnvironmentConfig:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'environment_config_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'environment_config_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -450,7 +450,7 @@ class EnvironmentConfig:
             'base_config_file': str(self.config_dir / 'base_config.json'),
             'env_config_file': str(self.config_dir / f'{self.environment}_config.json'),
             'config_keys': list(self.config.keys()),
-            'last_updated': datetime.now().isoformat()
+            'last_updated': now().isoformat()
         }
     
     def start_watching(self):
@@ -472,6 +472,7 @@ class EnvironmentConfig:
     def _watch_config_files(self):
         """Watch configuration files for changes"""
         import time
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
         
         config_files = [
             self.config_dir / 'base_config.json',

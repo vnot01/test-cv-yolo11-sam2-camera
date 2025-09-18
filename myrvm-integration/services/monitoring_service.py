@@ -85,7 +85,7 @@ class MonitoringService:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'monitoring_service_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'monitoring_service_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -126,6 +126,7 @@ class MonitoringService:
     
     def check_rvm_status(self) -> bool:
         """Check RVM status from platform"""
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
         try:
             start_time = time.time()
             
@@ -143,11 +144,11 @@ class MonitoringService:
                     'rvm_status': response.get('data', {}).get('rvm', {}).get('status', 'unknown'),
                     'latest_detection': response.get('data', {}).get('latest_detection'),
                     'detection_stats': response.get('data', {}).get('detection_stats', {}),
-                    'last_update': datetime.now().isoformat(),
+                    'last_update': now().isoformat(),
                     'connection_status': 'connected'
                 })
                 
-                self.health_metrics['last_successful_check'] = datetime.now()
+                self.health_metrics['last_successful_check'] = now()
                 self.health_metrics['connection_errors'] = 0
                 
                 self.logger.info(f"RVM status updated: {self.current_status['rvm_status']}")
@@ -191,7 +192,7 @@ class MonitoringService:
         """Perform health check"""
         health_status = {
             'status': 'healthy',
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'metrics': {},
             'alerts': []
         }
@@ -223,7 +224,7 @@ class MonitoringService:
             
             # Check uptime
             if self.health_metrics['uptime_start']:
-                uptime = (datetime.now() - self.health_metrics['uptime_start']).total_seconds()
+                uptime = (now() - self.health_metrics['uptime_start']).total_seconds()
                 health_status['metrics']['uptime_seconds'] = uptime
                 
                 if uptime < self.alert_thresholds['min_uptime']:
@@ -235,7 +236,7 @@ class MonitoringService:
             
             # Check last successful check
             if self.health_metrics['last_successful_check']:
-                time_since_success = (datetime.now() - self.health_metrics['last_successful_check']).total_seconds()
+                time_since_success = (now() - self.health_metrics['last_successful_check']).total_seconds()
                 health_status['metrics']['time_since_last_success'] = time_since_success
                 
                 if time_since_success > 300:  # 5 minutes
@@ -252,7 +253,7 @@ class MonitoringService:
             self.logger.error(f"Health check error: {e}")
             return {
                 'status': 'error',
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'error': str(e)
             }
     
@@ -308,7 +309,7 @@ class MonitoringService:
         """Save health status to file"""
         try:
             log_dir = Path(__file__).parent.parent / 'logs'
-            health_file = log_dir / f'health_status_{datetime.now().strftime("%Y%m%d")}.json'
+            health_file = log_dir / f'health_status_{now().strftime("%Y%m%d")}.json'
             
             # Load existing data
             health_data = []
@@ -339,7 +340,7 @@ class MonitoringService:
             
             # Start service
             self.is_running = True
-            self.health_metrics['uptime_start'] = datetime.now()
+            self.health_metrics['uptime_start'] = now()
             
             # Start worker threads
             self.monitoring_thread = threading.Thread(target=self.monitoring_worker)

@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 import requests
 import zipfile
 import tarfile
@@ -128,7 +129,7 @@ class UpdateManager:
         record = {
             "version": version,
             "status": status,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": now().isoformat(),
             "details": details
         }
         self.update_history.append(record)
@@ -161,7 +162,7 @@ class UpdateManager:
                 "current_version": self.current_version,
                 "available_updates": newer_updates,
                 "update_count": len(newer_updates),
-                "last_check": datetime.now().isoformat()
+                "last_check": now().isoformat()
             }
             
         except Exception as e:
@@ -171,7 +172,7 @@ class UpdateManager:
                 "available_updates": [],
                 "update_count": 0,
                 "error": str(e),
-                "last_check": datetime.now().isoformat()
+                "last_check": now().isoformat()
             }
     
     def _check_github_updates(self) -> List[Dict]:
@@ -393,7 +394,7 @@ class UpdateManager:
         try:
             self.logger.info("Creating backup before update...")
             
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = now().strftime("%Y%m%d_%H%M%S")
             backup_path = self.backup_dir / f"pre_update_backup_{timestamp}"
             backup_path.mkdir(parents=True, exist_ok=True)
             
@@ -571,6 +572,7 @@ class UpdateManager:
 def main():
     """Main function for testing."""
     import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
     
     # Load configuration
     config_path = Path(__file__).parent.parent / "config" / "development_config.json"

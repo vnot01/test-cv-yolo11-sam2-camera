@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, List
 import subprocess
 import os
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 class SystemMonitor:
     """System monitoring and debugging tool"""
@@ -40,7 +41,7 @@ class SystemMonitor:
         logger.setLevel(logging.INFO)
         
         # File handler
-        log_file = self.log_dir / f'system_monitor_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = self.log_dir / f'system_monitor_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -81,7 +82,7 @@ class SystemMonitor:
             gpu_info = self._get_gpu_info()
             
             return {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'cpu': {
                     'count': cpu_count,
                     'frequency': {
@@ -219,7 +220,7 @@ class SystemMonitor:
         """Collect current monitoring data"""
         try:
             data = {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'system': self.get_system_info(),
                 'processes': self.get_process_info(),
                 'network': self.get_network_connections()
@@ -244,7 +245,7 @@ class SystemMonitor:
     def save_monitoring_data(self, filename: str = None) -> str:
         """Save monitoring data to file"""
         if not filename:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = now().strftime("%Y%m%d_%H%M%S")
             filename = f"monitoring_data_{timestamp}.json"
         
         filepath = self.log_dir / filename
@@ -291,7 +292,7 @@ class SystemMonitor:
             
             return {
                 'status': overall_status,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'cpu': {'usage': cpu_usage, 'status': cpu_status},
                 'memory': {'usage': memory_usage, 'status': memory_status},
                 'disk': {'usage': disk_usage, 'status': disk_status},

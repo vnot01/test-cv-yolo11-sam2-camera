@@ -360,6 +360,16 @@ class TimezoneSyncService:
 
 # Example usage and testing
 if __name__ == "__main__":
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Timezone Sync Service')
+    parser.add_argument('--auto-sync', action='store_true', help='Run automatic timezone sync')
+    parser.add_argument('--manual-sync', action='store_true', help='Run manual timezone sync')
+    parser.add_argument('--status', action='store_true', help='Show timezone service status')
+    parser.add_argument('--test', action='store_true', help='Run test mode')
+    args = parser.parse_args()
+    
     # Load configuration
     config_path = Path(__file__).parent.parent / "config" / "development_config.json"
     with open(config_path, 'r') as f:
@@ -374,20 +384,56 @@ if __name__ == "__main__":
     # Create timezone sync service
     timezone_service = TimezoneSyncService(config)
     
-    # Test automatic sync
-    print("Testing automatic timezone sync...")
-    success, time_info = timezone_service.auto_detect_and_sync()
+    if args.auto_sync:
+        print("Running automatic timezone sync...")
+        success, time_info = timezone_service.auto_detect_and_sync()
+        
+        if success:
+            print("✅ Timezone sync successful!")
+            print(f"Current timezone: {time_info['timezone']}")
+            print(f"Local time: {time_info['local_time']}")
+            print(f"UTC offset: {time_info['utc_offset']}")
+        else:
+            print("❌ Timezone sync failed!")
+            sys.exit(1)
     
-    if success:
-        print("✅ Timezone sync successful!")
-        print(f"Current timezone: {time_info['timezone']}")
-        print(f"Local time: {time_info['local_time']}")
-        print(f"UTC offset: {time_info['utc_offset']}")
+    elif args.manual_sync:
+        print("Running manual timezone sync...")
+        success, time_info = timezone_service.manual_sync()
+        
+        if success:
+            print("✅ Manual timezone sync successful!")
+            print(f"Current timezone: {time_info['timezone']}")
+            print(f"Local time: {time_info['local_time']}")
+            print(f"UTC offset: {time_info['utc_offset']}")
+        else:
+            print("❌ Manual timezone sync failed!")
+            sys.exit(1)
+    
+    elif args.status:
+        print("Timezone Service Status:")
+        status = timezone_service.get_status()
+        for key, value in status.items():
+            print(f"{key}: {value}")
+    
+    elif args.test:
+        print("Testing automatic timezone sync...")
+        success, time_info = timezone_service.auto_detect_and_sync()
+        
+        if success:
+            print("✅ Timezone sync successful!")
+            print(f"Current timezone: {time_info['timezone']}")
+            print(f"Local time: {time_info['local_time']}")
+            print(f"UTC offset: {time_info['utc_offset']}")
+        else:
+            print("❌ Timezone sync failed!")
+        
+        # Show status
+        print("\nTimezone Service Status:")
+        status = timezone_service.get_status()
+        for key, value in status.items():
+            print(f"{key}: {value}")
+    
     else:
-        print("❌ Timezone sync failed!")
-    
-    # Show status
-    print("\nTimezone Service Status:")
-    status = timezone_service.get_status()
-    for key, value in status.items():
-        print(f"{key}: {value}")
+        # Default: show help
+        parser.print_help()

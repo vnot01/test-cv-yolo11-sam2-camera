@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
 import psutil
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 class HealthMonitor:
     """Automated health monitoring and recovery system"""
@@ -62,7 +63,7 @@ class HealthMonitor:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'health_monitor_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'health_monitor_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -197,7 +198,7 @@ class HealthMonitor:
                     self.health_status[check_name] = {
                         'status': status,
                         'result': check_result,
-                        'timestamp': datetime.now().isoformat(),
+                        'timestamp': now().isoformat(),
                         'check_name': check_name
                     }
                     
@@ -216,7 +217,7 @@ class HealthMonitor:
                     self.health_status[check_name] = {
                         'status': 'error',
                         'result': {'error': str(e)},
-                        'timestamp': datetime.now().isoformat(),
+                        'timestamp': now().isoformat(),
                         'check_name': check_name
                     }
                     overall_status = 'critical'
@@ -224,7 +225,7 @@ class HealthMonitor:
             # Store overall health status
             self.health_status['overall'] = {
                 'status': overall_status,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'checks_count': len(self.health_checks),
                 'healthy_checks': sum(1 for check in self.health_status.values() 
                                     if check.get('status') == 'healthy'),

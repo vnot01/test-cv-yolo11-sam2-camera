@@ -64,6 +64,7 @@ class EnhancedJetsonMain:
     
     def _load_config(self) -> Dict:
         """Load configuration from file"""
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
         config_path = Path(__file__).parent / self.config_file
         
         if not config_path.exists():
@@ -95,7 +96,7 @@ class EnhancedJetsonMain:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'enhanced_jetson_main_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'enhanced_jetson_main_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -203,7 +204,7 @@ class EnhancedJetsonMain:
     def get_system_status(self) -> Dict:
         """Get comprehensive system status"""
         status = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'is_running': self.is_running,
             'uptime_seconds': 0,
             'services': {},
@@ -212,7 +213,7 @@ class EnhancedJetsonMain:
         
         # Calculate uptime
         if self.stats['start_time']:
-            status['uptime_seconds'] = (datetime.now() - self.stats['start_time']).total_seconds()
+            status['uptime_seconds'] = (now() - self.stats['start_time']).total_seconds()
         
         # Get service statuses
         if self.camera_service:
@@ -226,7 +227,7 @@ class EnhancedJetsonMain:
     def get_health_status(self) -> Dict:
         """Get system health status"""
         health = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'overall_status': 'healthy',
             'services': {},
             'alerts': []
@@ -267,7 +268,7 @@ class EnhancedJetsonMain:
         except Exception as e:
             self.logger.error(f"Health status check failed: {e}")
             return {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'overall_status': 'error',
                 'error': str(e)
             }
@@ -276,12 +277,12 @@ class EnhancedJetsonMain:
         """Save status report to file"""
         try:
             log_dir = Path(__file__).parent.parent / 'logs'
-            status_file = log_dir / f'system_status_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+            status_file = log_dir / f'system_status_{now().strftime("%Y%m%d_%H%M%S")}.json'
             
             report = {
                 'system_status': self.get_system_status(),
                 'health_status': self.get_health_status(),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now().isoformat()
             }
             
             with open(status_file, 'w') as f:
@@ -296,7 +297,7 @@ class EnhancedJetsonMain:
         """Main run loop"""
         try:
             self.logger.info("🚀 Starting Enhanced Jetson Main Coordinator")
-            self.stats['start_time'] = datetime.now()
+            self.stats['start_time'] = now()
             
             # Initialize services
             if not self.initialize_services():
@@ -370,7 +371,7 @@ class EnhancedJetsonMain:
         # Log final statistics
         uptime = 0
         if self.stats['start_time']:
-            uptime = (datetime.now() - self.stats['start_time']).total_seconds()
+            uptime = (now() - self.stats['start_time']).total_seconds()
         
         self.logger.info(f"📊 Final Statistics:")
         self.logger.info(f"   Uptime: {uptime:.0f} seconds")

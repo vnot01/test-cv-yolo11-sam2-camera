@@ -1,0 +1,17 @@
+[Unit]
+Description=MyRVM Platform Timezone Sync Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=oneshot
+User=my
+Group=my
+WorkingDirectory=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration
+ExecStart=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration/venv/bin/python /home/my/test-cv-yolo11-sam2-camera/myrvm-integration/services/timezone_sync_service.py --auto-sync
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

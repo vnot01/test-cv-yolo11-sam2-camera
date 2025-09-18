@@ -107,6 +107,7 @@ def test_performance_benchmarking():
             
             # Try to import (basic test)
             from testing.performance_benchmark import PerformanceBenchmark
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             print("✓ Performance benchmark framework can be imported")
             
             return True
@@ -192,7 +193,7 @@ def main():
     results_dir = project_root / "testing" / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = now().strftime("%Y%m%d_%H%M%S")
     results_file = results_dir / f"stage6_test_results_{timestamp}.json"
     
     with open(results_file, 'w') as f:
@@ -203,7 +204,7 @@ def main():
                 "failed_tests": failed_tests,
                 "error_tests": error_tests,
                 "success_rate": (passed_tests / total_tests * 100) if total_tests > 0 else 0,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": now().isoformat()
             },
             "test_results": test_results
         }, f, indent=2)

@@ -62,7 +62,7 @@ class DetectionService:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'detection_service_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'detection_service_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -154,7 +154,7 @@ class DetectionService:
             result = {
                 'success': True,
                 'image_path': image_path,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'inference_time': inference_time,
                 'total_detections': len(detections),
                 'detections': detections,
@@ -203,7 +203,7 @@ class DetectionService:
                 return {
                     'success': True,
                     'image_path': image_path,
-                    'timestamp': datetime.now().isoformat(),
+                    'timestamp': now().isoformat(),
                     'inference_time': time.time() - start_time,
                     'total_segments': 0,
                     'segments': [],
@@ -228,6 +228,7 @@ class DetectionService:
                     
                     # Encode mask as base64
                     import base64
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
                     _, buffer = cv2.imencode('.png', mask_binary)
                     mask_base64 = base64.b64encode(buffer).decode('utf-8')
                 else:
@@ -244,7 +245,7 @@ class DetectionService:
             result = {
                 'success': True,
                 'image_path': image_path,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'inference_time': inference_time,
                 'total_segments': len(segments),
                 'segments': segments,
@@ -293,7 +294,7 @@ class DetectionService:
             result = {
                 'success': True,
                 'image_path': image_path,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'total_time': total_time,
                 'detection': detection_result,
                 'segmentation': segmentation_result
@@ -321,7 +322,7 @@ class DetectionService:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
         
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = now().strftime("%Y%m%d_%H%M%S")
         results_file = output_path / f"detection_results_{timestamp}.json"
         
         try:

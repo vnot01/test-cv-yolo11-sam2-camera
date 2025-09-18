@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from flask import Flask, render_template, jsonify, request, Response
 import psutil
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 class MonitoringDashboard:
     """Advanced monitoring dashboard server"""
@@ -71,7 +72,7 @@ class MonitoringDashboard:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'dashboard_server_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'dashboard_server_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -232,7 +233,7 @@ class MonitoringDashboard:
             
             return {
                 'status': status,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'uptime': time.time() - process.create_time(),
                 'cpu_percent': cpu_percent,
                 'memory_percent': memory.percent,
@@ -245,7 +246,7 @@ class MonitoringDashboard:
             self.logger.error(f"Error getting system status: {e}")
             return {
                 'status': 'error',
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'error': str(e)
             }
     
@@ -258,7 +259,7 @@ class MonitoringDashboard:
             process = psutil.Process()
             
             return {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'system': {
                     'cpu': {
                         'percent': cpu_percent,
@@ -290,7 +291,7 @@ class MonitoringDashboard:
         except Exception as e:
             self.logger.error(f"Error getting fallback metrics: {e}")
             return {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'error': str(e)
             }
     
@@ -299,7 +300,7 @@ class MonitoringDashboard:
         try:
             health = {
                 'status': 'healthy',
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'components': {
                     'dashboard': 'healthy',
                     'metrics_collector': 'healthy' if self.metrics_collector else 'unavailable',
@@ -338,7 +339,7 @@ class MonitoringDashboard:
             self.logger.error(f"Error getting health status: {e}")
             return {
                 'status': 'error',
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'error': str(e)
             }
     
@@ -350,7 +351,7 @@ class MonitoringDashboard:
                     # Update dashboard data
                     self.dashboard_data.update({
                         'system_status': self._get_system_status(),
-                        'last_update': datetime.now().isoformat(),
+                        'last_update': now().isoformat(),
                         'uptime': time.time() - psutil.Process().create_time(),
                         'alerts_count': len(self.alerting_engine.get_active_alerts()) if self.alerting_engine else 0
                     })

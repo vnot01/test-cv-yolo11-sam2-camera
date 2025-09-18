@@ -69,7 +69,7 @@ class SecurityManager:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'security_manager_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'security_manager_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -105,6 +105,7 @@ class SecurityManager:
         # Create new encryption key
         try:
             # Generate key from password if available
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             password = os.getenv('MYRVM_ENCRYPTION_PASSWORD', 'default_password_change_me')
             salt = os.urandom(16)
             
@@ -184,7 +185,7 @@ class SecurityManager:
             credential_data = {
                 'name': name,
                 'encrypted_credential': encrypted_credential,
-                'created_at': datetime.now().isoformat(),
+                'created_at': now().isoformat(),
                 'metadata': metadata or {}
             }
             
@@ -273,12 +274,12 @@ class SecurityManager:
         """Generate access token"""
         try:
             token = secrets.token_urlsafe(32)
-            expiry_time = datetime.now() + timedelta(hours=expiry_hours)
+            expiry_time = now() + timedelta(hours=expiry_hours)
             
             self.access_tokens[token] = {
                 'user_id': user_id,
                 'permissions': permissions or [],
-                'created_at': datetime.now().isoformat(),
+                'created_at': now().isoformat(),
                 'expires_at': expiry_time.isoformat()
             }
             
@@ -307,7 +308,7 @@ class SecurityManager:
                 return None
             
             # Check expiry
-            if datetime.now() > self.token_expiry[token]:
+            if now() > self.token_expiry[token]:
                 del self.access_tokens[token]
                 del self.token_expiry[token]
                 
@@ -376,7 +377,7 @@ class SecurityManager:
         """Log security event"""
         try:
             event = {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'event_type': event_type,
                 'details': details
             }
@@ -404,7 +405,7 @@ class SecurityManager:
     def cleanup_expired_tokens(self):
         """Cleanup expired access tokens"""
         try:
-            current_time = datetime.now()
+            current_time = now()
             expired_tokens = []
             
             for token, expiry_time in self.token_expiry.items():

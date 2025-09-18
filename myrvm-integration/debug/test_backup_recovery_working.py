@@ -20,6 +20,7 @@ sys.path.append(str(Path(__file__).parent.parent / "backup"))
 from backup_manager import BackupManager
 from recovery_manager import RecoveryManager
 from backup_monitor import BackupMonitor
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 def test_backup_manager_working():
     """Test backup manager functionality - working version"""
@@ -403,13 +404,13 @@ def main():
         print("⚠️  Some tests failed. Please check the logs for details.")
     
     # Save test results
-    results_file = Path(__file__).parent.parent / 'logs' / f'backup_recovery_working_test_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+    results_file = Path(__file__).parent.parent / 'logs' / f'backup_recovery_working_test_{now().strftime("%Y%m%d_%H%M%S")}.json'
     results_file.parent.mkdir(exist_ok=True)
     
     with open(results_file, 'w') as f:
         json.dump({
             'test_results': test_results,
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'passed_tests': passed_tests,
             'total_tests': total_tests
         }, f, indent=2)

@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 import numpy as np
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 class PerformanceMonitor:
     """Real-time performance monitoring and optimization"""
@@ -67,7 +68,7 @@ class PerformanceMonitor:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'performance_monitor_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'performance_monitor_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -123,7 +124,7 @@ class PerformanceMonitor:
                 cpu_temp = None
             
             return {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'cpu': {
                     'percent': cpu_percent,
                     'count': cpu_count,
@@ -234,7 +235,7 @@ class PerformanceMonitor:
                     # Add alerts to history
                     if alerts:
                         for alert in alerts:
-                            alert['timestamp'] = datetime.now().isoformat()
+                            alert['timestamp'] = now().isoformat()
                             self.alerts.append(alert)
                             self.stats['alerts_generated'] += 1
                             
@@ -272,7 +273,7 @@ class PerformanceMonitor:
         """Start performance monitoring"""
         if not self.is_monitoring:
             self.is_monitoring = True
-            self.stats['monitoring_start_time'] = datetime.now()
+            self.stats['monitoring_start_time'] = now()
             self.monitor_thread = threading.Thread(target=self.monitor_performance)
             self.monitor_thread.start()
             self.logger.info("Performance monitoring started")
@@ -327,7 +328,7 @@ class PerformanceMonitor:
         
         uptime = 0
         if stats.get('monitoring_start_time'):
-            uptime = (datetime.now() - stats['monitoring_start_time']).total_seconds()
+            uptime = (now() - stats['monitoring_start_time']).total_seconds()
         
         report = f"""
 Performance Monitor Report
@@ -359,7 +360,7 @@ Recent Alerts ({len(alerts)}):
         """Save performance data to file"""
         try:
             if filename is None:
-                filename = f"performance_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                filename = f"performance_data_{now().strftime('%Y%m%d_%H%M%S')}.json"
             
             log_dir = Path(__file__).parent.parent.parent / 'logs'
             file_path = log_dir / filename
@@ -368,7 +369,7 @@ Recent Alerts ({len(alerts)}):
                 'performance_history': self.performance_history,
                 'alerts': self.alerts,
                 'stats': self.stats,
-                'exported_at': datetime.now().isoformat()
+                'exported_at': now().isoformat()
             }
             
             with open(file_path, 'w') as f:
@@ -427,7 +428,7 @@ Recent Alerts ({len(alerts)}):
             
             return {
                 'recommendations': recommendations,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now().isoformat()
             }
             
         except Exception as e:

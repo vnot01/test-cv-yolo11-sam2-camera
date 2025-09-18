@@ -80,7 +80,7 @@ class BatchProcessor:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'batch_processor_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'batch_processor_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -107,7 +107,7 @@ class BatchProcessor:
                 metadata = {}
             
             # Add timestamp
-            metadata['added_at'] = datetime.now().isoformat()
+            metadata['added_at'] = now().isoformat()
             
             # Try to add to queue
             self.input_queue.put((image_path, metadata), timeout=1)
@@ -125,6 +125,7 @@ class BatchProcessor:
     
     def get_result(self, timeout: float = 5.0) -> Optional[Dict]:
         """Get processing result from output queue"""
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
         try:
             result = self.output_queue.get(timeout=timeout)
             self.output_queue.task_done()
@@ -181,7 +182,7 @@ class BatchProcessor:
                         'image_path': metadata.get('image_path', ''),
                         'metadata': metadata,
                         'detection_result': detection_result,
-                        'processed_at': datetime.now().isoformat(),
+                        'processed_at': now().isoformat(),
                         'processing_time': detection_result.get('processing_time', 0)
                     }
                     
@@ -199,7 +200,7 @@ class BatchProcessor:
                         'image_path': metadata.get('image_path', ''),
                         'metadata': metadata,
                         'error': str(e),
-                        'processed_at': datetime.now().isoformat()
+                        'processed_at': now().isoformat()
                     }
                     results.append(error_result)
             
@@ -288,7 +289,7 @@ class BatchProcessor:
         """Start batch processor"""
         if not self.is_running:
             self.is_running = True
-            self.stats['start_time'] = datetime.now()
+            self.stats['start_time'] = now()
             
             # Start memory manager
             self.memory_manager.start_monitoring()
@@ -321,7 +322,7 @@ class BatchProcessor:
         """Get batch processing statistics"""
         uptime = 0
         if self.stats['start_time']:
-            uptime = (datetime.now() - self.stats['start_time']).total_seconds()
+            uptime = (now() - self.stats['start_time']).total_seconds()
         
         return {
             'uptime_seconds': uptime,

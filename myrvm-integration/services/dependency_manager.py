@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Set, Tuple
 import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 import networkx as nx
 from collections import defaultdict, deque
 
@@ -461,6 +462,7 @@ class DependencyManager:
 def main():
     """Main function for testing."""
     import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
     
     # Load configuration
     config_path = Path(__file__).parent.parent / "config" / "development_config.json"

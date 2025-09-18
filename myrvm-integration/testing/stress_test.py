@@ -8,6 +8,7 @@ import os
 import sys
 import time
 import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 import logging
 import threading
 import asyncio
@@ -130,7 +131,7 @@ class StressTestFramework:
                     "complex_calculation": True,
                     "iterations": 1000,
                     "user_id": user_id,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": now().isoformat()
                 }
                 async with session.post(f"{self.base_url}{endpoint}", json=data, timeout=self.timeout) as response:
                     response_time = time.time() - start_time
@@ -141,7 +142,7 @@ class StressTestFramework:
                 large_data = {
                     "large_array": [random.randint(1, 1000) for _ in range(10000)],
                     "user_id": user_id,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": now().isoformat()
                 }
                 async with session.post(f"{self.base_url}{endpoint}", json=large_data, timeout=self.timeout) as response:
                     response_time = time.time() - start_time
@@ -152,7 +153,7 @@ class StressTestFramework:
                 network_data = {
                     "large_payload": "x" * 10000,  # 10KB string
                     "user_id": user_id,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": now().isoformat()
                 }
                 async with session.post(f"{self.base_url}{endpoint}", json=network_data, timeout=self.timeout) as response:
                     response_time = time.time() - start_time
@@ -163,7 +164,7 @@ class StressTestFramework:
                 disk_data = {
                     "file_operations": True,
                     "user_id": user_id,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": now().isoformat()
                 }
                 async with session.post(f"{self.base_url}{endpoint}", json=disk_data, timeout=self.timeout) as response:
                     response_time = time.time() - start_time
@@ -174,7 +175,7 @@ class StressTestFramework:
                 mixed_data = {
                     "stress_type": random.choice(["cpu", "memory", "network", "disk"]),
                     "user_id": user_id,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": now().isoformat()
                 }
                 async with session.post(f"{self.base_url}{endpoint}", json=mixed_data, timeout=self.timeout) as response:
                     response_time = time.time() - start_time
@@ -227,7 +228,7 @@ class StressTestFramework:
                 user_results["errors"].append({
                     "endpoint": endpoint,
                     "status_code": status_code,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": now().isoformat()
                 })
             
             # Shorter delay for stress testing (0.05 to 0.5 seconds)
@@ -274,7 +275,7 @@ class StressTestFramework:
             network_io = psutil.net_io_counters()
             
             self.monitoring_data.append({
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": now().isoformat(),
                 "cpu_percent": cpu_percent,
                 "memory_percent": memory.percent,
                 "memory_used_mb": memory.used / 1024 / 1024,
@@ -387,7 +388,7 @@ class StressTestFramework:
         
         # Create result
         result = StressTestResult(
-            timestamp=datetime.now().isoformat(),
+            timestamp=now().isoformat(),
             test_name=scenario["name"],
             stress_type=stress_type,
             max_concurrent_users=max_users,
@@ -436,7 +437,7 @@ class StressTestFramework:
     def save_results(self, filename: str = None):
         """Save test results to file."""
         if not filename:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = now().strftime("%Y%m%d_%H%M%S")
             filename = f"stress_test_results_{timestamp}.json"
         
         results_file = Path(__file__).parent / "results" / filename
@@ -457,7 +458,7 @@ class StressTestFramework:
     def save_results_csv(self, filename: str = None):
         """Save test results to CSV file."""
         if not filename:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = now().strftime("%Y%m%d_%H%M%S")
             filename = f"stress_test_results_{timestamp}.csv"
         
         results_file = Path(__file__).parent / "results" / filename
@@ -568,6 +569,7 @@ class StressTestFramework:
 def main():
     """Main function for testing."""
     import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
     
     # Load configuration
     config_path = Path(__file__).parent.parent / "config" / "development_config.json"

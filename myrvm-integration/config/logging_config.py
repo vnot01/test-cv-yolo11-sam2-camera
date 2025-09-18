@@ -261,7 +261,7 @@ class ProductionLoggingConfig:
             
             # Create structured message
             structured_data = {
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'level': level.upper(),
                 'message': message,
                 'environment': self.environment,
@@ -284,7 +284,7 @@ class ProductionLoggingConfig:
                 'error_message': str(error),
                 'traceback': traceback.format_exc(),
                 'context': context or {},
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now().isoformat()
             }
             
             error_logger.error(json.dumps(error_data, indent=2))
@@ -301,7 +301,7 @@ class ProductionLoggingConfig:
                 'action': action,
                 'user_id': user_id,
                 'details': details or {},
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'environment': self.environment
             }
             
@@ -319,7 +319,7 @@ class ProductionLoggingConfig:
                 'operation': operation,
                 'duration_seconds': duration,
                 'metrics': metrics or {},
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'environment': self.environment
             }
             
@@ -357,7 +357,8 @@ class ProductionLoggingConfig:
         """Cleanup old log files"""
         try:
             from datetime import timedelta
-            cutoff_date = datetime.now() - timedelta(days=days_to_keep)
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
+            cutoff_date = now() - timedelta(days=days_to_keep)
             
             cleaned_files = 0
             

@@ -8,6 +8,7 @@ import os
 import sys
 import time
 import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 import logging
 import threading
 import concurrent.futures
@@ -137,7 +138,7 @@ class LoadTestFramework:
         self.logger.info(f"Starting load test: {scenario_name}")
         self.logger.info(f"Concurrent users: {concurrent_users}, Duration: {duration}s")
         
-        start_time = datetime.now()
+        start_time = now()
         end_time = start_time + timedelta(seconds=duration)
         
         # Initialize result
@@ -165,7 +166,7 @@ class LoadTestFramework:
                 futures.append(future)
             
             # Continue submitting requests until duration is reached
-            while datetime.now() < end_time:
+            while now() < end_time:
                 # Collect completed requests
                 completed_futures = []
                 for future in futures:
@@ -194,7 +195,7 @@ class LoadTestFramework:
                     futures.remove(future)
                 
                 # Submit new requests to maintain concurrency
-                while len(futures) < concurrent_users and datetime.now() < end_time:
+                while len(futures) < concurrent_users and now() < end_time:
                     endpoint = self.api_endpoints[0]
                     future = executor.submit(self._make_request, endpoint)
                     futures.append(future)
@@ -226,7 +227,7 @@ class LoadTestFramework:
         # Clear metrics for next test
         self.system_metrics.clear()
         
-        result.end_time = datetime.now()
+        result.end_time = now()
         result.duration = (result.end_time - result.start_time).total_seconds()
         
         self.logger.info(f"Load test completed: {scenario_name}")
@@ -266,7 +267,7 @@ class LoadTestFramework:
         report = {
             "test_summary": {
                 "total_tests": len(self.test_results),
-                "test_date": datetime.now().isoformat(),
+                "test_date": now().isoformat(),
                 "total_requests": sum(result.total_requests for result in self.test_results),
                 "total_successful_requests": sum(result.successful_requests for result in self.test_results),
                 "total_failed_requests": sum(result.failed_requests for result in self.test_results)
@@ -292,7 +293,7 @@ class LoadTestFramework:
     def save_load_test_report(self, report: Dict[str, Any], filename: str = None):
         """Save load test report to file."""
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = now().strftime("%Y%m%d_%H%M%S")
             filename = f"load_test_report_{timestamp}.json"
         
         report_path = self.results_dir / filename
@@ -306,7 +307,7 @@ class LoadTestFramework:
         """Test single user load for basic validation."""
         self.logger.info("Testing single user load")
         
-        start_time = datetime.now()
+        start_time = now()
         result = {
             "test_name": "Single User Load Test",
             "start_time": start_time,
@@ -337,7 +338,7 @@ class LoadTestFramework:
             self.logger.error(f"Single user load test failed: {e}")
             result["error_messages"].append(str(e))
         
-        result["end_time"] = datetime.now()
+        result["end_time"] = now()
         result["duration"] = (result["end_time"] - result["start_time"]).total_seconds()
         
         success_rate = (result["successful_requests"] / result["total_requests"] * 100) if result["total_requests"] > 0 else 0
@@ -347,6 +348,7 @@ class LoadTestFramework:
 def main():
     """Main function for testing."""
     import json
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
     
     # Load configuration
     config_path = Path(__file__).parent.parent / "config" / "development_config.json"

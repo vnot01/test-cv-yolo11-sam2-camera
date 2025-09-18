@@ -23,6 +23,7 @@ from detection_service import DetectionService
 from memory_manager import MemoryManager
 from batch_processor import BatchProcessor
 from performance_monitor import PerformanceMonitor
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 class OptimizedDetectionService:
     """Production-ready detection service with comprehensive optimizations"""
@@ -74,7 +75,7 @@ class OptimizedDetectionService:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'optimized_detection_service_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'optimized_detection_service_{now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -126,7 +127,7 @@ class OptimizedDetectionService:
             detection_result['optimization_metadata'] = {
                 'processing_time': processing_time,
                 'memory_optimized': self.optimization_enabled,
-                'optimization_timestamp': datetime.now().isoformat()
+                'optimization_timestamp': now().isoformat()
             }
             
             # Update statistics
@@ -152,7 +153,7 @@ class OptimizedDetectionService:
                 metadata = {
                     'image_path': image_path,
                     'confidence_threshold': confidence_threshold,
-                    'added_at': datetime.now().isoformat()
+                    'added_at': now().isoformat()
                 }
                 
                 success = self.batch_processor.add_image(image_path, metadata)
@@ -202,7 +203,7 @@ class OptimizedDetectionService:
                     'batch_processing_enabled': self.batch_processor.is_running,
                     'performance_monitoring_enabled': self.performance_monitor.is_monitoring
                 },
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now().isoformat()
             }
             
         except Exception as e:
@@ -244,7 +245,7 @@ class OptimizedDetectionService:
             
             return {
                 'optimizations_applied': optimizations_applied,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': now().isoformat(),
                 'total_optimizations': len(optimizations_applied)
             }
             
@@ -264,7 +265,7 @@ class OptimizedDetectionService:
                 self.performance_monitor.start_monitoring()
                 
                 self.is_running = True
-                self.stats['start_time'] = datetime.now()
+                self.stats['start_time'] = now()
                 
                 self.logger.info("✅ Optimized detection service started successfully")
                 return True
@@ -299,7 +300,7 @@ class OptimizedDetectionService:
             
             uptime = 0
             if service_stats.get('start_time'):
-                uptime = (datetime.now() - service_stats['start_time']).total_seconds()
+                uptime = (now() - service_stats['start_time']).total_seconds()
             
             current = performance_summary.get('current', {})
             averages = performance_summary.get('averages', {})

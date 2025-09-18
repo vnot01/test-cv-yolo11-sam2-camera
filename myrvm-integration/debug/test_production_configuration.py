@@ -21,6 +21,7 @@ from environment_config import EnvironmentConfig
 from security_manager import SecurityManager
 from logging_config import ProductionLoggingConfig
 from service_manager import ServiceManager
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 def test_environment_configuration():
     """Test environment-based configuration management"""
@@ -161,7 +162,7 @@ def test_logging_configuration():
         
         # Test structured logging
         logging_config.log_structured('TestLogger', 'INFO', 'Test message', 
-                                    test_param='test_value', timestamp=datetime.now().isoformat())
+                                    test_param='test_value', timestamp=now().isoformat())
         print("   ✅ Structured logging working")
         
         # Test error logging
@@ -419,13 +420,13 @@ def main():
         print("⚠️  Some tests failed. Please check the logs for details.")
     
     # Save test results
-    results_file = Path(__file__).parent.parent / 'logs' / f'production_configuration_test_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+    results_file = Path(__file__).parent.parent / 'logs' / f'production_configuration_test_{now().strftime("%Y%m%d_%H%M%S")}.json'
     results_file.parent.mkdir(exist_ok=True)
     
     with open(results_file, 'w') as f:
         json.dump({
             'test_results': test_results,
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'passed_tests': passed_tests,
             'total_tests': total_tests
         }, f, indent=2)

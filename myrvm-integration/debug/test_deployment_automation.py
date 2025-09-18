@@ -136,6 +136,7 @@ def test_update_manager():
             print("   ⚠️  Updates available:")
             for update in updates['available_updates']:
                 print(f"      - {update['version']} from {update['source']}")
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
         else:
             print("   ✅ No updates available")
         
@@ -386,7 +387,7 @@ def main():
     """Main test function."""
     print("🚀 Stage 5: Deployment Automation Test")
     print("=" * 60)
-    print(f"Test started at: {datetime.now().isoformat()}")
+    print(f"Test started at: {now().isoformat()}")
     
     # Setup logging
     setup_logging()

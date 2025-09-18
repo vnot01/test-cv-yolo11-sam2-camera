@@ -46,6 +46,7 @@ def test_memory_manager():
         
         # Test image buffer management
         import numpy as np
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
         test_image = np.zeros((480, 640, 3), dtype=np.uint8)
         
         # Get optimized buffer
@@ -107,6 +108,7 @@ def test_batch_processor():
             if not Path(image_path).exists():
                 import cv2
                 import numpy as np
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
                 dummy_image = np.zeros((480, 640, 3), dtype=np.uint8)
                 cv2.imwrite(image_path, dummy_image)
             
@@ -227,6 +229,7 @@ def test_optimized_detection_service():
         if not Path(test_image).exists():
             import cv2
             import numpy as np
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             dummy_image = np.zeros((480, 640, 3), dtype=np.uint8)
             cv2.imwrite(test_image, dummy_image)
         
@@ -301,6 +304,7 @@ def run_performance_benchmark():
             if not Path(image_path).exists():
                 import cv2
                 import numpy as np
+from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
                 dummy_image = np.zeros((480, 640, 3), dtype=np.uint8)
                 cv2.imwrite(image_path, dummy_image)
             test_images.append(image_path)
@@ -375,13 +379,13 @@ def main():
         print("⚠️  Some tests failed. Please check the logs for details.")
     
     # Save test results
-    results_file = Path(__file__).parent.parent / 'logs' / f'performance_optimization_test_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+    results_file = Path(__file__).parent.parent / 'logs' / f'performance_optimization_test_{now().strftime("%Y%m%d_%H%M%S")}.json'
     results_file.parent.mkdir(exist_ok=True)
     
     with open(results_file, 'w') as f:
         json.dump({
             'test_results': test_results,
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': now().isoformat(),
             'passed_tests': passed_tests,
             'total_tests': total_tests
         }, f, indent=2)
