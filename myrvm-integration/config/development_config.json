@@ -1,5 +1,6 @@
 {
   "environment": "development",
+  "myrvm_base_url": "http://172.28.233.83:8001",
   "log_level": "DEBUG",
   "security": {
     "encrypt_credentials": false,

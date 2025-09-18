@@ -17,7 +17,9 @@ import requests
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from api_client.myrvm_api_client import MyRVMAPIClient
+import sys
+sys.path.append(str(project_root / "api-client"))
+from myrvm_api_client import MyRVMAPIClient
 
 class E2ETestFramework:
     """End-to-end testing framework for MyRVM Platform Integration."""
@@ -30,7 +32,8 @@ class E2ETestFramework:
         self.results_dir.mkdir(parents=True, exist_ok=True)
         
         # Initialize API client
-        self.api_client = MyRVMAPIClient(config)
+        base_url = config.get('myrvm_base_url', 'http://localhost:8000')
+        self.api_client = MyRVMAPIClient(base_url)
         
         # Test results
         self.test_results = []
@@ -157,7 +160,7 @@ class E2ETestFramework:
     
     def save_report(self, report):
         """Save test report."""
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"e2e_test_report_{timestamp}.json"
         report_path = self.results_dir / filename
         
