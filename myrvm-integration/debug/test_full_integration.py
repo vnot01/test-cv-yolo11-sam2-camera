@@ -39,20 +39,15 @@ def test_register_processing_engine(base_url, token):
     
     engine_data = {
         'name': 'Jetson Orin Nano - CV System',
-        'type': 'edge_vision',
-        'status': 'active',
-        'location': 'Jetson Orin Nano',
-        'capabilities': ['yolo11_detection', 'sam2_segmentation', 'camera_capture'],
-        'hardware_info': {
-            'device': 'NVIDIA Jetson Orin Nano',
-            'os': 'Ubuntu 22.04 LTS',
-            'python_version': '3.10.12',
-            'gpu': 'NVIDIA Orin Nano'
-        },
-        'network_info': {
-            'ip_address': '172.28.233.100',
-            'zerotier_network': '172.28.233.0/24'
-        }
+        'type': 'nvidia_cuda',
+        'server_address': '172.28.93.97',
+        'port': 5000,
+        'gpu_memory_limit': 8,
+        'docker_gpu_passthrough': True,
+        'model_path': '/models/yolo11n.pt',
+        'processing_timeout': 30,
+        'auto_failover': True,
+        'is_active': True
     }
     
     headers = {'Authorization': f'Bearer {token}'}
