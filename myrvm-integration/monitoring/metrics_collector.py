@@ -1,28 +1,24 @@
 #!/usr/bin/env python3
 """
-Enhanced Metrics Collector for MyRVM Platform Integration
-Comprehensive metrics collection and aggregation
+Comprehensive Metrics Collector for MyRVM Platform Integration
+Real-time system, application, and business metrics collection
 """
 
-import json
+import os
 import time
+import json
 import logging
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any, List, Optional, Callable
 import psutil
-import sqlite3
-
-# Add parent directories to path for imports
-import sys
-sys.path.append(str(Path(__file__).parent.parent))
-sys.path.append(str(Path(__file__).parent.parent / "utils"))
-
-from performance_monitor import PerformanceMonitor
+import GPUtil
+from collections import defaultdict, deque
+import statistics
 
 class MetricsCollector:
-    """Enhanced metrics collection and aggregation system"""
+    """Comprehensive metrics collection system"""
     
     def __init__(self, config: Dict):
         """
@@ -32,37 +28,30 @@ class MetricsCollector:
             config: Configuration dictionary
         """
         self.config = config
+        self.collection_interval = config.get('monitoring_interval', 30.0)
+        self.metrics_history_size = config.get('metrics_history_size', 1000)
+        self.enable_gpu_monitoring = config.get('enable_gpu_monitoring', True)
         
-        # Metrics configuration
-        self.collection_interval = config.get('metrics_collection_interval', 30)
-        self.retention_days = config.get('metrics_retention_days', 30)
-        self.aggregation_intervals = config.get('aggregation_intervals', [300, 3600, 86400])  # 5min, 1hour, 1day
+        # Metrics storage
+        self.metrics_history = defaultdict(lambda: deque(maxlen=self.metrics_history_size))
+        self.current_metrics = {}
+        self.custom_metrics = {}
         
-        # Database configuration
-        self.db_path = Path(__file__).parent.parent / 'data' / 'metrics.db'
-        self.db_path.parent.mkdir(exist_ok=True)
+        # Collection control
+        self.is_collecting = False
+        self.collection_thread = None
+        self.collection_lock = threading.Lock()
         
         # Setup logging
         self.logger = self._setup_logger()
         
-        # Initialize performance monitor
-        self.performance_monitor = PerformanceMonitor(config)
+        # Metrics callbacks
+        self.metrics_callbacks = []
         
-        # Metrics collection thread
-        self.collection_thread = None
-        self.is_running = False
+        # Initialize metrics
+        self._initialize_metrics()
         
-        # Custom metrics
-        self.custom_metrics = {}
-        self.business_metrics = {}
-        
-        # Initialize database
-        self._init_database()
-        
-        # Load metrics configuration
-        self._load_metrics_config()
-        
-        self.logger.info("Enhanced metrics collector initialized")
+        self.logger.info("Metrics collector initialized")
     
     def _setup_logger(self) -> logging.Logger:
         """Setup logger for metrics collector"""
@@ -94,415 +83,444 @@ class MetricsCollector:
         
         return logger
     
-    def _init_database(self):
-        """Initialize metrics database"""
-        try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                
-                # Create metrics table
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS metrics (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        timestamp DATETIME NOT NULL,
-                        metric_name TEXT NOT NULL,
-                        metric_value REAL NOT NULL,
-                        metric_type TEXT NOT NULL,
-                        tags TEXT,
-                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                    )
-                ''')
-                
-                # Create aggregated metrics table
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS aggregated_metrics (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        timestamp DATETIME NOT NULL,
-                        metric_name TEXT NOT NULL,
-                        aggregation_type TEXT NOT NULL,
-                        aggregation_interval INTEGER NOT NULL,
-                        min_value REAL,
-                        max_value REAL,
-                        avg_value REAL,
-                        sum_value REAL,
-                        count_value INTEGER,
-                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                    )
-                ''')
-                
-                # Create indexes
-                cursor.execute('CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON metrics(timestamp)')
-                cursor.execute('CREATE INDEX IF NOT EXISTS idx_metrics_name ON metrics(metric_name)')
-                cursor.execute('CREATE INDEX IF NOT EXISTS idx_aggregated_timestamp ON aggregated_metrics(timestamp)')
-                cursor.execute('CREATE INDEX IF NOT EXISTS idx_aggregated_name ON aggregated_metrics(metric_name)')
-                
-                conn.commit()
-                
-            self.logger.info("Metrics database initialized")
-            
-        except Exception as e:
-            self.logger.error(f"Failed to initialize metrics database: {e}")
-            raise
+    def _initialize_metrics(self):
+        """Initialize metrics structure"""
+        self.current_metrics = {
+            'timestamp': datetime.now().isoformat(),
+            'system': {},
+            'application': {},
+            'business': {},
+            'network': {},
+            'gpu': {}
+        }
     
-    def _load_metrics_config(self):
-        """Load metrics configuration from file"""
-        config_file = Path(__file__).parent / 'config' / 'metrics.json'
-        
-        if config_file.exists():
-            try:
-                with open(config_file, 'r') as f:
-                    config_data = json.load(f)
-                
-                self.custom_metrics = config_data.get('custom_metrics', {})
-                self.business_metrics = config_data.get('business_metrics', {})
-                
-                self.logger.info("Metrics configuration loaded from file")
-            except Exception as e:
-                self.logger.error(f"Failed to load metrics configuration: {e}")
-        else:
-            # Create default configuration
-            self._save_metrics_config()
-    
-    def _save_metrics_config(self):
-        """Save metrics configuration to file"""
-        try:
-            config_file = Path(__file__).parent / 'config' / 'metrics.json'
-            config_file.parent.mkdir(exist_ok=True)
-            
-            config_data = {
-                'custom_metrics': self.custom_metrics,
-                'business_metrics': self.business_metrics,
-                'collection_interval': self.collection_interval,
-                'retention_days': self.retention_days,
-                'aggregation_intervals': self.aggregation_intervals
-            }
-            
-            with open(config_file, 'w') as f:
-                json.dump(config_data, f, indent=2)
-            
-            self.logger.info("Metrics configuration saved to file")
-            
-        except Exception as e:
-            self.logger.error(f"Failed to save metrics configuration: {e}")
-    
-    def collect_system_metrics(self) -> Dict:
-        """Collect system metrics"""
-        try:
-            # Get system metrics from performance monitor
-            system_metrics = self.performance_monitor.get_system_metrics()
-            
-            # Add additional system metrics
-            additional_metrics = {
-                'boot_time': psutil.boot_time(),
-                'users': len(psutil.users()),
-                'processes': len(psutil.pids()),
-                'network_connections': len(psutil.net_connections()),
-                'disk_io': psutil.disk_io_counters()._asdict() if psutil.disk_io_counters() else {},
-                'network_io': psutil.net_io_counters()._asdict() if psutil.net_io_counters() else {}
-            }
-            
-            system_metrics.update(additional_metrics)
-            
-            return system_metrics
-            
-        except Exception as e:
-            self.logger.error(f"Failed to collect system metrics: {e}")
-            return {}
-    
-    def collect_application_metrics(self) -> Dict:
-        """Collect application-specific metrics"""
-        try:
-            # Get performance summary
-            performance_summary = self.performance_monitor.get_performance_summary()
-            
-            # Extract application metrics
-            app_metrics = {
-                'processing_time': performance_summary.get('current', {}).get('processing_time', 0),
-                'throughput': performance_summary.get('current', {}).get('throughput', 0),
-                'error_rate': performance_summary.get('current', {}).get('error_rate', 0),
-                'queue_size': performance_summary.get('current', {}).get('queue_size', 0),
-                'active_connections': performance_summary.get('current', {}).get('active_connections', 0)
-            }
-            
-            return app_metrics
-            
-        except Exception as e:
-            self.logger.error(f"Failed to collect application metrics: {e}")
-            return {}
-    
-    def collect_business_metrics(self) -> Dict:
-        """Collect business-specific metrics"""
-        try:
-            # This would be populated with actual business metrics
-            # For now, return sample data
-            business_metrics = {
-                'images_processed_total': 1234,
-                'detections_made_total': 5678,
-                'accuracy_rate': 94.2,
-                'processing_volume_mb': 123.45,
-                'user_sessions': 89,
-                'api_requests_total': 9876,
-                'success_rate': 98.5
-            }
-            
-            return business_metrics
-            
-        except Exception as e:
-            self.logger.error(f"Failed to collect business metrics: {e}")
-            return {}
-    
-    def collect_custom_metrics(self) -> Dict:
-        """Collect custom metrics"""
-        try:
-            custom_metrics = {}
-            
-            # Process custom metrics from configuration
-            for metric_name, metric_config in self.custom_metrics.items():
-                try:
-                    # This is a simplified implementation
-                    # In production, you'd have more sophisticated metric collection
-                    if metric_config.get('type') == 'counter':
-                        custom_metrics[metric_name] = self._get_counter_metric(metric_name)
-                    elif metric_config.get('type') == 'gauge':
-                        custom_metrics[metric_name] = self._get_gauge_metric(metric_name)
-                    elif metric_config.get('type') == 'histogram':
-                        custom_metrics[metric_name] = self._get_histogram_metric(metric_name)
-                        
-                except Exception as e:
-                    self.logger.error(f"Failed to collect custom metric {metric_name}: {e}")
-            
-            return custom_metrics
-            
-        except Exception as e:
-            self.logger.error(f"Failed to collect custom metrics: {e}")
-            return {}
-    
-    def _get_counter_metric(self, metric_name: str) -> float:
-        """Get counter metric value"""
-        # Simplified implementation
-        return 0.0
-    
-    def _get_gauge_metric(self, metric_name: str) -> float:
-        """Get gauge metric value"""
-        # Simplified implementation
-        return 0.0
-    
-    def _get_histogram_metric(self, metric_name: str) -> Dict:
-        """Get histogram metric value"""
-        # Simplified implementation
-        return {'count': 0, 'sum': 0.0, 'min': 0.0, 'max': 0.0, 'avg': 0.0}
-    
-    def store_metrics(self, metrics: Dict, metric_type: str = 'system'):
-        """Store metrics in database"""
-        try:
-            timestamp = datetime.now()
-            
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                
-                for metric_name, metric_value in metrics.items():
-                    # Handle nested metrics
-                    if isinstance(metric_value, dict):
-                        for sub_name, sub_value in metric_value.items():
-                            if isinstance(sub_value, (int, float)):
-                                cursor.execute('''
-                                    INSERT INTO metrics (timestamp, metric_name, metric_value, metric_type, tags)
-                                    VALUES (?, ?, ?, ?, ?)
-                                ''', (timestamp, f"{metric_name}.{sub_name}", sub_value, metric_type, json.dumps({})))
-                    elif isinstance(metric_value, (int, float)):
-                        cursor.execute('''
-                            INSERT INTO metrics (timestamp, metric_name, metric_value, metric_type, tags)
-                            VALUES (?, ?, ?, ?, ?)
-                        ''', (timestamp, metric_name, metric_value, metric_type, json.dumps({})))
-                
-                conn.commit()
-                
-        except Exception as e:
-            self.logger.error(f"Failed to store metrics: {e}")
-    
-    def get_metrics_history(self, metric_name: str, hours: int = 24) -> List[Dict]:
-        """Get metrics history"""
-        try:
-            start_time = datetime.now() - timedelta(hours=hours)
-            
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                
-                cursor.execute('''
-                    SELECT timestamp, metric_value, metric_type, tags
-                    FROM metrics
-                    WHERE metric_name = ? AND timestamp >= ?
-                    ORDER BY timestamp ASC
-                ''', (metric_name, start_time))
-                
-                results = []
-                for row in cursor.fetchall():
-                    results.append({
-                        'timestamp': row[0],
-                        'value': row[1],
-                        'type': row[2],
-                        'tags': json.loads(row[3]) if row[3] else {}
-                    })
-                
-                return results
-                
-        except Exception as e:
-            self.logger.error(f"Failed to get metrics history: {e}")
-            return []
-    
-    def aggregate_metrics(self, interval_seconds: int):
-        """Aggregate metrics for a specific interval"""
-        try:
-            end_time = datetime.now()
-            start_time = end_time - timedelta(seconds=interval_seconds)
-            
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                
-                # Get all unique metric names
-                cursor.execute('''
-                    SELECT DISTINCT metric_name
-                    FROM metrics
-                    WHERE timestamp >= ? AND timestamp < ?
-                ''', (start_time, end_time))
-                
-                metric_names = [row[0] for row in cursor.fetchall()]
-                
-                for metric_name in metric_names:
-                    # Calculate aggregations
-                    cursor.execute('''
-                        SELECT 
-                            MIN(metric_value) as min_val,
-                            MAX(metric_value) as max_val,
-                            AVG(metric_value) as avg_val,
-                            SUM(metric_value) as sum_val,
-                            COUNT(*) as count_val
-                        FROM metrics
-                        WHERE metric_name = ? AND timestamp >= ? AND timestamp < ?
-                    ''', (metric_name, start_time, end_time))
-                    
-                    result = cursor.fetchone()
-                    if result:
-                        cursor.execute('''
-                            INSERT INTO aggregated_metrics 
-                            (timestamp, metric_name, aggregation_type, aggregation_interval, 
-                             min_value, max_value, avg_value, sum_value, count_value)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        ''', (end_time, metric_name, 'time_series', interval_seconds,
-                              result[0], result[1], result[2], result[3], result[4]))
-                
-                conn.commit()
-                
-            self.logger.info(f"Metrics aggregated for interval {interval_seconds}s")
-            
-        except Exception as e:
-            self.logger.error(f"Failed to aggregate metrics: {e}")
-    
-    def cleanup_old_metrics(self):
-        """Cleanup old metrics based on retention policy"""
-        try:
-            cutoff_time = datetime.now() - timedelta(days=self.retention_days)
-            
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                
-                # Delete old raw metrics
-                cursor.execute('DELETE FROM metrics WHERE timestamp < ?', (cutoff_time,))
-                raw_deleted = cursor.rowcount
-                
-                # Delete old aggregated metrics
-                cursor.execute('DELETE FROM aggregated_metrics WHERE timestamp < ?', (cutoff_time,))
-                agg_deleted = cursor.rowcount
-                
-                conn.commit()
-                
-            self.logger.info(f"Cleaned up {raw_deleted} raw metrics and {agg_deleted} aggregated metrics")
-            
-        except Exception as e:
-            self.logger.error(f"Failed to cleanup old metrics: {e}")
-    
-    def _collection_worker(self):
-        """Metrics collection worker thread"""
-        self.logger.info("Metrics collection worker started")
-        
-        while self.is_running:
-            try:
-                # Collect all types of metrics
-                system_metrics = self.collect_system_metrics()
-                app_metrics = self.collect_application_metrics()
-                business_metrics = self.collect_business_metrics()
-                custom_metrics = self.collect_custom_metrics()
-                
-                # Store metrics
-                self.store_metrics(system_metrics, 'system')
-                self.store_metrics(app_metrics, 'application')
-                self.store_metrics(business_metrics, 'business')
-                self.store_metrics(custom_metrics, 'custom')
-                
-                # Perform aggregations
-                for interval in self.aggregation_intervals:
-                    self.aggregate_metrics(interval)
-                
-                # Cleanup old metrics (once per hour)
-                if datetime.now().minute == 0:
-                    self.cleanup_old_metrics()
-                
-                time.sleep(self.collection_interval)
-                
-            except Exception as e:
-                self.logger.error(f"Metrics collection worker error: {e}")
-                time.sleep(5)
-        
-        self.logger.info("Metrics collection worker stopped")
-    
-    def start(self):
+    def start_collection(self):
         """Start metrics collection"""
-        if not self.is_running:
-            self.is_running = True
-            self.collection_thread = threading.Thread(target=self._collection_worker)
+        if not self.is_collecting:
+            self.is_collecting = True
+            self.collection_thread = threading.Thread(target=self._collection_loop)
+            self.collection_thread.daemon = True
             self.collection_thread.start()
             self.logger.info("Metrics collection started")
     
-    def stop(self):
+    def stop_collection(self):
         """Stop metrics collection"""
-        if self.is_running:
-            self.is_running = False
+        if self.is_collecting:
+            self.is_collecting = False
             if self.collection_thread:
                 self.collection_thread.join(timeout=5)
             self.logger.info("Metrics collection stopped")
     
-    def get_metrics_summary(self) -> Dict:
-        """Get metrics collection summary"""
+    def _collection_loop(self):
+        """Main metrics collection loop"""
+        while self.is_collecting:
+            try:
+                start_time = time.time()
+                
+                # Collect all metrics
+                with self.collection_lock:
+                    self._collect_system_metrics()
+                    self._collect_application_metrics()
+                    self._collect_business_metrics()
+                    self._collect_network_metrics()
+                    
+                    if self.enable_gpu_monitoring:
+                        self._collect_gpu_metrics()
+                    
+                    # Update timestamp
+                    self.current_metrics['timestamp'] = datetime.now().isoformat()
+                    
+                    # Store in history
+                    self._store_metrics_history()
+                    
+                    # Notify callbacks
+                    self._notify_callbacks()
+                
+                # Calculate sleep time
+                collection_time = time.time() - start_time
+                sleep_time = max(0, self.collection_interval - collection_time)
+                
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+                else:
+                    self.logger.warning(f"Metrics collection took {collection_time:.2f}s, longer than interval {self.collection_interval}s")
+                
+            except Exception as e:
+                self.logger.error(f"Error in metrics collection loop: {e}")
+                time.sleep(5)  # Wait before retrying
+    
+    def _collect_system_metrics(self):
+        """Collect system metrics"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                
-                # Get total metrics count
-                cursor.execute('SELECT COUNT(*) FROM metrics')
-                total_metrics = cursor.fetchone()[0]
-                
-                # Get metrics by type
-                cursor.execute('''
-                    SELECT metric_type, COUNT(*) 
-                    FROM metrics 
-                    GROUP BY metric_type
-                ''')
-                metrics_by_type = dict(cursor.fetchall())
-                
-                # Get latest metrics timestamp
-                cursor.execute('SELECT MAX(timestamp) FROM metrics')
-                latest_timestamp = cursor.fetchone()[0]
-                
-                return {
-                    'total_metrics': total_metrics,
-                    'metrics_by_type': metrics_by_type,
-                    'latest_timestamp': latest_timestamp,
-                    'is_running': self.is_running,
-                    'collection_interval': self.collection_interval,
-                    'retention_days': self.retention_days,
-                    'database_path': str(self.db_path)
+            # CPU metrics
+            cpu_percent = psutil.cpu_percent(interval=1)
+            cpu_count = psutil.cpu_count()
+            cpu_freq = psutil.cpu_freq()
+            
+            # Memory metrics
+            memory = psutil.virtual_memory()
+            swap = psutil.swap_memory()
+            
+            # Disk metrics
+            disk = psutil.disk_usage('/')
+            disk_io = psutil.disk_io_counters()
+            
+            # Process metrics
+            process = psutil.Process()
+            process_memory = process.memory_info()
+            process_cpu = process.cpu_percent()
+            
+            self.current_metrics['system'] = {
+                'cpu': {
+                    'percent': cpu_percent,
+                    'count': cpu_count,
+                    'frequency_mhz': cpu_freq.current if cpu_freq else None,
+                    'load_avg': os.getloadavg() if hasattr(os, 'getloadavg') else None
+                },
+                'memory': {
+                    'total_gb': memory.total / (1024**3),
+                    'available_gb': memory.available / (1024**3),
+                    'used_gb': memory.used / (1024**3),
+                    'percent': memory.percent,
+                    'swap_total_gb': swap.total / (1024**3),
+                    'swap_used_gb': swap.used / (1024**3),
+                    'swap_percent': swap.percent
+                },
+                'disk': {
+                    'total_gb': disk.total / (1024**3),
+                    'used_gb': disk.used / (1024**3),
+                    'free_gb': disk.free / (1024**3),
+                    'percent': (disk.used / disk.total) * 100,
+                    'read_bytes': disk_io.read_bytes if disk_io else 0,
+                    'write_bytes': disk_io.write_bytes if disk_io else 0
+                },
+                'process': {
+                    'memory_rss_mb': process_memory.rss / (1024**2),
+                    'memory_vms_mb': process_memory.vms / (1024**2),
+                    'cpu_percent': process_cpu,
+                    'num_threads': process.num_threads(),
+                    'create_time': process.create_time()
                 }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error collecting system metrics: {e}")
+            self.current_metrics['system'] = {}
+    
+    def _collect_application_metrics(self):
+        """Collect application metrics"""
+        try:
+            # Get application-specific metrics
+            app_metrics = {
+                'uptime_seconds': time.time() - psutil.Process().create_time(),
+                'active_connections': 0,  # Placeholder
+                'processing_queue_size': 0,  # Placeholder
+                'error_count': 0,  # Placeholder
+                'success_count': 0,  # Placeholder
+                'last_processing_time': 0,  # Placeholder
+                'average_processing_time': 0,  # Placeholder
+                'throughput_per_minute': 0  # Placeholder
+            }
+            
+            # Update with custom metrics if available
+            app_metrics.update(self.custom_metrics.get('application', {}))
+            
+            self.current_metrics['application'] = app_metrics
+            
+        except Exception as e:
+            self.logger.error(f"Error collecting application metrics: {e}")
+            self.current_metrics['application'] = {}
+    
+    def _collect_business_metrics(self):
+        """Collect business metrics"""
+        try:
+            business_metrics = {
+                'detection_accuracy': 0.0,  # Placeholder
+                'detection_success_rate': 0.0,  # Placeholder
+                'total_detections': 0,  # Placeholder
+                'successful_detections': 0,  # Placeholder
+                'failed_detections': 0,  # Placeholder
+                'average_confidence': 0.0,  # Placeholder
+                'processing_volume_per_hour': 0,  # Placeholder
+                'user_satisfaction_score': 0.0  # Placeholder
+            }
+            
+            # Update with custom metrics if available
+            business_metrics.update(self.custom_metrics.get('business', {}))
+            
+            self.current_metrics['business'] = business_metrics
+            
+        except Exception as e:
+            self.logger.error(f"Error collecting business metrics: {e}")
+            self.current_metrics['business'] = {}
+    
+    def _collect_network_metrics(self):
+        """Collect network metrics"""
+        try:
+            network_io = psutil.net_io_counters()
+            network_connections = len(psutil.net_connections())
+            
+            self.current_metrics['network'] = {
+                'bytes_sent': network_io.bytes_sent if network_io else 0,
+                'bytes_recv': network_io.bytes_recv if network_io else 0,
+                'packets_sent': network_io.packets_sent if network_io else 0,
+                'packets_recv': network_io.packets_recv if network_io else 0,
+                'active_connections': network_connections,
+                'connection_errors': 0,  # Placeholder
+                'latency_ms': 0,  # Placeholder
+                'bandwidth_utilization': 0.0  # Placeholder
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error collecting network metrics: {e}")
+            self.current_metrics['network'] = {}
+    
+    def _collect_gpu_metrics(self):
+        """Collect GPU metrics"""
+        try:
+            gpu_metrics = {}
+            
+            # Try to get GPU information
+            try:
+                gpus = GPUtil.getGPUs()
+                if gpus:
+                    gpu = gpus[0]  # Use first GPU
+                    gpu_metrics = {
+                        'name': gpu.name,
+                        'load_percent': gpu.load * 100,
+                        'memory_used_mb': gpu.memoryUsed,
+                        'memory_total_mb': gpu.memoryTotal,
+                        'memory_percent': (gpu.memoryUsed / gpu.memoryTotal) * 100,
+                        'temperature_c': gpu.temperature,
+                        'uuid': gpu.uuid
+                    }
+                else:
+                    gpu_metrics = {
+                        'name': 'No GPU detected',
+                        'load_percent': 0,
+                        'memory_used_mb': 0,
+                        'memory_total_mb': 0,
+                        'memory_percent': 0,
+                        'temperature_c': 0,
+                        'uuid': None
+                    }
+            except Exception as e:
+                self.logger.warning(f"Could not get GPU metrics: {e}")
+                gpu_metrics = {
+                    'name': 'GPU monitoring unavailable',
+                    'load_percent': 0,
+                    'memory_used_mb': 0,
+                    'memory_total_mb': 0,
+                    'memory_percent': 0,
+                    'temperature_c': 0,
+                    'uuid': None
+                }
+            
+            self.current_metrics['gpu'] = gpu_metrics
+            
+        except Exception as e:
+            self.logger.error(f"Error collecting GPU metrics: {e}")
+            self.current_metrics['gpu'] = {}
+    
+    def _store_metrics_history(self):
+        """Store current metrics in history"""
+        try:
+            timestamp = self.current_metrics['timestamp']
+            
+            # Store each metric category
+            for category, metrics in self.current_metrics.items():
+                if category != 'timestamp':
+                    for metric_name, value in metrics.items():
+                        if isinstance(value, dict):
+                            for sub_metric, sub_value in value.items():
+                                key = f"{category}.{metric_name}.{sub_metric}"
+                                self.metrics_history[key].append({
+                                    'timestamp': timestamp,
+                                    'value': sub_value
+                                })
+                        else:
+                            key = f"{category}.{metric_name}"
+                            self.metrics_history[key].append({
+                                'timestamp': timestamp,
+                                'value': value
+                            })
+            
+        except Exception as e:
+            self.logger.error(f"Error storing metrics history: {e}")
+    
+    def _notify_callbacks(self):
+        """Notify registered callbacks"""
+        try:
+            for callback in self.metrics_callbacks:
+                try:
+                    callback(self.current_metrics)
+                except Exception as e:
+                    self.logger.error(f"Error in metrics callback: {e}")
+        except Exception as e:
+            self.logger.error(f"Error notifying callbacks: {e}")
+    
+    def add_metrics_callback(self, callback: Callable):
+        """Add metrics callback"""
+        self.metrics_callbacks.append(callback)
+        self.logger.info(f"Added metrics callback: {callback.__name__}")
+    
+    def remove_metrics_callback(self, callback: Callable):
+        """Remove metrics callback"""
+        if callback in self.metrics_callbacks:
+            self.metrics_callbacks.remove(callback)
+            self.logger.info(f"Removed metrics callback: {callback.__name__}")
+    
+    def update_custom_metric(self, category: str, metric_name: str, value: Any):
+        """Update custom metric"""
+        try:
+            if category not in self.custom_metrics:
+                self.custom_metrics[category] = {}
+            
+            self.custom_metrics[category][metric_name] = value
+            self.logger.debug(f"Updated custom metric: {category}.{metric_name} = {value}")
+            
+        except Exception as e:
+            self.logger.error(f"Error updating custom metric: {e}")
+    
+    def get_current_metrics(self) -> Dict:
+        """Get current metrics"""
+        with self.collection_lock:
+            return self.current_metrics.copy()
+    
+    def get_metrics_history(self, metric_name: str, limit: int = 100) -> List[Dict]:
+        """Get metrics history for specific metric"""
+        try:
+            if metric_name in self.metrics_history:
+                history = list(self.metrics_history[metric_name])
+                return history[-limit:] if limit else history
+            else:
+                return []
+        except Exception as e:
+            self.logger.error(f"Error getting metrics history: {e}")
+            return []
+    
+    def get_metrics_summary(self) -> Dict:
+        """Get metrics summary with statistics"""
+        try:
+            summary = {
+                'collection_status': 'active' if self.is_collecting else 'inactive',
+                'collection_interval': self.collection_interval,
+                'metrics_count': len(self.metrics_history),
+                'history_size': self.metrics_history_size,
+                'custom_metrics_count': len(self.custom_metrics),
+                'callbacks_count': len(self.metrics_callbacks),
+                'last_collection': self.current_metrics.get('timestamp', 'never')
+            }
+            
+            # Add statistics for key metrics
+            key_metrics = [
+                'system.cpu.percent',
+                'system.memory.percent',
+                'system.disk.percent'
+            ]
+            
+            for metric in key_metrics:
+                if metric in self.metrics_history:
+                    values = [item['value'] for item in self.metrics_history[metric] if item['value'] is not None]
+                    if values:
+                        summary[f"{metric}_stats"] = {
+                            'current': values[-1] if values else None,
+                            'average': statistics.mean(values),
+                            'min': min(values),
+                            'max': max(values),
+                            'count': len(values)
+                        }
+            
+            return summary
+            
+        except Exception as e:
+            self.logger.error(f"Error getting metrics summary: {e}")
+            return {}
+    
+    def export_metrics(self, format: str = 'json') -> str:
+        """Export metrics in specified format"""
+        try:
+            if format.lower() == 'json':
+                return json.dumps(self.current_metrics, indent=2)
+            elif format.lower() == 'prometheus':
+                return self._export_prometheus_format()
+            else:
+                raise ValueError(f"Unsupported export format: {format}")
                 
         except Exception as e:
-            self.logger.error(f"Failed to get metrics summary: {e}")
-            return {}
+            self.logger.error(f"Error exporting metrics: {e}")
+            return ""
+    
+    def _export_prometheus_format(self) -> str:
+        """Export metrics in Prometheus format"""
+        try:
+            lines = []
+            timestamp = int(time.time() * 1000)  # milliseconds
+            
+            for category, metrics in self.current_metrics.items():
+                if category == 'timestamp':
+                    continue
+                
+                for metric_name, value in metrics.items():
+                    if isinstance(value, dict):
+                        for sub_metric, sub_value in value.items():
+                            if isinstance(sub_value, (int, float)):
+                                metric_line = f"myrvm_{category}_{metric_name}_{sub_metric} {sub_value} {timestamp}"
+                                lines.append(metric_line)
+                    else:
+                        if isinstance(value, (int, float)):
+                            metric_line = f"myrvm_{category}_{metric_name} {value} {timestamp}"
+                            lines.append(metric_line)
+            
+            return '\n'.join(lines)
+            
+        except Exception as e:
+            self.logger.error(f"Error exporting Prometheus format: {e}")
+            return ""
+    
+    def get_metrics_report(self) -> str:
+        """Generate metrics report"""
+        try:
+            summary = self.get_metrics_summary()
+            current = self.get_current_metrics()
+            
+            report = f"""
+Metrics Collector Report
+========================
+Collection Status: {summary.get('collection_status', 'unknown')}
+Collection Interval: {summary.get('collection_interval', 0)}s
+Metrics Count: {summary.get('metrics_count', 0)}
+History Size: {summary.get('history_size', 0)}
+Custom Metrics: {summary.get('custom_metrics_count', 0)}
+Callbacks: {summary.get('callbacks_count', 0)}
+Last Collection: {summary.get('last_collection', 'never')}
+
+Current System Metrics:
+- CPU Usage: {current.get('system', {}).get('cpu', {}).get('percent', 'N/A')}%
+- Memory Usage: {current.get('system', {}).get('memory', {}).get('percent', 'N/A')}%
+- Disk Usage: {current.get('system', {}).get('disk', {}).get('percent', 'N/A')}%
+- Process Memory: {current.get('system', {}).get('process', {}).get('memory_rss_mb', 'N/A')}MB
+
+Current GPU Metrics:
+- GPU Name: {current.get('gpu', {}).get('name', 'N/A')}
+- GPU Load: {current.get('gpu', {}).get('load_percent', 'N/A')}%
+- GPU Memory: {current.get('gpu', {}).get('memory_percent', 'N/A')}%
+- GPU Temperature: {current.get('gpu', {}).get('temperature_c', 'N/A')}°C
+
+Application Metrics:
+- Uptime: {current.get('application', {}).get('uptime_seconds', 'N/A')}s
+- Processing Queue: {current.get('application', {}).get('processing_queue_size', 'N/A')}
+- Error Count: {current.get('application', {}).get('error_count', 'N/A')}
+- Success Count: {current.get('application', {}).get('success_count', 'N/A')}
+
+Business Metrics:
+- Detection Accuracy: {current.get('business', {}).get('detection_accuracy', 'N/A')}%
+- Success Rate: {current.get('business', {}).get('detection_success_rate', 'N/A')}%
+- Total Detections: {current.get('business', {}).get('total_detections', 'N/A')}
+- Average Confidence: {current.get('business', {}).get('average_confidence', 'N/A')}%
+"""
+            return report
+            
+        except Exception as e:
+            self.logger.error(f"Error generating metrics report: {e}")
+            return f"Error generating metrics report: {e}"

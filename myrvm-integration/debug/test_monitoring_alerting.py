@@ -9,6 +9,7 @@ import json
 import time
 import logging
 import sys
+import threading
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List
@@ -17,173 +18,86 @@ from typing import Dict, List
 sys.path.append(str(Path(__file__).parent.parent))
 sys.path.append(str(Path(__file__).parent.parent / "monitoring"))
 
-from dashboard_server import MonitoringDashboard
-from alerting_system import AlertingSystem
 from metrics_collector import MetricsCollector
-from health_checker import HealthChecker
-
-def test_monitoring_dashboard():
-    """Test monitoring dashboard functionality"""
-    print("\n📊 Testing Monitoring Dashboard...")
-    
-    try:
-        # Create test configuration
-        config = {
-            'dashboard_host': '0.0.0.0',
-            'dashboard_port': 5001,
-            'dashboard_refresh_interval': 5,
-            'log_level': 'INFO',
-            'environment': 'development'
-        }
-        
-        # Initialize dashboard
-        dashboard = MonitoringDashboard(config)
-        
-        # Test dashboard initialization
-        print("   ✅ Dashboard initialized successfully")
-        
-        # Test dashboard status
-        status = dashboard.get_dashboard_status()
-        print(f"   ✅ Dashboard status: {status['is_running']}")
-        
-        # Test data collection
-        dashboard._collect_dashboard_data()
-        print("   ✅ Data collection working")
-        
-        # Test health status
-        health_status = dashboard._get_health_status()
-        print(f"   ✅ Health status: {health_status['status']} (score: {health_status['score']})")
-        
-        # Test alert generation
-        alerts = dashboard._get_current_alerts()
-        print(f"   ✅ Alert generation working ({len(alerts)} alerts)")
-        
-        # Test metric history
-        history = dashboard._get_metric_history('cpu', 1)
-        print(f"   ✅ Metric history working ({len(history)} data points)")
-        
-        print("   ✅ Monitoring Dashboard test passed")
-        return True
-        
-    except Exception as e:
-        print(f"   ❌ Monitoring Dashboard test failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-def test_alerting_system():
-    """Test alerting system functionality"""
-    print("\n🚨 Testing Alerting System...")
-    
-    try:
-        # Create test configuration
-        config = {
-            'alert_thresholds': {
-                'cpu_percent': 80.0,
-                'memory_percent': 80.0,
-                'disk_percent': 85.0,
-                'temperature': 75.0
-            },
-            'notification_channels': {
-                'email': {'enabled': False},
-                'webhook': {'enabled': False},
-                'slack': {'enabled': False},
-                'sms': {'enabled': False}
-            },
-            'alert_cooldown': 300
-        }
-        
-        # Initialize alerting system
-        alerting = AlertingSystem(config)
-        
-        # Test alerting initialization
-        print("   ✅ Alerting system initialized successfully")
-        
-        # Test metrics checking
-        test_metrics = {
-            'cpu': {'percent': 85.0},
-            'memory': {'percent': 75.0},
-            'disk': {'percent': 90.0},
-            'temperature': {'cpu_celsius': 80.0}
-        }
-        
-        alerts = alerting.check_metrics(test_metrics)
-        print(f"   ✅ Metrics checking working ({len(alerts)} alerts generated)")
-        
-        # Test alert processing
-        alerting.process_alerts(alerts)
-        print("   ✅ Alert processing working")
-        
-        # Test active alerts
-        active_alerts = alerting.get_active_alerts()
-        print(f"   ✅ Active alerts: {len(active_alerts)}")
-        
-        # Test alert statistics
-        stats = alerting.get_alert_statistics()
-        print(f"   ✅ Alert statistics: {stats.get('total_alerts', 0)} total alerts")
-        
-        # Test alerting status
-        status = alerting.get_alerting_status()
-        print(f"   ✅ Alerting status: {status['is_running']}")
-        
-        print("   ✅ Alerting System test passed")
-        return True
-        
-    except Exception as e:
-        print(f"   ❌ Alerting System test failed: {e}")
-        return False
+from alerting_engine import AlertingEngine
+from dashboard_server import MonitoringDashboard
+from health_monitor import HealthMonitor
 
 def test_metrics_collector():
     """Test metrics collector functionality"""
-    print("\n📈 Testing Metrics Collector...")
+    print("\n📊 Testing Metrics Collector...")
     
     try:
         # Create test configuration
         config = {
-            'metrics_collection_interval': 30,
-            'metrics_retention_days': 30,
-            'aggregation_intervals': [300, 3600, 86400],
-            'log_level': 'INFO'
+            'monitoring_interval': 5.0,
+            'metrics_history_size': 100,
+            'enable_gpu_monitoring': True
         }
         
         # Initialize metrics collector
-        collector = MetricsCollector(config)
+        metrics_collector = MetricsCollector(config)
         
-        # Test collector initialization
-        print("   ✅ Metrics collector initialized successfully")
+        # Test metrics collection
+        print("   Starting metrics collection...")
+        metrics_collector.start_collection()
         
-        # Test system metrics collection
-        system_metrics = collector.collect_system_metrics()
-        print(f"   ✅ System metrics collection working ({len(system_metrics)} metrics)")
+        # Wait for some metrics to be collected
+        time.sleep(10)
         
-        # Test application metrics collection
-        app_metrics = collector.collect_application_metrics()
-        print(f"   ✅ Application metrics collection working ({len(app_metrics)} metrics)")
-        
-        # Test business metrics collection
-        business_metrics = collector.collect_business_metrics()
-        print(f"   ✅ Business metrics collection working ({len(business_metrics)} metrics)")
-        
-        # Test custom metrics collection
-        custom_metrics = collector.collect_custom_metrics()
-        print(f"   ✅ Custom metrics collection working ({len(custom_metrics)} metrics)")
-        
-        # Test metrics storage
-        test_metrics = {'test_metric': 123.45}
-        collector.store_metrics(test_metrics, 'test')
-        print("   ✅ Metrics storage working")
+        # Test current metrics
+        current_metrics = metrics_collector.get_current_metrics()
+        if current_metrics and 'system' in current_metrics:
+            print("   ✅ Current metrics collection working")
+            print(f"   ✅ CPU: {current_metrics['system'].get('cpu', {}).get('percent', 'N/A')}%")
+            print(f"   ✅ Memory: {current_metrics['system'].get('memory', {}).get('percent', 'N/A')}%")
+        else:
+            print("   ❌ Current metrics collection failed")
+            return False
         
         # Test metrics history
-        history = collector.get_metrics_history('test_metric', 1)
-        print(f"   ✅ Metrics history working ({len(history)} records)")
+        cpu_history = metrics_collector.get_metrics_history('system.cpu.percent', 10)
+        if cpu_history:
+            print(f"   ✅ Metrics history working: {len(cpu_history)} entries")
+        else:
+            print("   ❌ Metrics history failed")
+            return False
         
-        # Test metrics aggregation
-        collector.aggregate_metrics(300)
-        print("   ✅ Metrics aggregation working")
+        # Test custom metrics
+        metrics_collector.update_custom_metric('application', 'test_metric', 42)
+        custom_metrics = metrics_collector.get_current_metrics()
+        if custom_metrics.get('application', {}).get('test_metric') == 42:
+            print("   ✅ Custom metrics working")
+        else:
+            print("   ❌ Custom metrics failed")
+            return False
+        
+        # Test metrics export
+        json_export = metrics_collector.export_metrics('json')
+        if json_export and 'system' in json_export:
+            print("   ✅ JSON export working")
+        else:
+            print("   ❌ JSON export failed")
+            return False
         
         # Test metrics summary
-        summary = collector.get_metrics_summary()
-        print(f"   ✅ Metrics summary: {summary.get('total_metrics', 0)} total metrics")
+        summary = metrics_collector.get_metrics_summary()
+        if summary and 'collection_status' in summary:
+            print("   ✅ Metrics summary working")
+        else:
+            print("   ❌ Metrics summary failed")
+            return False
+        
+        # Test metrics report
+        report = metrics_collector.get_metrics_report()
+        if report and 'Metrics Collector Report' in report:
+            print("   ✅ Metrics report working")
+        else:
+            print("   ❌ Metrics report failed")
+            return False
+        
+        # Stop collection
+        metrics_collector.stop_collection()
         
         print("   ✅ Metrics Collector test passed")
         return True
@@ -192,63 +106,278 @@ def test_metrics_collector():
         print(f"   ❌ Metrics Collector test failed: {e}")
         return False
 
-def test_health_checker():
-    """Test health checker functionality"""
-    print("\n🏥 Testing Health Checker...")
+def test_alerting_engine():
+    """Test alerting engine functionality"""
+    print("\n🚨 Testing Alerting Engine...")
     
     try:
         # Create test configuration
         config = {
-            'health_check_interval': 60,
-            'health_check_timeout': 30,
-            'health_check_retry_count': 3,
-            'health_recovery_enabled': True,
-            'log_level': 'INFO'
+            'environment': 'test',
+            'email_alerts': {
+                'enabled': False
+            },
+            'webhook_alerts': {
+                'enabled': False
+            }
         }
         
-        # Initialize health checker
-        health_checker = HealthChecker(config)
+        # Initialize alerting engine
+        alerting_engine = AlertingEngine(config)
         
-        # Test health checker initialization
-        print("   ✅ Health checker initialized successfully")
+        # Test alert rules loading
+        if alerting_engine.alert_rules:
+            print(f"   ✅ Alert rules loaded: {len(alerting_engine.alert_rules)} rules")
+        else:
+            print("   ❌ Alert rules loading failed")
+            return False
         
-        # Test system resources check
-        system_check = health_checker.check_system_resources()
-        print(f"   ✅ System resources check: {system_check['status']} (score: {system_check['score']})")
+        # Test alert processing with normal metrics
+        normal_metrics = {
+            'system': {
+                'cpu': {'percent': 50},
+                'memory': {'percent': 60},
+                'disk': {'percent': 70}
+            },
+            'application': {
+                'uptime_seconds': 3600,
+                'error_count': 0
+            },
+            'gpu': {
+                'load_percent': 30,
+                'temperature_c': 45
+            }
+        }
         
-        # Test service availability check
-        service_check = health_checker.check_service_availability()
-        print(f"   ✅ Service availability check: {service_check['status']} (score: {service_check['score']})")
+        alerting_engine.process_metrics(normal_metrics)
+        active_alerts = alerting_engine.get_active_alerts()
+        if len(active_alerts) == 0:
+            print("   ✅ Normal metrics processing working (no alerts)")
+        else:
+            print(f"   ⚠️ Normal metrics triggered {len(active_alerts)} alerts")
         
-        # Test API connectivity check
-        api_check = health_checker.check_api_connectivity()
-        print(f"   ✅ API connectivity check: {api_check['status']} (score: {api_check['score']})")
+        # Test alert processing with critical metrics
+        critical_metrics = {
+            'system': {
+                'cpu': {'percent': 98},
+                'memory': {'percent': 96},
+                'disk': {'percent': 99}
+            },
+            'application': {
+                'uptime_seconds': 0,
+                'error_count': 15
+            },
+            'gpu': {
+                'load_percent': 95,
+                'temperature_c': 85
+            }
+        }
         
-        # Test database connectivity check
-        db_check = health_checker.check_database_connectivity()
-        print(f"   ✅ Database connectivity check: {db_check['status']} (score: {db_check['score']})")
+        alerting_engine.process_metrics(critical_metrics)
+        active_alerts = alerting_engine.get_active_alerts()
+        if len(active_alerts) > 0:
+            print(f"   ✅ Critical metrics processing working: {len(active_alerts)} alerts")
+        else:
+            print("   ❌ Critical metrics processing failed (no alerts triggered)")
+            return False
         
-        # Test network connectivity check
-        network_check = health_checker.check_network_connectivity()
-        print(f"   ✅ Network connectivity check: {network_check['status']} (score: {network_check['score']})")
+        # Test alert history
+        alert_history = alerting_engine.get_alert_history(10)
+        if alert_history:
+            print(f"   ✅ Alert history working: {len(alert_history)} entries")
+        else:
+            print("   ❌ Alert history failed")
+            return False
         
-        # Test overall health checks
-        health_results = health_checker.perform_health_checks()
-        print(f"   ✅ Overall health check: {health_results['overall']} (score: {health_results['score']:.1f})")
+        # Test alert suppression
+        alerting_engine.suppress_alert('high_cpu_usage', 1)  # 1 minute
+        suppressed_alerts = alerting_engine.suppressed_alerts
+        if 'high_cpu_usage' in suppressed_alerts:
+            print("   ✅ Alert suppression working")
+        else:
+            print("   ❌ Alert suppression failed")
+            return False
         
-        # Test health status
-        status = health_checker.get_health_status()
-        print(f"   ✅ Health status: {status['overall']}")
+        # Test alerting status
+        status = alerting_engine.get_alerting_status()
+        if status and 'active_alerts_count' in status:
+            print("   ✅ Alerting status working")
+        else:
+            print("   ❌ Alerting status failed")
+            return False
         
-        # Test health summary
-        summary = health_checker.get_health_summary()
-        print(f"   ✅ Health summary: {summary['is_running']}")
+        # Test alerting report
+        report = alerting_engine.get_alerting_report()
+        if report and 'Alerting Engine Report' in report:
+            print("   ✅ Alerting report working")
+        else:
+            print("   ❌ Alerting report failed")
+            return False
         
-        print("   ✅ Health Checker test passed")
+        print("   ✅ Alerting Engine test passed")
         return True
         
     except Exception as e:
-        print(f"   ❌ Health Checker test failed: {e}")
+        print(f"   ❌ Alerting Engine test failed: {e}")
+        return False
+
+def test_health_monitor():
+    """Test health monitor functionality"""
+    print("\n🏥 Testing Health Monitor...")
+    
+    try:
+        # Create test configuration
+        config = {
+            'health_check_interval': 10.0,
+            'recovery_enabled': True,
+            'max_recovery_attempts': 2
+        }
+        
+        # Initialize health monitor
+        health_monitor = HealthMonitor(config)
+        
+        # Test health checks initialization
+        if health_monitor.health_checks:
+            print(f"   ✅ Health checks initialized: {len(health_monitor.health_checks)} checks")
+        else:
+            print("   ❌ Health checks initialization failed")
+            return False
+        
+        # Test individual health checks
+        system_resources = health_monitor._check_system_resources()
+        if 'cpu_percent' in system_resources:
+            print("   ✅ System resources check working")
+        else:
+            print("   ❌ System resources check failed")
+            return False
+        
+        process_health = health_monitor._check_process_health()
+        if 'process_count' in process_health:
+            print("   ✅ Process health check working")
+        else:
+            print("   ❌ Process health check failed")
+            return False
+        
+        file_system = health_monitor._check_file_system()
+        if 'health_percent' in file_system:
+            print("   ✅ File system check working")
+        else:
+            print("   ❌ File system check failed")
+            return False
+        
+        # Test health monitoring
+        print("   Starting health monitoring...")
+        health_monitor.start_monitoring()
+        
+        # Wait for health checks to run
+        time.sleep(15)
+        
+        # Test health status
+        health_status = health_monitor.get_health_status()
+        if health_status and 'overall' in health_status:
+            overall_status = health_status['overall']
+            print(f"   ✅ Health monitoring working: {overall_status.get('status', 'unknown')}")
+            print(f"   ✅ Healthy checks: {overall_status.get('healthy_checks', 0)}")
+            print(f"   ✅ Warning checks: {overall_status.get('warning_checks', 0)}")
+            print(f"   ✅ Critical checks: {overall_status.get('critical_checks', 0)}")
+        else:
+            print("   ❌ Health monitoring failed")
+            return False
+        
+        # Test health history
+        health_history = health_monitor.get_health_history(5)
+        if health_history:
+            print(f"   ✅ Health history working: {len(health_history)} entries")
+        else:
+            print("   ❌ Health history failed")
+            return False
+        
+        # Test health report
+        report = health_monitor.get_health_report()
+        if report and 'Health Monitor Report' in report:
+            print("   ✅ Health report working")
+        else:
+            print("   ❌ Health report failed")
+            return False
+        
+        # Stop monitoring
+        health_monitor.stop_monitoring()
+        
+        print("   ✅ Health Monitor test passed")
+        return True
+        
+    except Exception as e:
+        print(f"   ❌ Health Monitor test failed: {e}")
+        return False
+
+def test_dashboard_server():
+    """Test dashboard server functionality"""
+    print("\n📊 Testing Dashboard Server...")
+    
+    try:
+        # Create test configuration
+        config = {
+            'dashboard_host': '127.0.0.1',
+            'dashboard_port': 5002,  # Use different port for testing
+            'dashboard_debug': False,
+            'dashboard_refresh_interval': 5
+        }
+        
+        # Initialize dashboard server
+        dashboard = MonitoringDashboard(config)
+        
+        # Test dashboard initialization
+        if dashboard.app:
+            print("   ✅ Dashboard server initialized")
+        else:
+            print("   ❌ Dashboard server initialization failed")
+            return False
+        
+        # Test dashboard info
+        info = dashboard.get_dashboard_info()
+        if info and 'url' in info:
+            print(f"   ✅ Dashboard info working: {info['url']}")
+        else:
+            print("   ❌ Dashboard info failed")
+            return False
+        
+        # Test system status
+        system_status = dashboard._get_system_status()
+        if system_status and 'status' in system_status:
+            print(f"   ✅ System status working: {system_status['status']}")
+        else:
+            print("   ❌ System status failed")
+            return False
+        
+        # Test fallback metrics
+        fallback_metrics = dashboard._get_fallback_metrics()
+        if fallback_metrics and 'system' in fallback_metrics:
+            print("   ✅ Fallback metrics working")
+        else:
+            print("   ❌ Fallback metrics failed")
+            return False
+        
+        # Test health status
+        health_status = dashboard._get_health_status()
+        if health_status and 'status' in health_status:
+            print(f"   ✅ Health status working: {health_status['status']}")
+        else:
+            print("   ❌ Health status failed")
+            return False
+        
+        # Test dashboard report
+        report = dashboard.get_dashboard_report()
+        if report and 'Monitoring Dashboard Report' in report:
+            print("   ✅ Dashboard report working")
+        else:
+            print("   ❌ Dashboard report failed")
+            return False
+        
+        print("   ✅ Dashboard Server test passed")
+        return True
+        
+    except Exception as e:
+        print(f"   ❌ Dashboard Server test failed: {e}")
         return False
 
 def test_monitoring_integration():
@@ -258,63 +387,62 @@ def test_monitoring_integration():
     try:
         # Create comprehensive configuration
         config = {
-            'dashboard_host': '0.0.0.0',
-            'dashboard_port': 5001,
-            'dashboard_refresh_interval': 5,
-            'alert_thresholds': {
-                'cpu_percent': 80.0,
-                'memory_percent': 80.0,
-                'disk_percent': 85.0,
-                'temperature': 75.0
-            },
-            'notification_channels': {
-                'email': {'enabled': False},
-                'webhook': {'enabled': False},
-                'slack': {'enabled': False},
-                'sms': {'enabled': False}
-            },
-            'metrics_collection_interval': 30,
-            'health_check_interval': 60,
-            'log_level': 'INFO',
-            'environment': 'development'
+            'environment': 'test',
+            'monitoring_interval': 5.0,
+            'health_check_interval': 10.0,
+            'dashboard_host': '127.0.0.1',
+            'dashboard_port': 5003,
+            'enable_gpu_monitoring': True,
+            'recovery_enabled': True
         }
         
         # Initialize all components
-        dashboard = MonitoringDashboard(config)
-        alerting = AlertingSystem(config)
-        collector = MetricsCollector(config)
-        health_checker = HealthChecker(config)
+        metrics_collector = MetricsCollector(config)
+        alerting_engine = AlertingEngine(config)
+        health_monitor = HealthMonitor(config)
+        dashboard = MonitoringDashboard(config, metrics_collector, alerting_engine)
         
-        print("   ✅ All monitoring components initialized successfully")
+        print("   ✅ All components initialized successfully")
         
-        # Test data flow
-        # 1. Collect metrics
-        system_metrics = collector.collect_system_metrics()
-        print("   ✅ Metrics collection working")
+        # Test metrics callback integration
+        def metrics_callback(metrics):
+            alerting_engine.process_metrics(metrics)
         
-        # 2. Check for alerts
-        alerts = alerting.check_metrics(system_metrics)
-        print(f"   ✅ Alert checking working ({len(alerts)} alerts)")
+        metrics_collector.add_metrics_callback(metrics_callback)
+        print("   ✅ Metrics callback integration working")
         
-        # 3. Process alerts
-        alerting.process_alerts(alerts)
-        print("   ✅ Alert processing working")
+        # Test health callback integration
+        def health_callback(health_status):
+            print(f"   Health status: {health_status.get('overall', {}).get('status', 'unknown')}")
         
-        # 4. Perform health checks
-        health_results = health_checker.perform_health_checks()
-        print(f"   ✅ Health checking working ({health_results['overall']})")
+        health_monitor.add_health_callback(health_callback)
+        print("   ✅ Health callback integration working")
         
-        # 5. Update dashboard data
-        dashboard._collect_dashboard_data()
-        print("   ✅ Dashboard data collection working")
+        # Start all components
+        print("   Starting all monitoring components...")
+        metrics_collector.start_collection()
+        health_monitor.start_monitoring()
         
-        # Test component status
-        dashboard_status = dashboard.get_dashboard_status()
-        alerting_status = alerting.get_alerting_status()
-        collector_summary = collector.get_metrics_summary()
-        health_summary = health_checker.get_health_summary()
+        # Wait for components to run
+        time.sleep(15)
         
-        print("   ✅ All component status checks working")
+        # Test integration
+        current_metrics = metrics_collector.get_current_metrics()
+        active_alerts = alerting_engine.get_active_alerts()
+        health_status = health_monitor.get_health_status()
+        
+        if current_metrics and health_status:
+            print("   ✅ Monitoring integration working")
+            print(f"   ✅ Metrics collection: Active")
+            print(f"   ✅ Active alerts: {len(active_alerts)}")
+            print(f"   ✅ Health status: {health_status.get('overall', {}).get('status', 'unknown')}")
+        else:
+            print("   ❌ Monitoring integration failed")
+            return False
+        
+        # Stop all components
+        metrics_collector.stop_collection()
+        health_monitor.stop_monitoring()
         
         print("   ✅ Monitoring Integration test passed")
         return True
@@ -330,55 +458,50 @@ def test_monitoring_performance():
     try:
         # Create test configuration
         config = {
-            'dashboard_refresh_interval': 1,
-            'metrics_collection_interval': 5,
-            'health_check_interval': 10,
-            'log_level': 'INFO'
+            'monitoring_interval': 1.0,  # Fast interval for testing
+            'metrics_history_size': 50,
+            'enable_gpu_monitoring': True
         }
         
-        # Initialize components
-        dashboard = MonitoringDashboard(config)
-        alerting = AlertingSystem(config)
-        collector = MetricsCollector(config)
-        health_checker = HealthChecker(config)
+        # Initialize metrics collector
+        metrics_collector = MetricsCollector(config)
         
-        print("   ✅ Performance test components initialized")
-        
-        # Test data collection performance
+        # Test collection performance
         start_time = time.time()
-        for i in range(10):
-            system_metrics = collector.collect_system_metrics()
-            alerts = alerting.check_metrics(system_metrics)
-            health_results = health_checker.perform_health_checks()
+        metrics_collector.start_collection()
+        
+        # Collect metrics for 10 seconds
+        time.sleep(10)
+        
         end_time = time.time()
+        collection_time = end_time - start_time
         
-        avg_time = (end_time - start_time) / 10
-        print(f"   ✅ Data collection performance: {avg_time:.3f}s per cycle")
+        # Get metrics summary
+        summary = metrics_collector.get_metrics_summary()
+        metrics_count = summary.get('metrics_count', 0)
         
-        # Test dashboard performance
-        start_time = time.time()
-        for i in range(5):
-            dashboard._collect_dashboard_data()
-        end_time = time.time()
+        if metrics_count > 0:
+            print(f"   ✅ Performance test completed")
+            print(f"   ✅ Collection time: {collection_time:.2f}s")
+            print(f"   ✅ Metrics collected: {metrics_count}")
+            print(f"   ✅ Collection rate: {metrics_count/collection_time:.2f} metrics/sec")
+        else:
+            print("   ❌ Performance test failed")
+            return False
         
-        avg_time = (end_time - start_time) / 5
-        print(f"   ✅ Dashboard performance: {avg_time:.3f}s per update")
+        # Test export performance
+        export_start = time.time()
+        json_export = metrics_collector.export_metrics('json')
+        export_time = time.time() - export_start
         
-        # Test alert processing performance
-        test_metrics = {
-            'cpu': {'percent': 85.0},
-            'memory': {'percent': 75.0},
-            'disk': {'percent': 90.0}
-        }
+        if json_export:
+            print(f"   ✅ Export performance: {export_time:.3f}s")
+        else:
+            print("   ❌ Export performance failed")
+            return False
         
-        start_time = time.time()
-        for i in range(100):
-            alerts = alerting.check_metrics(test_metrics)
-            alerting.process_alerts(alerts)
-        end_time = time.time()
-        
-        avg_time = (end_time - start_time) / 100
-        print(f"   ✅ Alert processing performance: {avg_time:.3f}s per alert")
+        # Stop collection
+        metrics_collector.stop_collection()
         
         print("   ✅ Monitoring Performance test passed")
         return True
@@ -393,19 +516,19 @@ def main():
     print("=" * 60)
     
     test_results = {
-        'monitoring_dashboard': False,
-        'alerting_system': False,
         'metrics_collector': False,
-        'health_checker': False,
+        'alerting_engine': False,
+        'health_monitor': False,
+        'dashboard_server': False,
         'monitoring_integration': False,
         'monitoring_performance': False
     }
     
     # Run individual component tests
-    test_results['monitoring_dashboard'] = test_monitoring_dashboard()
-    test_results['alerting_system'] = test_alerting_system()
     test_results['metrics_collector'] = test_metrics_collector()
-    test_results['health_checker'] = test_health_checker()
+    test_results['alerting_engine'] = test_alerting_engine()
+    test_results['health_monitor'] = test_health_monitor()
+    test_results['dashboard_server'] = test_dashboard_server()
     
     # Run integration tests
     test_results['monitoring_integration'] = test_monitoring_integration()

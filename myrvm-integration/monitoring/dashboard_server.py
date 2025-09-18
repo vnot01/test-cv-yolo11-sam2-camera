@@ -1,75 +1,68 @@
 #!/usr/bin/env python3
 """
-Monitoring Dashboard Server for MyRVM Platform Integration
-Real-time web-based monitoring dashboard
+Advanced Monitoring Dashboard Server for MyRVM Platform Integration
+Real-time web-based monitoring interface with interactive charts
 """
 
+import os
 import json
-import time
 import logging
 import threading
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-from flask import Flask, render_template, jsonify, request, send_from_directory
+from typing import Dict, Any, List, Optional
+from flask import Flask, render_template, jsonify, request, Response
 import psutil
 
-# Add parent directories to path for imports
-import sys
-sys.path.append(str(Path(__file__).parent.parent))
-sys.path.append(str(Path(__file__).parent.parent / "utils"))
-sys.path.append(str(Path(__file__).parent.parent / "services"))
-
-from performance_monitor import PerformanceMonitor
-from monitoring_service import MonitoringService
-
 class MonitoringDashboard:
-    """Real-time monitoring dashboard server"""
+    """Advanced monitoring dashboard server"""
     
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, metrics_collector=None, alerting_engine=None):
         """
         Initialize monitoring dashboard
         
         Args:
             config: Configuration dictionary
+            metrics_collector: Metrics collector instance
+            alerting_engine: Alerting engine instance
         """
         self.config = config
+        self.metrics_collector = metrics_collector
+        self.alerting_engine = alerting_engine
+        
+        # Dashboard settings
         self.host = config.get('dashboard_host', '0.0.0.0')
         self.port = config.get('dashboard_port', 5001)
+        self.debug = config.get('dashboard_debug', False)
         self.refresh_interval = config.get('dashboard_refresh_interval', 5)
         
-        # Initialize Flask app
+        # Setup Flask app
         self.app = Flask(__name__, 
-                        template_folder='dashboard_templates',
-                        static_folder='static')
+                        template_folder=str(Path(__file__).parent.parent / 'templates'),
+                        static_folder=str(Path(__file__).parent.parent / 'static'))
         
         # Setup logging
         self.logger = self._setup_logger()
         
-        # Initialize monitoring components
-        self.performance_monitor = PerformanceMonitor(config)
-        self.monitoring_service = MonitoringService(config)
-        
-        # Dashboard data cache
+        # Dashboard data
         self.dashboard_data = {
-            'system_metrics': {},
-            'performance_metrics': {},
-            'service_status': {},
-            'alerts': [],
-            'last_update': None
+            'system_status': 'unknown',
+            'last_update': None,
+            'uptime': 0,
+            'alerts_count': 0
         }
         
-        # Data collection thread
-        self.data_collection_thread = None
-        self.is_running = False
-        
-        # Setup Flask routes
+        # Setup routes
         self._setup_routes()
+        
+        # Start background data update
+        self._start_data_update_thread()
         
         self.logger.info("Monitoring dashboard initialized")
     
     def _setup_logger(self) -> logging.Logger:
-        """Setup logger for monitoring dashboard"""
+        """Setup logger for dashboard"""
         logger = logging.getLogger('MonitoringDashboard')
         logger.setLevel(logging.INFO)
         
@@ -78,7 +71,7 @@ class MonitoringDashboard:
         log_dir.mkdir(exist_ok=True)
         
         # File handler
-        log_file = log_dir / f'monitoring_dashboard_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = log_dir / f'dashboard_server_{datetime.now().strftime("%Y%m%d")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         
@@ -102,295 +95,344 @@ class MonitoringDashboard:
         """Setup Flask routes"""
         
         @self.app.route('/')
-        def dashboard():
+        def index():
             """Main dashboard page"""
-            return render_template('dashboard.html')
+            return render_template('dashboard.html', 
+                                 title='MyRVM Platform Integration - Monitoring Dashboard',
+                                 refresh_interval=self.refresh_interval * 1000)
+        
+        @self.app.route('/api/status')
+        def api_status():
+            """Get system status"""
+            try:
+                status = self._get_system_status()
+                return jsonify(status)
+            except Exception as e:
+                self.logger.error(f"Error getting system status: {e}")
+                return jsonify({'error': str(e)}), 500
         
         @self.app.route('/api/metrics')
-        def get_metrics():
+        def api_metrics():
             """Get current metrics"""
-            return jsonify(self.dashboard_data)
+            try:
+                if self.metrics_collector:
+                    metrics = self.metrics_collector.get_current_metrics()
+                else:
+                    metrics = self._get_fallback_metrics()
+                return jsonify(metrics)
+            except Exception as e:
+                self.logger.error(f"Error getting metrics: {e}")
+                return jsonify({'error': str(e)}), 500
         
-        @self.app.route('/api/system')
-        def get_system_metrics():
-            """Get system metrics"""
-            return jsonify(self.dashboard_data.get('system_metrics', {}))
-        
-        @self.app.route('/api/performance')
-        def get_performance_metrics():
-            """Get performance metrics"""
-            return jsonify(self.dashboard_data.get('performance_metrics', {}))
-        
-        @self.app.route('/api/services')
-        def get_service_status():
-            """Get service status"""
-            return jsonify(self.dashboard_data.get('service_status', {}))
+        @self.app.route('/api/metrics/history')
+        def api_metrics_history():
+            """Get metrics history"""
+            try:
+                metric_name = request.args.get('metric', 'system.cpu.percent')
+                limit = int(request.args.get('limit', 100))
+                
+                if self.metrics_collector:
+                    history = self.metrics_collector.get_metrics_history(metric_name, limit)
+                else:
+                    history = []
+                
+                return jsonify(history)
+            except Exception as e:
+                self.logger.error(f"Error getting metrics history: {e}")
+                return jsonify({'error': str(e)}), 500
         
         @self.app.route('/api/alerts')
-        def get_alerts():
-            """Get current alerts"""
-            return jsonify(self.dashboard_data.get('alerts', []))
-        
-        @self.app.route('/api/history/<metric>')
-        def get_metric_history(metric):
-            """Get metric history"""
-            hours = request.args.get('hours', 24, type=int)
-            return jsonify(self._get_metric_history(metric, hours))
+        def api_alerts():
+            """Get alerts"""
+            try:
+                if self.alerting_engine:
+                    active_alerts = self.alerting_engine.get_active_alerts()
+                    alert_history = self.alerting_engine.get_alert_history(50)
+                else:
+                    active_alerts = {}
+                    alert_history = []
+                
+                return jsonify({
+                    'active': active_alerts,
+                    'history': alert_history
+                })
+            except Exception as e:
+                self.logger.error(f"Error getting alerts: {e}")
+                return jsonify({'error': str(e)}), 500
         
         @self.app.route('/api/health')
-        def get_health_status():
-            """Get overall health status"""
-            return jsonify(self._get_health_status())
+        def api_health():
+            """Health check endpoint"""
+            try:
+                health = self._get_health_status()
+                return jsonify(health)
+            except Exception as e:
+                self.logger.error(f"Error getting health status: {e}")
+                return jsonify({'error': str(e)}), 500
         
         @self.app.route('/api/config')
-        def get_config():
-            """Get dashboard configuration"""
-            return jsonify({
-                'refresh_interval': self.refresh_interval,
-                'host': self.host,
-                'port': self.port
-            })
-    
-    def _collect_dashboard_data(self):
-        """Collect data for dashboard"""
-        try:
-            # System metrics
-            system_metrics = self.performance_monitor.get_system_metrics()
-            
-            # Performance metrics
-            performance_summary = self.performance_monitor.get_performance_summary()
-            
-            # Service status
-            service_status = self.monitoring_service.get_status()
-            
-            # Alerts
-            alerts = self._get_current_alerts()
-            
-            # Update dashboard data
-            self.dashboard_data.update({
-                'system_metrics': system_metrics,
-                'performance_metrics': performance_summary,
-                'service_status': service_status,
-                'alerts': alerts,
-                'last_update': datetime.now().isoformat()
-            })
-            
-        except Exception as e:
-            self.logger.error(f"Failed to collect dashboard data: {e}")
-    
-    def _get_current_alerts(self) -> List[Dict]:
-        """Get current alerts"""
-        alerts = []
+        def api_config():
+            """Get configuration"""
+            try:
+                config_data = {
+                    'environment': self.config.get('environment', 'unknown'),
+                    'refresh_interval': self.refresh_interval,
+                    'dashboard_version': '1.0.0',
+                    'features': {
+                        'metrics_collector': self.metrics_collector is not None,
+                        'alerting_engine': self.alerting_engine is not None
+                    }
+                }
+                return jsonify(config_data)
+            except Exception as e:
+                self.logger.error(f"Error getting config: {e}")
+                return jsonify({'error': str(e)}), 500
         
-        try:
-            # Get performance summary for alert checking
-            performance_summary = self.performance_monitor.get_performance_summary()
-            current = performance_summary.get('current', {})
-            averages = performance_summary.get('averages', {})
-            
-            # CPU alert
-            cpu_percent = current.get('cpu', {}).get('percent', 0)
-            if cpu_percent > 80:
-                alerts.append({
-                    'type': 'high_cpu',
-                    'severity': 'warning' if cpu_percent < 90 else 'critical',
-                    'message': f'High CPU usage: {cpu_percent:.1f}%',
-                    'timestamp': datetime.now().isoformat()
-                })
-            
-            # Memory alert
-            memory_percent = current.get('memory', {}).get('percent', 0)
-            if memory_percent > 80:
-                alerts.append({
-                    'type': 'high_memory',
-                    'severity': 'warning' if memory_percent < 90 else 'critical',
-                    'message': f'High memory usage: {memory_percent:.1f}%',
-                    'timestamp': datetime.now().isoformat()
-                })
-            
-            # Disk alert
-            disk_percent = current.get('disk', {}).get('percent', 0)
-            if disk_percent > 85:
-                alerts.append({
-                    'type': 'high_disk',
-                    'severity': 'warning' if disk_percent < 95 else 'critical',
-                    'message': f'High disk usage: {disk_percent:.1f}%',
-                    'timestamp': datetime.now().isoformat()
-                })
-            
-            # Temperature alert
-            cpu_temp = current.get('temperature', {}).get('cpu_celsius')
-            if cpu_temp and cpu_temp > 75:
-                alerts.append({
-                    'type': 'high_temperature',
-                    'severity': 'warning' if cpu_temp < 85 else 'critical',
-                    'message': f'High CPU temperature: {cpu_temp:.1f}°C',
-                    'timestamp': datetime.now().isoformat()
-                })
-            
-        except Exception as e:
-            self.logger.error(f"Failed to get current alerts: {e}")
-        
-        return alerts
-    
-    def _get_metric_history(self, metric: str, hours: int) -> List[Dict]:
-        """Get metric history"""
-        try:
-            # This is a simplified implementation
-            # In production, you'd query a time-series database
-            history = []
-            
-            # Generate sample historical data
-            end_time = datetime.now()
-            for i in range(hours * 12):  # 5-minute intervals
-                timestamp = end_time - timedelta(minutes=i*5)
+        @self.app.route('/api/export')
+        def api_export():
+            """Export metrics data"""
+            try:
+                format_type = request.args.get('format', 'json')
                 
-                # Generate sample data based on metric type
-                if metric == 'cpu':
-                    value = 30 + (i % 20)  # Sample CPU data
-                elif metric == 'memory':
-                    value = 40 + (i % 15)  # Sample memory data
-                elif metric == 'disk':
-                    value = 20 + (i % 10)  # Sample disk data
+                if self.metrics_collector:
+                    if format_type == 'json':
+                        data = self.metrics_collector.get_current_metrics()
+                        return jsonify(data)
+                    elif format_type == 'prometheus':
+                        data = self.metrics_collector.export_metrics('prometheus')
+                        return Response(data, mimetype='text/plain')
+                    else:
+                        return jsonify({'error': 'Unsupported format'}), 400
                 else:
-                    value = 50 + (i % 30)  # Default sample data
-                
-                history.append({
-                    'timestamp': timestamp.isoformat(),
-                    'value': value
-                })
-            
-            return history[::-1]  # Reverse to get chronological order
-            
-        except Exception as e:
-            self.logger.error(f"Failed to get metric history: {e}")
-            return []
+                    return jsonify({'error': 'Metrics collector not available'}), 503
+                    
+            except Exception as e:
+                self.logger.error(f"Error exporting data: {e}")
+                return jsonify({'error': str(e)}), 500
     
-    def _get_health_status(self) -> Dict:
-        """Get overall health status"""
+    def _get_system_status(self) -> Dict:
+        """Get system status"""
         try:
-            performance_summary = self.performance_monitor.get_performance_summary()
-            current = performance_summary.get('current', {})
-            alerts = self._get_current_alerts()
+            # Get basic system info
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage('/')
             
-            # Calculate overall health score
-            health_score = 100
+            # Get process info
+            process = psutil.Process()
+            process_memory = process.memory_info()
             
-            # Deduct points for high resource usage
-            cpu_percent = current.get('cpu', {}).get('percent', 0)
-            if cpu_percent > 80:
-                health_score -= 20
-            elif cpu_percent > 60:
-                health_score -= 10
-            
-            memory_percent = current.get('memory', {}).get('percent', 0)
-            if memory_percent > 80:
-                health_score -= 20
-            elif memory_percent > 60:
-                health_score -= 10
-            
-            disk_percent = current.get('disk', {}).get('percent', 0)
-            if disk_percent > 85:
-                health_score -= 15
-            elif disk_percent > 70:
-                health_score -= 5
-            
-            # Deduct points for alerts
-            critical_alerts = len([a for a in alerts if a.get('severity') == 'critical'])
-            warning_alerts = len([a for a in alerts if a.get('severity') == 'warning'])
-            
-            health_score -= critical_alerts * 25
-            health_score -= warning_alerts * 10
-            
-            # Ensure health score is not negative
-            health_score = max(0, health_score)
-            
-            # Determine health status
-            if health_score >= 90:
-                status = 'healthy'
-            elif health_score >= 70:
-                status = 'warning'
-            elif health_score >= 50:
-                status = 'degraded'
-            else:
+            # Determine overall status
+            if cpu_percent > 90 or memory.percent > 90 or disk.percent > 95:
                 status = 'critical'
+            elif cpu_percent > 80 or memory.percent > 80 or disk.percent > 90:
+                status = 'warning'
+            else:
+                status = 'healthy'
             
             return {
                 'status': status,
-                'score': health_score,
-                'alerts': {
-                    'critical': critical_alerts,
-                    'warning': warning_alerts,
-                    'total': len(alerts)
-                },
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'uptime': time.time() - process.create_time(),
+                'cpu_percent': cpu_percent,
+                'memory_percent': memory.percent,
+                'disk_percent': disk.percent,
+                'process_memory_mb': process_memory.rss / (1024**2),
+                'alerts_count': len(self.alerting_engine.get_active_alerts()) if self.alerting_engine else 0
             }
             
         except Exception as e:
-            self.logger.error(f"Failed to get health status: {e}")
+            self.logger.error(f"Error getting system status: {e}")
             return {
-                'status': 'unknown',
-                'score': 0,
-                'alerts': {'critical': 0, 'warning': 0, 'total': 0},
-                'timestamp': datetime.now().isoformat()
+                'status': 'error',
+                'timestamp': datetime.now().isoformat(),
+                'error': str(e)
             }
     
-    def _data_collection_worker(self):
-        """Data collection worker thread"""
-        self.logger.info("Data collection worker started")
+    def _get_fallback_metrics(self) -> Dict:
+        """Get fallback metrics when metrics collector is not available"""
+        try:
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage('/')
+            process = psutil.Process()
+            
+            return {
+                'timestamp': datetime.now().isoformat(),
+                'system': {
+                    'cpu': {
+                        'percent': cpu_percent,
+                        'count': psutil.cpu_count()
+                    },
+                    'memory': {
+                        'total_gb': memory.total / (1024**3),
+                        'used_gb': memory.used / (1024**3),
+                        'percent': memory.percent
+                    },
+                    'disk': {
+                        'total_gb': disk.total / (1024**3),
+                        'used_gb': disk.used / (1024**3),
+                        'percent': (disk.used / disk.total) * 100
+                    },
+                    'process': {
+                        'memory_rss_mb': process.memory_info().rss / (1024**2),
+                        'cpu_percent': process.cpu_percent()
+                    }
+                },
+                'application': {
+                    'uptime_seconds': time.time() - process.create_time()
+                },
+                'business': {},
+                'network': {},
+                'gpu': {}
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error getting fallback metrics: {e}")
+            return {
+                'timestamp': datetime.now().isoformat(),
+                'error': str(e)
+            }
+    
+    def _get_health_status(self) -> Dict:
+        """Get health status"""
+        try:
+            health = {
+                'status': 'healthy',
+                'timestamp': datetime.now().isoformat(),
+                'components': {
+                    'dashboard': 'healthy',
+                    'metrics_collector': 'healthy' if self.metrics_collector else 'unavailable',
+                    'alerting_engine': 'healthy' if self.alerting_engine else 'unavailable'
+                },
+                'checks': []
+            }
+            
+            # Check metrics collector
+            if self.metrics_collector:
+                if self.metrics_collector.is_collecting:
+                    health['components']['metrics_collector'] = 'healthy'
+                else:
+                    health['components']['metrics_collector'] = 'unhealthy'
+                    health['checks'].append('Metrics collector not running')
+            
+            # Check alerting engine
+            if self.alerting_engine:
+                active_alerts = self.alerting_engine.get_active_alerts()
+                if len(active_alerts) > 0:
+                    health['components']['alerting_engine'] = 'warning'
+                    health['checks'].append(f'{len(active_alerts)} active alerts')
+                else:
+                    health['components']['alerting_engine'] = 'healthy'
+            
+            # Determine overall health
+            component_statuses = list(health['components'].values())
+            if 'unhealthy' in component_statuses:
+                health['status'] = 'unhealthy'
+            elif 'warning' in component_statuses or 'unavailable' in component_statuses:
+                health['status'] = 'warning'
+            
+            return health
+            
+        except Exception as e:
+            self.logger.error(f"Error getting health status: {e}")
+            return {
+                'status': 'error',
+                'timestamp': datetime.now().isoformat(),
+                'error': str(e)
+            }
+    
+    def _start_data_update_thread(self):
+        """Start background data update thread"""
+        def update_data():
+            while True:
+                try:
+                    # Update dashboard data
+                    self.dashboard_data.update({
+                        'system_status': self._get_system_status(),
+                        'last_update': datetime.now().isoformat(),
+                        'uptime': time.time() - psutil.Process().create_time(),
+                        'alerts_count': len(self.alerting_engine.get_active_alerts()) if self.alerting_engine else 0
+                    })
+                    
+                    time.sleep(self.refresh_interval)
+                    
+                except Exception as e:
+                    self.logger.error(f"Error in data update thread: {e}")
+                    time.sleep(5)
         
-        while self.is_running:
-            try:
-                self._collect_dashboard_data()
-                time.sleep(self.refresh_interval)
-            except Exception as e:
-                self.logger.error(f"Data collection worker error: {e}")
-                time.sleep(5)
-        
-        self.logger.info("Data collection worker stopped")
+        update_thread = threading.Thread(target=update_data, daemon=True)
+        update_thread.start()
+        self.logger.info("Data update thread started")
     
     def start(self):
-        """Start monitoring dashboard"""
+        """Start dashboard server"""
         try:
-            # Start monitoring components
-            self.performance_monitor.start_monitoring()
-            self.monitoring_service.start()
-            
-            # Start data collection
-            self.is_running = True
-            self.data_collection_thread = threading.Thread(target=self._data_collection_worker)
-            self.data_collection_thread.start()
-            
-            # Start Flask app
             self.logger.info(f"Starting monitoring dashboard on {self.host}:{self.port}")
-            self.app.run(host=self.host, port=self.port, debug=False, threaded=True)
-            
+            self.app.run(host=self.host, port=self.port, debug=self.debug, threaded=True)
         except Exception as e:
-            self.logger.error(f"Failed to start monitoring dashboard: {e}")
+            self.logger.error(f"Error starting dashboard server: {e}")
             raise
     
     def stop(self):
-        """Stop monitoring dashboard"""
-        self.logger.info("Stopping monitoring dashboard...")
-        
-        # Stop data collection
-        self.is_running = False
-        if self.data_collection_thread:
-            self.data_collection_thread.join(timeout=5)
-        
-        # Stop monitoring components
-        self.performance_monitor.stop_monitoring()
-        self.monitoring_service.stop()
-        
-        self.logger.info("Monitoring dashboard stopped")
+        """Stop dashboard server"""
+        try:
+            self.logger.info("Stopping monitoring dashboard")
+            # Flask doesn't have a built-in stop method, so we'll just log
+            # In a real implementation, you might use a different WSGI server
+        except Exception as e:
+            self.logger.error(f"Error stopping dashboard server: {e}")
     
-    def get_dashboard_status(self) -> Dict:
-        """Get dashboard status"""
-        return {
-            'is_running': self.is_running,
-            'host': self.host,
-            'port': self.port,
-            'refresh_interval': self.refresh_interval,
-            'last_update': self.dashboard_data.get('last_update'),
-            'data_collection_active': self.data_collection_thread and self.data_collection_thread.is_alive()
-        }
+    def get_dashboard_info(self) -> Dict:
+        """Get dashboard information"""
+        try:
+            return {
+                'host': self.host,
+                'port': self.port,
+                'url': f"http://{self.host}:{self.port}",
+                'refresh_interval': self.refresh_interval,
+                'features': {
+                    'metrics_collector': self.metrics_collector is not None,
+                    'alerting_engine': self.alerting_engine is not None
+                },
+                'status': 'running'
+            }
+        except Exception as e:
+            self.logger.error(f"Error getting dashboard info: {e}")
+            return {}
+    
+    def get_dashboard_report(self) -> str:
+        """Generate dashboard report"""
+        try:
+            info = self.get_dashboard_info()
+            health = self._get_health_status()
+            
+            report = f"""
+Monitoring Dashboard Report
+==========================
+URL: {info.get('url', 'N/A')}
+Host: {info.get('host', 'N/A')}
+Port: {info.get('port', 'N/A')}
+Refresh Interval: {info.get('refresh_interval', 'N/A')}s
+
+Features:
+- Metrics Collector: {'Enabled' if info.get('features', {}).get('metrics_collector') else 'Disabled'}
+- Alerting Engine: {'Enabled' if info.get('features', {}).get('alerting_engine') else 'Disabled'}
+
+Health Status: {health.get('status', 'unknown')}
+Components:
+"""
+            
+            for component, status in health.get('components', {}).items():
+                report += f"- {component}: {status}\n"
+            
+            if health.get('checks'):
+                report += "\nHealth Checks:\n"
+                for check in health['checks']:
+                    report += f"- {check}\n"
+            
+            return report
+            
+        except Exception as e:
+            self.logger.error(f"Error generating dashboard report: {e}")
+            return f"Error generating dashboard report: {e}"
