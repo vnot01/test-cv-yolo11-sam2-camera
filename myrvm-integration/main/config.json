@@ -1,5 +1,5 @@
 {
-  "myrvm_base_url": "http://localhost:8000",
+  "myrvm_base_url": "http://172.28.233.83:8001",
   "myrvm_tunnel_url": "https://your-tunnel-domain.com",
   "api_token": null,
   "camera_index": 0,
@@ -9,7 +9,7 @@
   "confidence_threshold": 0.5,
   "auto_processing": true,
   "debug_mode": true,
-  "jetson_ip": "192.168.1.11",
+  "jetson_ip": "172.28.93.97",
   "jetson_port": 5000,
   "log_level": "INFO",
   "max_processing_queue": 10,
@@ -17,6 +17,12 @@
   "retry_attempts": 3,
   "retry_delay": 2.0,
   "use_tunnel": false,
-  "tunnel_type": "cloudflare",
-  "fallback_to_local": true
+  "tunnel_type": "zerotier",
+  "fallback_to_local": true,
+  "zerotier_network": {
+    "rvm_ip": "172.28.93.97",
+    "platform_ip": "172.28.233.83",
+    "platform_port": 8001,
+    "platform_url": "http://172.28.233.83:8001"
+  }
 }
