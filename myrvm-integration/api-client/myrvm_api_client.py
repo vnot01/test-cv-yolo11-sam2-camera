@@ -123,10 +123,10 @@ class MyRVMAPIClient:
             'password': password
         }
         
-        success, response = self._make_request('POST', '/api/auth/login', data=login_data)
+        success, response = self._make_request('POST', '/api/v2/auth/login', data=login_data)
         
-        if success and 'token' in response:
-            self.api_token = response['token']
+        if success and 'data' in response and 'token' in response['data']:
+            self.api_token = response['data']['token']
             self.session.headers.update({
                 'Authorization': f'Bearer {self.api_token}'
             })
