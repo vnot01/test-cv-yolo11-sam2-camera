@@ -1,18 +1,19 @@
 # MyRVM Platform Integration Test Report
 
 **Date:** September 18, 2025  
-**Time:** 17:17 UTC  
+**Time:** 17:28 UTC  
 **Tester:** Jetson Orin Nano CV System  
 **Platform:** MyRVM Platform (VM100)  
 
 ## 📊 Executive Summary
 
-### ✅ **Integration Status: SUCCESSFUL**
-- **Overall Result:** 5/6 tests passed (83% success rate)
+### ✅ **Integration Status: PARTIALLY SUCCESSFUL**
+- **Overall Result:** 6/6 basic tests passed (100% success rate)
+- **Advanced Workflow:** 0/5 tests passed (0% success rate)
 - **Critical Functions:** ✅ Working
 - **Authentication:** ✅ Working
-- **Data Operations:** ✅ Working
-- **Minor Issues:** 1 endpoint needs server-side fix
+- **Basic Data Operations:** ✅ Working
+- **Advanced Operations:** ❌ Server-side issues
 
 ## 🔍 Test Results
 
@@ -36,12 +37,11 @@
 - **Pagination:** ✅ Working (27 pages total, 400 deposits)
 - **Data Structure:** ✅ Complete with all required fields
 
-### 4. **Processing Engines Endpoint** ❌ FAIL
+### 4. **Processing Engines Endpoint** ✅ PASS
 - **Endpoint:** `GET /api/v2/processing-engines`
-- **Status:** 500 Internal Server Error
-- **Error:** `Call to undefined relationship [reverseVendingMachines] on model [App\\Models\\ProcessingEngine]`
-- **Issue:** Server-side model relationship not defined
-- **Fix Required:** Update ProcessingEngine model in MyRVM Platform
+- **Status:** 200 OK
+- **Result:** Successfully retrieved 13 processing engines
+- **Fix Applied:** Server-side model relationship updated
 
 ### 5. **Detection Results Endpoint** ✅ PASS
 - **Endpoint:** `GET /api/v2/detection-results`
@@ -101,13 +101,26 @@ def login(self, email: str, password: str) -> Tuple[bool, Dict]:
 
 ## ❌ Issues Found
 
-### 1. **Processing Engines Endpoint**
-- **Issue:** 500 Internal Server Error
-- **Root Cause:** Missing relationship in ProcessingEngine model
-- **Fix Required:** Update server-side model
+### 1. **Processing Engine Registration** ✅ FIXED
+- **Issue:** 422 Validation Error
+- **Root Cause:** Missing required fields (type, server_address, port)
+- **Fix Applied:** Updated API client with correct field names and data types
+- **Result:** ✅ Processing engine registration now working (Engine ID: 25)
+- **Valid Type:** `nvidia_cuda`
+
+### 2. **Database Schema Issues**
+- **Issue:** 500 Internal Server Error on trigger processing and RVM status
+- **Root Cause:** Missing column `reverse_vending_machine_id` in `rvm_processing_engines` table
+- **Fix Required:** Database migration needed
+- **Priority:** High (affects core functionality)
+
+### 3. **Processing History Endpoint**
+- **Issue:** 404 Not Found
+- **Root Cause:** Endpoint not implemented
+- **Fix Required:** Implement processing history endpoint
 - **Priority:** Medium (not critical for basic operations)
 
-### 2. **Health Check Endpoint**
+### 4. **Health Check Endpoint**
 - **Issue:** `/api/health` returns 404
 - **Impact:** Low (not used in current workflow)
 - **Fix Required:** Implement health check endpoint
@@ -117,7 +130,8 @@ def login(self, email: str, password: str) -> Tuple[bool, Dict]:
 ### Immediate Actions
 1. ✅ **API Client Updated** - Login method added
 2. ✅ **Basic Integration Working** - Core functionality operational
-3. ⏳ **Fix Processing Engines** - Server-side model update needed
+3. ✅ **Processing Engine Registration** - Fixed and working
+4. ⏳ **Fix Database Schema** - Server-side migration needed for advanced features
 
 ### Integration Workflow
 1. **Authentication** ✅ - Login and token management working
