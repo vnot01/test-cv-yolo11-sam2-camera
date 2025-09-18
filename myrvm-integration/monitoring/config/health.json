@@ -1,0 +1,66 @@
+{
+  "health_checks": {
+    "system_resources": {
+      "enabled": true,
+      "critical_thresholds": {
+        "cpu_percent": 90,
+        "memory_percent": 90,
+        "disk_percent": 95,
+        "temperature": 85
+      },
+      "warning_thresholds": {
+        "cpu_percent": 80,
+        "memory_percent": 80,
+        "disk_percent": 85,
+        "temperature": 75
+      }
+    },
+    "service_availability": {
+      "enabled": true,
+      "services": [
+        "myrvm-integration",
+        "camera-service",
+        "monitoring-service"
+      ]
+    },
+    "api_connectivity": {
+      "enabled": true,
+      "endpoints": [
+        "http://172.28.233.83:8001/api/v2/deposits",
+        "http://172.28.233.83:8001/api/v2/processing-engines"
+      ]
+    },
+    "database_connectivity": {
+      "enabled": true,
+      "databases": [
+        "metrics.db",
+        "logs.db"
+      ]
+    },
+    "network_connectivity": {
+      "enabled": true,
+      "targets": [
+        "172.28.233.83",
+        "8.8.8.8"
+      ]
+    }
+  },
+  "recovery_actions": {
+    "restart_service": {
+      "enabled": true,
+      "services": ["myrvm-integration"]
+    },
+    "clear_temp_files": {
+      "enabled": true,
+      "paths": ["/tmp", "/var/tmp"]
+    },
+    "restart_network": {
+      "enabled": false,
+      "interfaces": ["eth0", "wlan0"]
+    }
+  },
+  "check_interval": 60,
+  "timeout": 30,
+  "retry_count": 3,
+  "recovery_enabled": true
+}

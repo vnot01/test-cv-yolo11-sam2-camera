@@ -1,0 +1,75 @@
+{
+  "custom_metrics": {
+    "processing_throughput": {
+      "type": "gauge",
+      "description": "Images processed per minute",
+      "unit": "images/min"
+    },
+    "detection_accuracy": {
+      "type": "gauge",
+      "description": "Detection accuracy percentage",
+      "unit": "percent"
+    },
+    "api_response_time": {
+      "type": "histogram",
+      "description": "API response time distribution",
+      "unit": "seconds"
+    },
+    "queue_depth": {
+      "type": "gauge",
+      "description": "Processing queue depth",
+      "unit": "items"
+    },
+    "error_count": {
+      "type": "counter",
+      "description": "Total error count",
+      "unit": "count"
+    }
+  },
+  "business_metrics": {
+    "images_processed_total": {
+      "type": "counter",
+      "description": "Total images processed",
+      "unit": "count"
+    },
+    "detections_made_total": {
+      "type": "counter",
+      "description": "Total detections made",
+      "unit": "count"
+    },
+    "accuracy_rate": {
+      "type": "gauge",
+      "description": "Overall accuracy rate",
+      "unit": "percent"
+    },
+    "processing_volume_mb": {
+      "type": "counter",
+      "description": "Total processing volume in MB",
+      "unit": "MB"
+    },
+    "user_sessions": {
+      "type": "gauge",
+      "description": "Active user sessions",
+      "unit": "count"
+    },
+    "api_requests_total": {
+      "type": "counter",
+      "description": "Total API requests",
+      "unit": "count"
+    },
+    "success_rate": {
+      "type": "gauge",
+      "description": "API success rate",
+      "unit": "percent"
+    }
+  },
+  "collection_interval": 30,
+  "retention_days": 30,
+  "aggregation_intervals": [300, 3600, 86400],
+  "storage": {
+    "type": "sqlite",
+    "database_path": "../data/metrics.db",
+    "backup_enabled": true,
+    "backup_interval_hours": 24
+  }
+}

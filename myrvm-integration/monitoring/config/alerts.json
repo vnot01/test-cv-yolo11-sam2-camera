@@ -1,0 +1,64 @@
+{
+  "thresholds": {
+    "cpu_percent": 80.0,
+    "memory_percent": 80.0,
+    "disk_percent": 85.0,
+    "temperature": 75.0,
+    "response_time": 5.0,
+    "error_rate": 0.1,
+    "queue_size": 50,
+    "processing_time": 10.0
+  },
+  "channels": {
+    "email": {
+      "enabled": false,
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      "username": "your-email@gmail.com",
+      "password": "your-app-password",
+      "from_email": "alerts@myrvm.com",
+      "to_email": "admin@myrvm.com"
+    },
+    "webhook": {
+      "enabled": false,
+      "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+      "timeout": 10
+    },
+    "slack": {
+      "enabled": false,
+      "webhook_url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+      "channel": "#alerts",
+      "username": "MyRVM Platform"
+    },
+    "sms": {
+      "enabled": false,
+      "provider": "twilio",
+      "account_sid": "your-account-sid",
+      "auth_token": "your-auth-token",
+      "from_number": "+1234567890",
+      "to_number": "+1234567890"
+    }
+  },
+  "cooldown": 300,
+  "max_history": 1000,
+  "escalation": {
+    "enabled": true,
+    "levels": [
+      {
+        "level": 1,
+        "delay_minutes": 5,
+        "channels": ["email"]
+      },
+      {
+        "level": 2,
+        "delay_minutes": 15,
+        "channels": ["email", "slack"]
+      },
+      {
+        "level": 3,
+        "delay_minutes": 30,
+        "channels": ["email", "slack", "sms"]
+      }
+    ]
+  }
+}
