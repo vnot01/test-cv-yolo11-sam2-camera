@@ -202,15 +202,15 @@ class MyRVMAPIClient:
         Args:
             engine_data: Engine information
                 {
-                    'name': 'Jetson Orin Edge',
-                    'type': 'jetson_edge',
+                    'name': 'Jetson Orin Nano - CV System',
+                    'type': 'nvidia_cuda',  # Valid type based on testing
                     'server_address': '172.28.93.97',
                     'port': 5000,
-                    'gpu_memory_limit': 8192,
-                    'docker_gpu_passthrough': False,
-                    'model_path': '/models',
+                    'gpu_memory_limit': 8,  # Integer value
+                    'docker_gpu_passthrough': True,
+                    'model_path': '/models/yolo11n.pt',
                     'processing_timeout': 30,
-                    'auto_failover': False,
+                    'auto_failover': True,
                     'is_active': True
                 }
         """
