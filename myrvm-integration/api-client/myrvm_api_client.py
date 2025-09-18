@@ -191,25 +191,6 @@ class MyRVMAPIClient:
             self.logger.error(error_msg)
             return False, {'error': error_msg}
     
-    def login(self, email: str, password: str) -> Tuple[bool, Dict]:
-        """Login to MyRVM Platform and get authentication token"""
-        login_data = {
-            'email': email,
-            'password': password
-        }
-        
-        success, response = self._make_request('POST', '/api/v2/auth/login', data=login_data)
-        
-        if success and 'data' in response and 'token' in response['data']:
-            # Store token for future requests
-            self.api_token = response['data']['token']
-            self.session.headers.update({
-                'Authorization': f'Bearer {self.api_token}'
-            })
-            self.logger.info("Successfully logged in and obtained token")
-        
-        return success, response
-    
     def ping_platform(self) -> Tuple[bool, Dict]:
         """Ping MyRVM Platform to check connectivity"""
         return self._make_request('GET', '/api/health')
@@ -223,11 +204,14 @@ class MyRVMAPIClient:
                 {
                     'name': 'Jetson Orin Edge',
                     'type': 'jetson_edge',
-                    'status': 'active',
-                    'capabilities': ['object_detection', 'segmentation'],
-                    'location': 'Edge Device',
-                    'ip_address': '192.168.1.11',
-                    'port': 5000
+                    'server_address': '172.28.93.97',
+                    'port': 5000,
+                    'gpu_memory_limit': 8192,
+                    'docker_gpu_passthrough': False,
+                    'model_path': '/models',
+                    'processing_timeout': 30,
+                    'auto_failover': False,
+                    'is_active': True
                 }
         """
         return self._make_request('POST', '/api/v2/processing-engines', data=engine_data)
