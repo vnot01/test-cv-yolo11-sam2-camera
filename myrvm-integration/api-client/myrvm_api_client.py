@@ -100,12 +100,39 @@ class MyRVMAPIClient:
         """Test connectivity to current URL"""
         try:
             response = self.session.get(f"{self.current_url}/api/health", timeout=10)
-            if response.status_code == 200:
+            if response.status_code in [200, 404]:  # 404 is OK for unimplemented endpoint
                 return True, "Connected"
             else:
                 return False, f"HTTP {response.status_code}"
         except Exception as e:
             return False, str(e)
+    
+    def login(self, email: str, password: str) -> Tuple[bool, Dict]:
+        """
+        Login to MyRVM Platform and get API token
+        
+        Args:
+            email: User email
+            password: User password
+            
+        Returns:
+            Tuple of (success, response_data)
+        """
+        login_data = {
+            'email': email,
+            'password': password
+        }
+        
+        success, response = self._make_request('POST', '/api/auth/login', data=login_data)
+        
+        if success and 'token' in response:
+            self.api_token = response['token']
+            self.session.headers.update({
+                'Authorization': f'Bearer {self.api_token}'
+            })
+            self.logger.info("Login successful, token updated")
+        
+        return success, response
     
     def _make_request(self, method: str, endpoint: str, data: Dict = None, 
                      params: Dict = None, files: Dict = None) -> Tuple[bool, Dict]:
@@ -203,20 +230,20 @@ class MyRVMAPIClient:
                     'port': 5000
                 }
         """
-        return self._make_request('POST', '/admin/processing-engines', data=engine_data)
+        return self._make_request('POST', '/api/v2/processing-engines', data=engine_data)
     
     def update_engine_status(self, engine_id: int, status: str) -> Tuple[bool, Dict]:
         """Update processing engine status"""
-        return self._make_request('PUT', f'/admin/processing-engines/{engine_id}', 
+        return self._make_request('PUT', f'/api/v2/processing-engines/{engine_id}', 
                                 data={'status': status})
     
     def ping_engine(self, engine_id: int) -> Tuple[bool, Dict]:
         """Ping processing engine"""
-        return self._make_request('POST', f'/admin/processing-engines/{engine_id}/ping')
+        return self._make_request('POST', f'/api/v2/processing-engines/{engine_id}/ping')
     
     def assign_engine_to_rvm(self, engine_id: int, rvm_id: int) -> Tuple[bool, Dict]:
         """Assign processing engine to RVM"""
-        return self._make_request('POST', f'/admin/processing-engines/{engine_id}/assign', 
+        return self._make_request('POST', f'/api/v2/processing-engines/{engine_id}/assign', 
                                 data={'rvm_id': rvm_id})
     
     def create_rvm_session(self, rvm_id: int, session_data: Dict) -> Tuple[bool, Dict]:
@@ -248,7 +275,7 @@ class MyRVMAPIClient:
                     'image_path': '/path/to/image.jpg'
                 }
         """
-        return self._make_request('POST', '/api/v2/deposits/create', data=deposit_data)
+        return self._make_request('POST', '/api/v2/deposits', data=deposit_data)
     
     def process_deposit(self, deposit_id: int, analysis_data: Dict) -> Tuple[bool, Dict]:
         """
@@ -289,17 +316,17 @@ class MyRVMAPIClient:
                     'timestamp': '2024-09-18T10:30:00Z'
                 }
         """
-        return self._make_request('POST', '/admin/edge-vision/upload-results', 
+        return self._make_request('POST', '/api/v2/detection-results', 
                                 data=results_data)
     
     def trigger_processing(self, rvm_id: int) -> Tuple[bool, Dict]:
         """Trigger processing for specific RVM"""
-        return self._make_request('POST', '/admin/edge-vision/trigger-processing', 
+        return self._make_request('POST', '/api/v2/trigger-processing', 
                                 data={'rvm_id': rvm_id})
     
     def get_rvm_status(self, rvm_id: int) -> Tuple[bool, Dict]:
         """Get RVM status"""
-        return self._make_request('GET', f'/admin/edge-vision/rvm-status/{rvm_id}')
+        return self._make_request('GET', f'/api/v2/rvm-status/{rvm_id}')
     
     def upload_image_file(self, image_path: str, metadata: Dict = None) -> Tuple[bool, Dict]:
         """
@@ -316,7 +343,7 @@ class MyRVMAPIClient:
         data = metadata or {}
         
         try:
-            success, response = self._make_request('POST', '/admin/edge-vision/upload-image', 
+            success, response = self._make_request('POST', '/api/v2/upload', 
                                                  data=data, files=files)
             return success, response
         finally:
@@ -328,7 +355,7 @@ class MyRVMAPIClient:
         if rvm_id:
             params['rvm_id'] = rvm_id
         
-        return self._make_request('GET', '/admin/edge-vision/processing-history', 
+        return self._make_request('GET', '/api/v2/processing-history', 
                                 params=params)
 
 # Example usage and testing
