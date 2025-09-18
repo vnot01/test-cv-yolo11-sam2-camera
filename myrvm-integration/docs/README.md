@@ -48,9 +48,22 @@ This documentation provides comprehensive information about the integration betw
 - Network configuration details
 - Test scripts and results
 
+#### 6. **[TEST_SCRIPT_UPDATES.md](TEST_SCRIPT_UPDATES.md)**
+- Detailed documentation of test script changes
+- Field validation fixes and improvements
+- Before/after code comparisons
+- Test results and impact assessment
+- Version 1.1.0 updates and fixes
+
+#### 7. **[VERSION_1.1.0_SUMMARY.md](VERSION_1.1.0_SUMMARY.md)**
+- Comprehensive summary of Version 1.1.0 changes
+- Impact assessment and test results
+- Deployment status and next steps
+- Quick reference for all modifications
+
 ### **Setup and Configuration**
 
-#### 6. **[TUNNEL_SETUP.md](TUNNEL_SETUP.md)**
+#### 8. **[TUNNEL_SETUP.md](TUNNEL_SETUP.md)**
 - Tunnel setup for external access
 - Cloudflare and ngrok configuration
 - Network access options

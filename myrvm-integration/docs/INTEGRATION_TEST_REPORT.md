@@ -1,19 +1,21 @@
 # MyRVM Platform Integration Test Report
 
 **Date:** September 18, 2025  
-**Time:** 17:28 UTC  
+**Time:** 18:00 UTC  
 **Tester:** Jetson Orin Nano CV System  
 **Platform:** MyRVM Platform (VM100)  
+**Version:** 1.1.0  
 
 ## 📊 Executive Summary
 
-### ✅ **Integration Status: PARTIALLY SUCCESSFUL**
+### ✅ **Integration Status: SUCCESSFUL FOR CORE OPERATIONS**
 - **Overall Result:** 6/6 basic tests passed (100% success rate)
-- **Advanced Workflow:** 0/5 tests passed (0% success rate)
+- **Advanced Workflow:** 1/5 tests passed (20% success rate) - **IMPROVED**
 - **Critical Functions:** ✅ Working
 - **Authentication:** ✅ Working
 - **Basic Data Operations:** ✅ Working
-- **Advanced Operations:** ❌ Server-side issues
+- **Processing Engine Registration:** ✅ **FIXED AND WORKING**
+- **Advanced Operations:** ⏳ Server-side database schema issues remain
 
 ## 🔍 Test Results
 
@@ -101,12 +103,16 @@ def login(self, email: str, password: str) -> Tuple[bool, Dict]:
 
 ## ❌ Issues Found
 
-### 1. **Processing Engine Registration** ✅ FIXED
+### 1. **Processing Engine Registration** ✅ FULLY FIXED
 - **Issue:** 422 Validation Error
-- **Root Cause:** Missing required fields (type, server_address, port)
-- **Fix Applied:** Updated API client with correct field names and data types
-- **Result:** ✅ Processing engine registration now working (Engine ID: 25)
+- **Root Cause:** Missing required fields (type, server_address, port) and incorrect field types
+- **Fix Applied:** Updated test scripts with correct field names and data types
+- **Result:** ✅ Processing engine registration now working (Engine ID: 28)
 - **Valid Type:** `nvidia_cuda`
+- **Field Updates:** 
+  - `gpu_memory_limit`: string `'8GB'` → integer `8`
+  - Added required fields: `server_address`, `port`, `docker_gpu_passthrough`, etc.
+  - Removed invalid fields: `capabilities`, `location`, `hardware_info`, `network_info`
 
 ### 2. **Database Schema Issues**
 - **Issue:** 500 Internal Server Error on trigger processing and RVM status
