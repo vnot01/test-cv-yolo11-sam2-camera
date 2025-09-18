@@ -40,7 +40,9 @@ class JetsonMain:
         # Initialize services
         self.api_client = MyRVMAPIClient(
             base_url=self.config.get('myrvm_base_url', 'http://localhost:8000'),
-            api_token=self.config.get('api_token')
+            api_token=self.config.get('api_token'),
+            tunnel_url=self.config.get('myrvm_tunnel_url'),
+            use_tunnel=self.config.get('use_tunnel', False)
         )
         self.detection_service = DetectionService(
             models_dir=self.config.get('models_dir', '../models')

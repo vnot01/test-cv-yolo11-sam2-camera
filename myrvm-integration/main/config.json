@@ -1,5 +1,6 @@
 {
   "myrvm_base_url": "http://localhost:8000",
+  "myrvm_tunnel_url": "https://your-tunnel-domain.com",
   "api_token": null,
   "camera_index": 0,
   "rvm_id": 1,
@@ -14,5 +15,8 @@
   "max_processing_queue": 10,
   "processing_timeout": 30.0,
   "retry_attempts": 3,
-  "retry_delay": 2.0
+  "retry_delay": 2.0,
+  "use_tunnel": false,
+  "tunnel_type": "cloudflare",
+  "fallback_to_local": true
 }

@@ -15,17 +15,25 @@ from typing import Dict, List, Optional, Tuple
 class MyRVMAPIClient:
     """API Client for MyRVM Platform communication"""
     
-    def __init__(self, base_url: str = "http://localhost:8000", api_token: str = None):
+    def __init__(self, base_url: str = "http://localhost:8000", api_token: str = None, 
+                 tunnel_url: str = None, use_tunnel: bool = False):
         """
         Initialize API client
         
         Args:
-            base_url: MyRVM Platform base URL
+            base_url: MyRVM Platform base URL (local)
             api_token: API authentication token
+            tunnel_url: Tunnel URL (for external access)
+            use_tunnel: Whether to use tunnel URL
         """
         self.base_url = base_url.rstrip('/')
+        self.tunnel_url = tunnel_url.rstrip('/') if tunnel_url else None
+        self.use_tunnel = use_tunnel
         self.api_token = api_token
         self.session = requests.Session()
+        
+        # Determine which URL to use
+        self.current_url = self.tunnel_url if self.use_tunnel and self.tunnel_url else self.base_url
         
         # Set headers
         if self.api_token:
@@ -73,6 +81,32 @@ class MyRVMAPIClient:
         
         return logger
     
+    def switch_to_tunnel(self):
+        """Switch to tunnel URL"""
+        if self.tunnel_url:
+            self.current_url = self.tunnel_url
+            self.use_tunnel = True
+            self.logger.info(f"Switched to tunnel URL: {self.current_url}")
+        else:
+            self.logger.warning("No tunnel URL configured")
+    
+    def switch_to_local(self):
+        """Switch to local URL"""
+        self.current_url = self.base_url
+        self.use_tunnel = False
+        self.logger.info(f"Switched to local URL: {self.current_url}")
+    
+    def test_connectivity(self) -> Tuple[bool, str]:
+        """Test connectivity to current URL"""
+        try:
+            response = self.session.get(f"{self.current_url}/api/health", timeout=10)
+            if response.status_code == 200:
+                return True, "Connected"
+            else:
+                return False, f"HTTP {response.status_code}"
+        except Exception as e:
+            return False, str(e)
+    
     def _make_request(self, method: str, endpoint: str, data: Dict = None, 
                      params: Dict = None, files: Dict = None) -> Tuple[bool, Dict]:
         """
@@ -88,7 +122,7 @@ class MyRVMAPIClient:
         Returns:
             Tuple of (success, response_data)
         """
-        url = f"{self.base_url}{endpoint}"
+        url = f"{self.current_url}{endpoint}"
         
         try:
             self.logger.info(f"Making {method} request to {url}")
