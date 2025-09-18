@@ -1,0 +1,32 @@
+{
+  "environment": "staging",
+  "log_level": "INFO",
+  "security": {
+    "encrypt_credentials": true,
+    "require_https": false,
+    "access_control": true
+  },
+  "performance": {
+    "optimization_enabled": true,
+    "cache_enabled": true,
+    "parallel_processing": true
+  },
+  "logging": {
+    "structured_logging": true,
+    "log_rotation": true,
+    "max_log_size_mb": 10,
+    "backup_count": 5
+  },
+  "service": {
+    "auto_start": true,
+    "restart_policy": "always",
+    "restart_sec": 5,
+    "timeout_start_sec": 30,
+    "timeout_stop_sec": 30
+  },
+  "monitoring_interval": 20.0,
+  "health_check_interval": 45.0,
+  "capture_interval": 5.0,
+  "batch_size": 3,
+  "max_processing_queue": 8
+}

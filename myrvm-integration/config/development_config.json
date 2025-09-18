@@ -1,0 +1,32 @@
+{
+  "environment": "development",
+  "log_level": "DEBUG",
+  "security": {
+    "encrypt_credentials": false,
+    "require_https": false,
+    "access_control": false
+  },
+  "performance": {
+    "optimization_enabled": false,
+    "cache_enabled": false,
+    "parallel_processing": false
+  },
+  "logging": {
+    "structured_logging": false,
+    "log_rotation": false,
+    "max_log_size_mb": 100,
+    "backup_count": 1
+  },
+  "service": {
+    "auto_start": false,
+    "restart_policy": "no",
+    "restart_sec": 1,
+    "timeout_start_sec": 60,
+    "timeout_stop_sec": 60
+  },
+  "monitoring_interval": 60.0,
+  "health_check_interval": 120.0,
+  "capture_interval": 10.0,
+  "batch_size": 1,
+  "max_processing_queue": 5
+}

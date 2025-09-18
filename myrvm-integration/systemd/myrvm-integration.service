@@ -1,0 +1,39 @@
+[Unit]
+Description=MyRVM Platform Integration Service
+Documentation=https://github.com/vnot01/test-cv-yolo11-sam2-camera
+After=network.target network-online.target
+Wants=network-online.target
+StartLimitInterval=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=jetson
+Group=jetson
+WorkingDirectory=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration
+ExecStart=/home/my/test-cv-yolo11-sam2-camera/myenv/bin/python /home/my/test-cv-yolo11-sam2-camera/myrvm-integration/main/enhanced_jetson_main.py --config /home/my/test-cv-yolo11-sam2-camera/myrvm-integration/main/config.json
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -TERM $MAINPID
+PIDFile=/var/run/myrvm-integration.pid
+Restart=always
+RestartSec=5
+TimeoutStartSec=30
+TimeoutStopSec=30
+StandardOutput=append:/home/my/test-cv-yolo11-sam2-camera/myrvm-integration/logs/myrvm-integration.log
+StandardError=append:/home/my/test-cv-yolo11-sam2-camera/myrvm-integration/logs/myrvm-integration.log
+Environment=PYTHONPATH=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration
+Environment=MYRVM_ENVIRONMENT=production
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration /tmp /var/run
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target

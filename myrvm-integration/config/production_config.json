@@ -1,0 +1,34 @@
+{
+  "environment": "production",
+  "log_level": "WARNING",
+  "security": {
+    "encrypt_credentials": true,
+    "require_https": true,
+    "access_control": true
+  },
+  "performance": {
+    "optimization_enabled": true,
+    "cache_enabled": true,
+    "parallel_processing": true
+  },
+  "logging": {
+    "structured_logging": true,
+    "log_rotation": true,
+    "max_log_size_mb": 10,
+    "backup_count": 10
+  },
+  "service": {
+    "auto_start": true,
+    "restart_policy": "always",
+    "restart_sec": 3,
+    "timeout_start_sec": 20,
+    "timeout_stop_sec": 20
+  },
+  "monitoring_interval": 15.0,
+  "health_check_interval": 30.0,
+  "capture_interval": 3.0,
+  "batch_size": 6,
+  "max_processing_queue": 15,
+  "max_memory_mb": 2048,
+  "memory_threshold": 0.7
+}
