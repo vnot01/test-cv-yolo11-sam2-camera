@@ -1,0 +1,18 @@
+{
+  "myrvm_base_url": "http://localhost:8000",
+  "api_token": null,
+  "camera_index": 0,
+  "rvm_id": 1,
+  "models_dir": "../models",
+  "capture_interval": 5.0,
+  "confidence_threshold": 0.5,
+  "auto_processing": true,
+  "debug_mode": true,
+  "jetson_ip": "192.168.1.11",
+  "jetson_port": 5000,
+  "log_level": "INFO",
+  "max_processing_queue": 10,
+  "processing_timeout": 30.0,
+  "retry_attempts": 3,
+  "retry_delay": 2.0
+}

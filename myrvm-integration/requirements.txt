@@ -1,0 +1,21 @@
+# MyRVM Integration Requirements
+# Install with: pip install -r requirements.txt
+
+# Core dependencies
+opencv-python>=4.8.0
+numpy>=1.24.0
+requests>=2.31.0
+psutil>=5.9.0
+
+# AI/ML dependencies
+ultralytics>=8.3.0
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Optional dependencies for better performance
+Pillow>=10.0.0
+matplotlib>=3.7.0
+
+# Development and debugging
+pytest>=7.4.0
+pytest-cov>=4.1.0
