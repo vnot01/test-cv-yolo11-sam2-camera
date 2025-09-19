@@ -1,0 +1,30 @@
+[Unit]
+Description=RVM Remote GUI Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=my
+Group=my
+WorkingDirectory=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration
+ExecStart=/usr/bin/python3 services/remote_gui_service.py
+Restart=always
+RestartSec=10
+Environment=PYTHONPATH=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration/logs
+ReadWritePaths=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration/storages
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rvm-remote-gui
+
+[Install]
+WantedBy=multi-user.target
