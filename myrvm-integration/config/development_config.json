@@ -29,5 +29,19 @@
   "health_check_interval": 120.0,
   "capture_interval": 10.0,
   "batch_size": 1,
-  "max_processing_queue": 5
+  "max_processing_queue": 5,
+  "rvm_id": 1,
+  "use_tunnel": false,
+  "remote_access": {
+    "enabled": true,
+    "controller_port": 5001,
+    "host": "0.0.0.0",
+    "authentication_required": true,
+    "session_timeout": 3600,
+    "camera_script": "/home/my/test-cv-yolo11-sam2-camera/cv-camera/camera_sam2_integration.py",
+    "camera_port": 5000,
+    "auto_status_change": true,
+    "maintenance_status": "maintenance",
+    "restore_status": "active"
+  }
 }

@@ -156,7 +156,7 @@ python -c "import torchvision; print(f'TorchVision version: {torchvision.__versi
 pip install ultralytics
 ```
 
-#### Download YOLO11 Models
+#### Download Models
 
 ```bash
 # Download YOLO11 nano model (fastest)
@@ -167,6 +167,13 @@ wget https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s.pt
 
 # Download custom trained model
 wget https://github.com/vnot01/MySuperApps/releases/download/trained-models/best.pt
+
+# Download SAM2.1 small model (fastest)
+wget https://github.com/ultralytics/assets/releases/download/v8.3.0/sam2.1_b.pt
+
+# Download SAM2.1 base model (balanced)
+wget https://github.com/ultralytics/assets/releases/download/v8.3.0/sam2_b.pt
+    
 ```
 
 #### Verify Ultralytics Installation

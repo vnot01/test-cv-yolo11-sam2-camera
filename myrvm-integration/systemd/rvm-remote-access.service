@@ -1,0 +1,28 @@
+[Unit]
+Description=RVM Remote Access Controller
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=my
+Group=my
+WorkingDirectory=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration
+ExecStart=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration/venv/bin/python -m services.remote_access_controller
+Restart=always
+RestartSec=10
+Environment=PYTHONPATH=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration
+Environment=DISPLAY=:0
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rvm-remote-access
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration
+
+[Install]
+WantedBy=multi-user.target
