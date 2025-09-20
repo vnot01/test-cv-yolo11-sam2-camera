@@ -1,0 +1,75 @@
+{
+  "screen_hardware": {
+    "primary_display": {
+      "name": "Default Display",
+      "resolution": "1920x1080",
+      "type": "default",
+      "primary": true
+    },
+    "available_resolutions": [
+      "1920x1080",
+      "1366x768",
+      "1280x720",
+      "1024x768",
+      "800x600"
+    ],
+    "color_depth": 24,
+    "refresh_rates": [
+      60,
+      75,
+      120,
+      144
+    ],
+    "brightness_control": true,
+    "orientation_support": true
+  },
+  "touch_devices": [],
+  "display_devices": [
+    {
+      "device": "/dev/fb0",
+      "type": "framebuffer",
+      "name": "fb0"
+    },
+    {
+      "device": "/dev/dri/card1",
+      "type": "drm",
+      "name": "card1"
+    },
+    {
+      "device": "/dev/dri/card0",
+      "type": "drm",
+      "name": "card0"
+    }
+  ],
+  "system_info": {
+    "platform": "linux",
+    "architecture": "aarch64",
+    "kernel_version": "Linux version 5.15.148-tegra (buildbrain@mobile-u64-6344-d7000) (aarch64-buildroot-linux-gnu-gcc.br_real (Buildroot 2022.08) 11.3.0, GNU ld (GNU Binutils) 2.38) #1 SMP PREEMPT Thu Dec 12 15:37:09 PST 2024",
+    "cpu_info": {
+      "count": 6,
+      "frequency": {
+        "current": 1228.8,
+        "min": 729.6,
+        "max": 1728.0
+      },
+      "usage": 1.3
+    },
+    "memory_info": {
+      "total": 7989948416,
+      "available": 5141626880,
+      "used": 2848321536,
+      "percentage": 35.6
+    },
+    "gpu_info": {
+      "pci_gpus": []
+    }
+  },
+  "capabilities": {
+    "multi_touch": false,
+    "gesture_recognition": false,
+    "pressure_sensitivity": false,
+    "hardware_acceleration": true,
+    "gpu_memory": 0,
+    "display_rotation": true
+  }
+}
