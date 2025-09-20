@@ -605,3 +605,5 @@ if __name__ == "__main__":
     touch_handler.stop_touch_handling()
     
     print("\n✅ Touch event handler test completed successfully!")
+
+

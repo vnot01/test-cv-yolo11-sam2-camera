@@ -1,0 +1,96 @@
+{
+  "user_profiles": {
+    "1": {
+      "user_id": 1,
+      "name": "John Smith",
+      "email": "john@example.com",
+      "avatar": null,
+      "phone": "+1234567890",
+      "date_of_birth": null,
+      "address": null,
+      "preferences": {},
+      "history": {},
+      "statistics": {},
+      "created_at": "2025-09-20T23:57:47.374015",
+      "updated_at": "2025-09-20T23:57:47.374571",
+      "last_login": null,
+      "status": "active",
+      "balance": 20000.0,
+      "total_deposits": 0.0,
+      "login_count": 0
+    }
+  },
+  "user_preferences": {
+    "1": {
+      "user_id": 1,
+      "display": {
+        "theme": "dark",
+        "brightness": 80,
+        "contrast": 60,
+        "orientation": "landscape"
+      },
+      "notifications": {
+        "enabled": false,
+        "sound": true,
+        "vibration": false
+      },
+      "privacy": {
+        "data_collection": true,
+        "analytics": true,
+        "crash_reports": true
+      },
+      "accessibility": {
+        "large_text": false,
+        "high_contrast": false,
+        "screen_reader": false
+      },
+      "language": "id",
+      "timezone": "UTC",
+      "theme": "light",
+      "auto_login": false,
+      "created_at": "2025-09-20T23:57:47.374044",
+      "updated_at": "2025-09-20T23:57:47.374392"
+    }
+  },
+  "user_history": {
+    "1": {
+      "user_id": 1,
+      "activity_logs": [
+        {
+          "timestamp": "2025-09-20T23:57:47.374484",
+          "activity": "login",
+          "data": {
+            "method": "qr_code"
+          }
+        },
+        {
+          "timestamp": "2025-09-20T23:57:47.374520",
+          "activity": "deposit",
+          "data": {
+            "amount": 5000,
+            "items": [
+              "bottle"
+            ]
+          }
+        },
+        {
+          "timestamp": "2025-09-20T23:57:47.374527",
+          "activity": "logout",
+          "data": {
+            "duration": 300
+          }
+        }
+      ],
+      "login_history": [],
+      "transaction_history": [],
+      "statistics": {
+        "total_logins": 0,
+        "total_deposits": 0,
+        "total_amount": 0.0,
+        "average_session_time": 0
+      },
+      "created_at": "2025-09-20T23:57:47.374060",
+      "updated_at": "2025-09-20T23:57:47.374537"
+    }
+  }
+}

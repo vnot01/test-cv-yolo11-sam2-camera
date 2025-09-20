@@ -23,7 +23,7 @@ from config.enhanced_config_manager import EnhancedConfigurationManager
 import importlib.util
 
 # Import enhanced API client
-spec = importlib.util.spec_from_file_location('enhanced_myrvm_api_client', 'api-client/enhanced_myrvm_api_client.py')
+spec = importlib.util.spec_from_file_location('enhanced_myrvm_api_client', 'api_client/enhanced_myrvm_api_client.py')
 enhanced_api_client = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(enhanced_api_client)
 
@@ -615,7 +615,13 @@ class MyRVMServiceIntegration:
             }
             
             for service_name, metrics in self.service_metrics.items():
-                metrics_data['services'][service_name] = asdict(metrics)
+                # Convert metrics to dict and handle datetime serialization
+                metrics_dict = asdict(metrics)
+                # Convert any datetime objects to ISO format strings
+                for key, value in metrics_dict.items():
+                    if isinstance(value, datetime):
+                        metrics_dict[key] = value.isoformat()
+                metrics_data['services'][service_name] = metrics_dict
             
             # Send to server
             success, response = self.api_client.send_system_metrics(self.rvm_id, metrics_data)

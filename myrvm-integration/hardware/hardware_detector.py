@@ -691,3 +691,5 @@ if __name__ == "__main__":
     detector.save_detection_results('hardware_detection_results.json')
     
     print("\n✅ Hardware detector test completed successfully!")
+
+

@@ -1,15 +1,40 @@
 {
-  "environment": "production",
-  "log_level": "WARNING",
-  "security": {
-    "encrypt_credentials": true,
-    "require_https": true,
-    "access_control": true
+  "application": {
+    "name": "MyRVM Application",
+    "version": "1.0.0",
+    "environment": "production",
+    "debug": false,
+    "log_level": "INFO"
+  },
+  "services": {
+    "config_manager": {"enabled": true, "priority": 1},
+    "api_client": {"enabled": true, "priority": 2},
+    "service_integration": {"enabled": true, "priority": 3},
+    "gui_client": {"enabled": true, "priority": 4, "port": 5001},
+    "led_screen_interface": {"enabled": true, "priority": 5},
+    "user_profile_manager": {"enabled": true, "priority": 6},
+    "detection_service": {"enabled": true, "priority": 7}
   },
   "performance": {
-    "optimization_enabled": true,
-    "cache_enabled": true,
-    "parallel_processing": true
+    "max_memory_usage": "80%",
+    "max_cpu_usage": "70%",
+    "monitoring_interval": 30,
+    "alert_thresholds": {
+      "memory": 85,
+      "cpu": 75,
+      "disk": 90
+    }
+  },
+  "backup": {
+    "enabled": true,
+    "interval": "daily",
+    "retention_days": 30,
+    "backup_path": "/backup/myrvm"
+  },
+  "security": {
+    "encrypt_credentials": true,
+    "require_https": false,
+    "access_control": true
   },
   "logging": {
     "structured_logging": true,
