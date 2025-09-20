@@ -653,3 +653,4 @@ if __name__ == "__main__":
     print(f"Confidence threshold validation: {field_result}")
     
     print("Configuration validator test completed successfully!")
+

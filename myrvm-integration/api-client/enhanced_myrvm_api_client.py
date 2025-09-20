@@ -672,3 +672,4 @@ if __name__ == "__main__":
     # Shutdown
     client.shutdown()
     print("\n✅ Enhanced API client test completed!")
+

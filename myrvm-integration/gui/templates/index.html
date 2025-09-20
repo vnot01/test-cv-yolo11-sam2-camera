@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyRVM - {{ rvm_id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-recycle"></i>
+                    <span>MyRVM</span>
+                </div>
+                <div class="rvm-info">
+                    <span class="rvm-id">{{ rvm_id }}</span>
+                    <span class="status" id="system-status">Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Login Screen -->
+            <div id="login-screen" class="screen {{ 'active' if current_screen == 'login' else '' }}">
+                <div class="login-container">
+                    <div class="login-header">
+                        <h1>Welcome to MyRVM</h1>
+                        <p>Scan QR Code to Login</p>
+                    </div>
+                    
+                    <div class="qr-code-container">
+                        <div class="qr-code-wrapper">
+                            <img id="qr-code-image" src="" alt="QR Code" />
+                            <div class="qr-code-loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Generating QR Code...</p>
+                            </div>
+                        </div>
+                        <div class="qr-code-info">
+                            <p><i class="fas fa-info-circle"></i> Use your mobile app to scan this QR code</p>
+                            <button id="refresh-qr" class="btn btn-secondary">
+                                <i class="fas fa-refresh"></i> Refresh QR Code
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="login-status">
+                        <div id="login-status" class="status-message"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Screen -->
+            <div id="main-screen" class="screen {{ 'active' if current_screen == 'main' else '' }}">
+                <div class="main-container">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <h2 id="user-name">User Name</h2>
+                            <p id="user-email">user@example.com</p>
+                            <p class="balance">Balance: <span id="user-balance">Rp 0</span></p>
+                        </div>
+                        <button id="logout-btn" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+
+                    <div class="main-actions">
+                        <div class="action-grid">
+                            <button class="action-btn" id="deposit-btn">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Deposit</span>
+                            </button>
+                            <button class="action-btn" id="profile-btn">
+                                <i class="fas fa-user-circle"></i>
+                                <span>Profile</span>
+                            </button>
+                            <button class="action-btn" id="history-btn">
+                                <i class="fas fa-history"></i>
+                                <span>History</span>
+                            </button>
+                            <button class="action-btn" id="settings-btn">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="detection-results">
+                        <h3>Recent Detection Results</h3>
+                        <div id="detection-list" class="detection-list">
+                            <div class="no-results">
+                                <i class="fas fa-search"></i>
+                                <p>No detection results yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Screen -->
+            <div id="profile-screen" class="screen {{ 'active' if current_screen == 'profile' else '' }}">
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <button id="back-to-main" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <h2>User Profile</h2>
+                    </div>
+                    
+                    <div class="profile-content">
+                        <div class="profile-info">
+                            <div class="info-item">
+                                <label>Name:</label>
+                                <span id="profile-name">User Name</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Email:</label>
+                                <span id="profile-email">user@example.com</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Balance:</label>
+                                <span id="profile-balance">Rp 0</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Login Count:</label>
+                                <span id="profile-login-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Screen -->
+            <div id="settings-screen" class="screen {{ 'active' if current_screen == 'settings' else '' }}">
+                <div class="settings-container">
+                    <div class="settings-header">
+                        <button id="back-to-main-settings" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <h2>System Settings</h2>
+                    </div>
+                    
+                    <div class="settings-content">
+                        <div class="system-info">
+                            <h3>System Information</h3>
+                            <div id="system-info-list" class="info-list">
+                                <div class="info-item">
+                                    <label>RVM ID:</label>
+                                    <span id="system-rvm-id">{{ rvm_id }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Status:</label>
+                                    <span id="system-status-info">Online</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Uptime:</label>
+                                    <span id="system-uptime">N/A</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>CPU Usage:</label>
+                                    <span id="system-cpu">0%</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Memory Usage:</label>
+                                    <span id="system-memory">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <span>MyRVM Platform v1.0</span>
+                    <span id="current-time"></span>
+                </div>
+                <div class="footer-status">
+                    <span id="connection-status">Connected</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <i class="fas fa-info-circle"></i>
+            <span id="notification-message"></span>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
+

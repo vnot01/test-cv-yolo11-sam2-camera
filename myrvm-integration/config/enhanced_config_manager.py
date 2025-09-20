@@ -521,3 +521,4 @@ if __name__ == "__main__":
     config_manager.register_update_callback(config_changed_callback)
     
     print("Configuration manager test completed successfully!")
+
