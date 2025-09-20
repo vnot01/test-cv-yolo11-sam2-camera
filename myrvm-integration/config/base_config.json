@@ -1,42 +1,51 @@
 {
-  "environment": "base",
   "myrvm_base_url": "http://172.28.233.83:8001",
-  "rvm_id": 1,
+  "rvm_id": "jetson_orin_nano_001",
+  "api_key": "your_api_key_here",
   "camera_index": 0,
-  "capture_interval": 5.0,
-  "confidence_threshold": 0.5,
-  "auto_processing": true,
-  "use_tunnel": false,
-  "monitoring_interval": 30.0,
-  "health_check_interval": 60.0,
-  "max_processing_queue": 10,
-  "batch_size": 4,
-  "batch_timeout": 2.0,
-  "max_memory_mb": 1024,
-  "memory_threshold": 0.8,
-  "log_level": "INFO",
   "models_dir": "../models",
-  "security": {
-    "encrypt_credentials": true,
-    "require_https": false,
-    "access_control": false
+  "jetson_ip": "172.28.93.97",
+  "jetson_port": 5000,
+  "capture_interval": 5.0,
+  "auto_processing": true,
+  "max_processing_queue": 10,
+  "debug_mode": true,
+  "log_level": "INFO",
+  "processing_timeout": 30.0,
+  "retry_attempts": 3,
+  "retry_delay": 2.0,
+  "use_tunnel": false,
+  "tunnel_type": "zerotier",
+  "fallback_to_local": true,
+  "zerotier_network": {
+    "rvm_ip": "172.28.93.97",
+    "platform_ip": "172.28.233.83",
+    "platform_port": 8001,
+    "platform_url": "http://172.28.233.83:8001"
   },
-  "performance": {
-    "optimization_enabled": true,
-    "cache_enabled": true,
-    "parallel_processing": true
+  "hardware": {
+    "camera_resolution": "1920x1080",
+    "camera_fps": 30,
+    "gpu_memory_limit": 2048,
+    "cpu_cores": 6
   },
-  "logging": {
-    "structured_logging": true,
-    "log_rotation": true,
-    "max_log_size_mb": 10,
-    "backup_count": 5
+  "detection": {
+    "yolo_model_path": "../models/best.pt",
+    "yolo11n_path": "../models/yolo11n.pt",
+    "sam2_model_path": "../models/sam2.1_b.pt",
+    "batch_size": 1,
+    "device": "cuda"
   },
-  "service": {
-    "auto_start": false,
-    "restart_policy": "always",
-    "restart_sec": 5,
-    "timeout_start_sec": 30,
-    "timeout_stop_sec": 30
+  "storage": {
+    "images_dir": "../storages/images",
+    "logs_dir": "../logs",
+    "cache_dir": "../cache",
+    "backup_dir": "../backups"
+  },
+  "gui": {
+    "port": 5001,
+    "host": "0.0.0.0",
+    "debug": false,
+    "auto_reload": false
   }
 }
