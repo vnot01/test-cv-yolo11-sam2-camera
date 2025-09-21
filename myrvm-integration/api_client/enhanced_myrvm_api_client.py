@@ -190,7 +190,7 @@ class EnhancedMyRVMAPIClient:
     def health_check(self) -> Tuple[bool, Dict]:
         """Check server health"""
         try:
-            response = self.session.get(f"{self.current_url}/api/health", timeout=10)
+            response = self.session.get(f"{self.current_url}/api/health-check", timeout=10)
             if response.status_code == 200:
                 return True, response.json()
             else:
@@ -206,6 +206,9 @@ class EnhancedMyRVMAPIClient:
         """Send metrics to server"""
         if not self.rvm_id:
             return False, {'error': 'RVM ID not provided'}
+        
+        # Refresh CSRF token before POST request
+        self._initialize_csrf_token()
         
         try:
             response = self.session.post(
@@ -229,6 +232,9 @@ class EnhancedMyRVMAPIClient:
         """Execute remote command"""
         if not self.rvm_id:
             return False, {'error': 'RVM ID not provided'}
+        
+        # Refresh CSRF token before POST request
+        self._initialize_csrf_token()
         
         data = {
             'command_type': command_type,

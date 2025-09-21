@@ -97,15 +97,33 @@ class MetricsSender:
                 }
             }
             
+            # Get CSRF token first
+            csrf_response = requests.get(f"{self.server_url}/sanctum/csrf-cookie")
+            csrf_token = None
+            if csrf_response.status_code == 204:
+                for cookie in csrf_response.cookies:
+                    if cookie.name == 'XSRF-TOKEN':
+                        csrf_token = cookie.value
+                        break
+            
+            # Prepare headers
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.api_key}',
+                'X-RVM-ID': str(self.rvm_id),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+            
+            # Add CSRF token if available
+            if csrf_token:
+                headers['X-XSRF-TOKEN'] = csrf_token
+            
             # Send to server
             response = requests.post(
                 f"{self.server_url}/admin/rvm/{self.rvm_id}/store-metrics",
                 json=payload,
-                headers={
-                    'Content-Type': 'application/json',
-                    'Authorization': f'Bearer {self.api_key}',
-                    'X-RVM-ID': str(self.rvm_id)
-                },
+                headers=headers,
+                cookies=csrf_response.cookies,
                 timeout=30
             )
             
