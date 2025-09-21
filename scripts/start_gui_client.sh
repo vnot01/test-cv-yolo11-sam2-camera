@@ -142,3 +142,4 @@ trap 'echo -e "\n${GREEN}[INFO]${NC} Stopping GUI Client..."; exit 0' INT
 # Run main function
 main
 
+
