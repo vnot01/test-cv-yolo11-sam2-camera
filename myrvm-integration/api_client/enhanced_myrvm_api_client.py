@@ -103,6 +103,10 @@ class EnhancedMyRVMAPIClient:
         # Initialize WebSocket if configured
         if self.websocket_config.url:
             self._initialize_websocket()
+        
+        # CSRF token handling
+        self.csrf_token = None
+        self._initialize_csrf_token()
     
     def _create_session(self) -> requests.Session:
         """Create requests session with retry and connection pooling"""
@@ -127,6 +131,22 @@ class EnhancedMyRVMAPIClient:
         session.mount("http://", adapter)
         session.mount("https://", adapter)
         
+        # Set default headers
+        session.headers.update({
+            'User-Agent': 'MyRVM-Jetson-Client/1.0',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        })
+        
+        # Add authentication if provided
+        if self.api_token:
+            session.headers['Authorization'] = f'Bearer {self.api_token}'
+        
+        # Add RVM ID header
+        if self.rvm_id:
+            session.headers['X-RVM-ID'] = str(self.rvm_id)
+        
         # Set headers
         if self.api_token:
             session.headers.update({
@@ -143,6 +163,96 @@ class EnhancedMyRVMAPIClient:
             })
         
         return session
+    
+    def _initialize_csrf_token(self):
+        """Initialize CSRF token from server"""
+        try:
+            # Get CSRF token from server
+            response = self.session.get(f"{self.current_url}/sanctum/csrf-cookie")
+            if response.status_code == 204:
+                # Extract CSRF token from cookies
+                for cookie in self.session.cookies:
+                    if cookie.name == 'XSRF-TOKEN':
+                        self.csrf_token = cookie.value
+                        break
+                
+                # Set CSRF token header
+                if self.csrf_token:
+                    self.session.headers['X-XSRF-TOKEN'] = self.csrf_token
+                
+                self.logger.info(f"CSRF token initialized: {self.csrf_token[:20] if self.csrf_token else 'None'}...")
+            else:
+                self.logger.warning(f"Failed to get CSRF token: {response.status_code}")
+                
+        except Exception as e:
+            self.logger.error(f"Error initializing CSRF token: {e}")
+    
+    def health_check(self) -> Tuple[bool, Dict]:
+        """Check server health"""
+        try:
+            response = self.session.get(f"{self.current_url}/api/health", timeout=10)
+            if response.status_code == 200:
+                return True, response.json()
+            else:
+                return False, {
+                    'error': f'HTTP {response.status_code}',
+                    'message': response.text,
+                    'status_code': response.status_code
+                }
+        except Exception as e:
+            return False, {'error': str(e)}
+    
+    def send_metrics(self, metrics_data: Dict) -> Tuple[bool, Dict]:
+        """Send metrics to server"""
+        if not self.rvm_id:
+            return False, {'error': 'RVM ID not provided'}
+        
+        try:
+            response = self.session.post(
+                f"{self.current_url}/admin/rvm/{self.rvm_id}/store-metrics",
+                json=metrics_data,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                return True, response.json()
+            else:
+                return False, {
+                    'error': f'HTTP {response.status_code}',
+                    'message': response.text,
+                    'status_code': response.status_code
+                }
+        except Exception as e:
+            return False, {'error': str(e)}
+    
+    def execute_command(self, command_type: str, command_name: str, payload: Dict = None) -> Tuple[bool, Dict]:
+        """Execute remote command"""
+        if not self.rvm_id:
+            return False, {'error': 'RVM ID not provided'}
+        
+        data = {
+            'command_type': command_type,
+            'command_name': command_name,
+            'command_payload': payload or {}
+        }
+        
+        try:
+            response = self.session.post(
+                f"{self.current_url}/admin/rvm/{self.rvm_id}/execute-command",
+                json=data,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                return True, response.json()
+            else:
+                return False, {
+                    'error': f'HTTP {response.status_code}',
+                    'message': response.text,
+                    'status_code': response.status_code
+                }
+        except Exception as e:
+            return False, {'error': str(e)}
     
     def _setup_logger(self) -> logging.Logger:
         """Setup logger for API client"""

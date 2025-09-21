@@ -47,7 +47,7 @@
   "remote_access": {
     "server_url": "http://172.28.233.83:8001",
     "api_key": "your_api_key_here",
-    "rvm_id": 1,
+    "rvm_id": 4,
     "metrics_interval": 30,
     "command_timeout": 30
   },
