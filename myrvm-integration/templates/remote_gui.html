@@ -263,10 +263,10 @@
                 <div id="camera-status">
                     <span class="status-indicator status-inactive"></span>
                     Camera: <span id="camera-status-text">Inactive</span>
-                </div>
+                    </div>
                 <div class="camera-preview" id="camera-preview">
                     Camera Preview
-                </div>
+                    </div>
                 <div>
                     <button class="btn btn-success" onclick="startCamera()" id="start-camera-btn">
                         Start Camera
@@ -274,7 +274,7 @@
                     <button class="btn btn-danger" onclick="stopCamera()" id="stop-camera-btn" disabled>
                         Stop Camera
                     </button>
-                </div>
+                    </div>
                 <div id="camera-url" class="hidden">
                     <p><strong>Camera URL:</strong> <a href="#" id="camera-link" target="_blank">Open Camera</a></p>
                 </div>
@@ -344,7 +344,7 @@
             <p>MyRVM Platform Integration | Remote Access Controller v1.0</p>
         </div>
     </div>
-    
+
     <script>
         let currentSessionId = null;
         let statusInterval = null;
@@ -495,9 +495,9 @@
             
             if (data.total_sessions === 0) {
                 sessionList.innerHTML = '<p>No active sessions</p>';
-                return;
-            }
-            
+                        return;
+                    }
+                    
             let html = '';
             for (const [sessionId, session] of Object.entries(data.sessions)) {
                 const startTime = new Date(session.start_time).toLocaleString();
@@ -524,9 +524,9 @@
         async function endSession(sessionId) {
             try {
                 const response = await fetch('/api/end_session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                         'X-API-Key': 'admin-key'
                     },
                     body: JSON.stringify({

@@ -73,3 +73,4 @@ else
 fi
 
 log_success "MyRVM Application stopped successfully!"
+

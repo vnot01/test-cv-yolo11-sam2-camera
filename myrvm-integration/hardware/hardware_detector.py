@@ -693,3 +693,4 @@ if __name__ == "__main__":
     print("\n✅ Hardware detector test completed successfully!")
 
 
+
