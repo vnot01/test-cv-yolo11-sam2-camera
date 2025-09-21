@@ -13,7 +13,9 @@
     "gui_client": {"enabled": true, "priority": 4, "port": 5001},
     "led_screen_interface": {"enabled": true, "priority": 5},
     "user_profile_manager": {"enabled": true, "priority": 6},
-    "detection_service": {"enabled": true, "priority": 7}
+    "detection_service": {"enabled": true, "priority": 7},
+    "metrics_sender": {"enabled": true, "priority": 8},
+    "command_receiver": {"enabled": true, "priority": 9}
   },
   "performance": {
     "max_memory_usage": "80%",
@@ -41,6 +43,13 @@
     "log_rotation": true,
     "max_log_size_mb": 10,
     "backup_count": 10
+  },
+  "remote_access": {
+    "server_url": "http://172.28.233.83:8001",
+    "api_key": "your_api_key_here",
+    "rvm_id": 1,
+    "metrics_interval": 30,
+    "command_timeout": 30
   },
   "service": {
     "auto_start": true,
