@@ -29,6 +29,10 @@ from hardware.led_touch_screen_interface import LEDTouchScreenInterface
 from user.user_profile_manager import UserProfileManager
 from user.user_session_manager import UserSessionManager
 from services.detection_service import DetectionService
+# Import new Analisis 3 components
+from monitoring.metrics_sender import MetricsSender
+from monitoring.application_metrics_collector import ApplicationMetricsCollector
+from remote.command_receiver import RemoteCommandReceiver
 
 class MyRVMApplication:
     """Main MyRVM Application with full integration"""
@@ -53,6 +57,10 @@ class MyRVMApplication:
         self.user_profile_manager = None
         self.user_session_manager = None
         self.detection_service = None
+        # New Analisis 3 components
+        self.metrics_sender = None
+        self.app_metrics_collector = None
+        self.command_receiver = None
         
         # Application state
         self.startup_time = None
@@ -167,7 +175,9 @@ class MyRVMApplication:
                     "gui_client": {"enabled": True, "priority": 4, "port": 5001},
                     "led_screen_interface": {"enabled": True, "priority": 5},
                     "user_profile_manager": {"enabled": True, "priority": 6},
-                    "detection_service": {"enabled": True, "priority": 7}
+                    "detection_service": {"enabled": True, "priority": 7},
+                    "metrics_sender": {"enabled": True, "priority": 8},
+                    "command_receiver": {"enabled": True, "priority": 9}
                 },
                 "performance": {
                     "max_memory_usage": "80%",
@@ -184,6 +194,13 @@ class MyRVMApplication:
                     "interval": "daily",
                     "retention_days": 30,
                     "backup_path": "/backup/myrvm"
+                },
+                "remote_access": {
+                    "server_url": "localhost:8000",
+                    "api_key": "your_api_key_here",
+                    "rvm_id": 1,
+                    "metrics_interval": 60,
+                    "command_timeout": 30
                 }
             }
             
@@ -237,6 +254,17 @@ class MyRVMApplication:
             # Initialize Detection Service
             if self.production_config['services']['detection_service']['enabled']:
                 self._initialize_detection_service()
+            
+            # Initialize Application Metrics Collector
+            self._initialize_app_metrics_collector()
+            
+            # Initialize Metrics Sender
+            if self.production_config['services']['metrics_sender']['enabled']:
+                self._initialize_metrics_sender()
+            
+            # Initialize Remote Command Receiver
+            if self.production_config['services']['command_receiver']['enabled']:
+                self._initialize_command_receiver()
             
             self.logger.info("All components initialized successfully")
             
@@ -352,6 +380,53 @@ class MyRVMApplication:
             self.logger.error(f"Failed to initialize Detection Service: {e}")
             raise
     
+    def _initialize_app_metrics_collector(self):
+        """Initialize Application Metrics Collector"""
+        try:
+            self.logger.info("Initializing Application Metrics Collector...")
+            self.app_metrics_collector = ApplicationMetricsCollector()
+            self.services_status['app_metrics_collector'] = 'initialized'
+            self.logger.info("Application Metrics Collector initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Application Metrics Collector: {e}")
+            raise
+    
+    def _initialize_metrics_sender(self):
+        """Initialize Metrics Sender"""
+        try:
+            self.logger.info("Initializing Metrics Sender...")
+            
+            # Get remote access configuration
+            remote_config = self.production_config.get('remote_access', {})
+            server_url = remote_config.get('server_url', 'localhost:8000')
+            api_key = remote_config.get('api_key', 'your_api_key_here')
+            rvm_id = remote_config.get('rvm_id', 1)
+            
+            self.metrics_sender = MetricsSender(server_url, rvm_id, api_key)
+            self.services_status['metrics_sender'] = 'initialized'
+            self.logger.info("Metrics Sender initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Metrics Sender: {e}")
+            raise
+    
+    def _initialize_command_receiver(self):
+        """Initialize Remote Command Receiver"""
+        try:
+            self.logger.info("Initializing Remote Command Receiver...")
+            
+            # Get remote access configuration
+            remote_config = self.production_config.get('remote_access', {})
+            server_url = remote_config.get('server_url', 'localhost:8000')
+            api_key = remote_config.get('api_key', 'your_api_key_here')
+            rvm_id = remote_config.get('rvm_id', 1)
+            
+            self.command_receiver = RemoteCommandReceiver(server_url, rvm_id, api_key)
+            self.services_status['command_receiver'] = 'initialized'
+            self.logger.info("Remote Command Receiver initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Remote Command Receiver: {e}")
+            raise
+    
     def start_application(self):
         """Start MyRVM Application"""
         try:
@@ -442,6 +517,14 @@ class MyRVMApplication:
                 
             elif service_name == 'detection_service' and self.detection_service:
                 # Detection Service is already initialized
+                self.services_status[service_name] = 'running'
+                
+            elif service_name == 'metrics_sender' and self.metrics_sender:
+                self.metrics_sender.start()
+                self.services_status[service_name] = 'running'
+                
+            elif service_name == 'command_receiver' and self.command_receiver:
+                self.command_receiver.start()
                 self.services_status[service_name] = 'running'
             
             self.logger.info(f"{service_name} started successfully")
@@ -662,6 +745,14 @@ class MyRVMApplication:
             elif service_name == 'user_session_manager' and self.user_session_manager:
                 self.user_session_manager.shutdown()
                 self.services_status[service_name] = 'stopped'
+                
+            elif service_name == 'metrics_sender' and self.metrics_sender:
+                self.metrics_sender.stop()
+                self.services_status[service_name] = 'stopped'
+                
+            elif service_name == 'command_receiver' and self.command_receiver:
+                self.command_receiver.stop()
+                self.services_status[service_name] = 'stopped'
             
             self.logger.info(f"{service_name} stopped successfully")
             
@@ -692,6 +783,27 @@ class MyRVMApplication:
         except Exception as e:
             self.logger.error(f"Failed to restart MyRVM Application: {e}")
             raise
+    
+    def increment_deposit_count(self):
+        """Increment deposit count in metrics"""
+        if self.app_metrics_collector:
+            self.app_metrics_collector.increment_deposit_count()
+    
+    def increment_error_count(self):
+        """Increment error count in metrics"""
+        if self.app_metrics_collector:
+            self.app_metrics_collector.increment_error_count()
+    
+    def increment_warning_count(self):
+        """Increment warning count in metrics"""
+        if self.app_metrics_collector:
+            self.app_metrics_collector.increment_warning_count()
+    
+    def is_maintenance_mode(self) -> bool:
+        """Check if system is in maintenance mode"""
+        if self.command_receiver and self.command_receiver.command_executor:
+            return self.command_receiver.command_executor.maintenance_mode
+        return False
 
 # Main application entry point
 def main():
