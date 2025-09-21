@@ -2,6 +2,8 @@
 
 # INSTALLATION SCRIPT FOR RVM LOCATION A
 # This script automates the installation process for MyRVM Integration
+# Refrence: 
+# /home/my/test-cv-yolo11-sam2-camera/myrvm-integration/docs/INSTALLATION_GUIDE_LOCATION_A.md
 
 set -e  # Exit on any error
 

@@ -2,6 +2,8 @@
 
 # HARDWARE CONFIGURATION SCRIPT FOR RVM LOCATION A
 # This script configures hardware-specific settings for Location A
+# Refrence: 
+# /home/my/test-cv-yolo11-sam2-camera/myrvm-integration/docs/INSTALLATION_GUIDE_LOCATION_A.md
 
 set -e
 
