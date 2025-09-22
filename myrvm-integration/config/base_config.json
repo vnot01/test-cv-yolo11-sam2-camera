@@ -1,6 +1,6 @@
 {
   "myrvm_base_url": "http://172.28.233.83:8001",
-  "rvm_id": "jetson_orin_nano_001",
+  "rvm_id": "4",
   "api_key": "your_api_key_here",
   "camera_index": 0,
   "models_dir": "../models",

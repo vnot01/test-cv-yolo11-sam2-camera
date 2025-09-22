@@ -28,7 +28,7 @@ from gui.user_authentication import UserAuthenticationHandler, UserSession
 class GUIClient:
     """Main GUI Client for LED Touch Screen"""
     
-    def __init__(self, rvm_id: str = "jetson_orin_nano_001", 
+    def __init__(self, rvm_id: str = "4", 
                  host: str = "0.0.0.0", port: int = 5001,
                  api_client=None, service_integration=None):
         """
@@ -422,7 +422,7 @@ class GUIClient:
 # Example usage and testing
 if __name__ == "__main__":
     # Test GUI client
-    gui_client = GUIClient("jetson_orin_nano_001")
+    gui_client = GUIClient("4")
     
     try:
         print("Starting GUI Client...")

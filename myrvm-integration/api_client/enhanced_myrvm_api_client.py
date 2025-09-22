@@ -754,7 +754,7 @@ if __name__ == "__main__":
     client = EnhancedMyRVMAPIClient(
         base_url="http://localhost:8000",
         api_token=None,
-        rvm_id="jetson_orin_nano_001"
+        rvm_id="4"
     )
     
     # Test connectivity

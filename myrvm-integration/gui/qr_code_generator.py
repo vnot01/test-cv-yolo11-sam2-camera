@@ -265,7 +265,7 @@ class QRCodeGenerator:
 # Example usage and testing
 if __name__ == "__main__":
     # Test QR code generator
-    generator = QRCodeGenerator("jetson_orin_nano_001")
+    generator = QRCodeGenerator("4")
     
     print("QR Code Generator Test:")
     print("=" * 50)

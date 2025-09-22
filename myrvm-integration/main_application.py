@@ -278,7 +278,7 @@ class MyRVMApplication:
         try:
             self.logger.info("Initializing Configuration Manager...")
             # Initialize with None API client first, will be updated later
-            self.config_manager = EnhancedConfigurationManager(api_client=None, rvm_id="jetson_orin_nano_001")
+            self.config_manager = EnhancedConfigurationManager(api_client=None, rvm_id="4")
             self.services_status['config_manager'] = 'initialized'
             self.logger.info("Configuration Manager initialized")
         except Exception as e:
@@ -301,7 +301,7 @@ class MyRVMApplication:
         try:
             self.logger.info("Initializing Service Integration...")
             self.service_integration = MyRVMServiceIntegration(
-                rvm_id="jetson_orin_nano_001",
+                rvm_id="4",
                 config_dir="config"
             )
             self.services_status['service_integration'] = 'initialized'
@@ -357,7 +357,7 @@ class MyRVMApplication:
             port = gui_config.get('port', 5001)
             
             self.gui_client = GUIClient(
-                rvm_id="jetson_orin_nano_001",
+                rvm_id="4",
                 host="0.0.0.0",
                 port=port,
                 api_client=self.api_client,

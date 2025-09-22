@@ -49,7 +49,7 @@ class UserSession:
 class UserAuthenticationHandler:
     """Handle user authentication via QR Code"""
     
-    def __init__(self, api_client=None, rvm_id: str = "jetson_orin_nano_001"):
+    def __init__(self, api_client=None, rvm_id: str = "4"):
         """
         Initialize User Authentication Handler
         
@@ -386,7 +386,7 @@ class UserAuthenticationHandler:
 # Example usage and testing
 if __name__ == "__main__":
     # Test user authentication handler
-    auth_handler = UserAuthenticationHandler("jetson_orin_nano_001")
+    auth_handler = UserAuthenticationHandler("4")
     
     print("User Authentication Handler Test:")
     print("=" * 50)

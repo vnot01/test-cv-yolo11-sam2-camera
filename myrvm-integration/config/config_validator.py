@@ -591,7 +591,7 @@ class ConfigurationValidator:
 if __name__ == "__main__":
     # Test configuration
     test_config = {
-        "rvm_id": "jetson_orin_nano_001",
+        "rvm_id": "4",
         "myrvm_base_url": "http://172.28.233.83:8001",
         "api_key": "test_api_key_12345",
         "camera_index": 0,

@@ -388,7 +388,7 @@ document.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && window.app.currentScreen === 'login') {
         // Simulate QR code scan for testing
         const mockQRData = {
-            rvm_id: 'jetson_orin_nano_001',
+            rvm_id: '4',
             timestamp: Math.floor(Date.now() / 1000),
             action: 'login',
             session_token: 'test_token_' + Date.now(),

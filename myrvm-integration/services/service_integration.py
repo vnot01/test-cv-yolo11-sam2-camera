@@ -757,7 +757,7 @@ class MyRVMServiceIntegration:
 # Example usage and testing
 if __name__ == "__main__":
     # Test service integration
-    integration = MyRVMServiceIntegration("jetson_orin_nano_001")
+    integration = MyRVMServiceIntegration("4")
     
     try:
         # Start services
