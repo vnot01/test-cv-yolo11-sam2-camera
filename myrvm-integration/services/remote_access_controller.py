@@ -43,6 +43,7 @@ class RemoteAccessController:
         # Initialize components
         self.api_client = MyRVMAPIClient(
             base_url=config.get('myrvm_base_url'),
+            api_token=config.get('remote_access', {}).get('api_key'),
             use_tunnel=config.get('use_tunnel', False)
         )
         

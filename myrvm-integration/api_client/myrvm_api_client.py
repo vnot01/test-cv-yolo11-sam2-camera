@@ -348,6 +348,37 @@ class MyRVMAPIClient:
         
         return self._make_request('GET', '/api/v2/processing-history', 
                                 params=params)
+    
+    def update_rvm_status(self, rvm_id: int, status: str) -> Tuple[bool, Dict]:
+        """
+        Update RVM status
+        
+        Args:
+            rvm_id: RVM ID
+            status: New status (active, maintenance, offline, etc.)
+            
+        Returns:
+            Tuple of (success, response_data)
+        """
+        try:
+            url = f"{self.current_url}/api/v2/rvm-status/{rvm_id}"
+            data = {
+                'status': status,
+                'updated_at': now().isoformat()
+            }
+            
+            self.logger.info(f"Updating RVM {rvm_id} status to {status}")
+            response = self.session.put(url, json=data)
+            
+            if response.status_code == 200:
+                return True, response.json()
+            else:
+                self.logger.error(f"HTTP {response.status_code}: {response.text}")
+                return False, {'error': response.text}
+                
+        except Exception as e:
+            self.logger.error(f"Failed to update RVM status: {e}")
+            return False, {'error': str(e)}
 
 # Example usage and testing
 if __name__ == "__main__":

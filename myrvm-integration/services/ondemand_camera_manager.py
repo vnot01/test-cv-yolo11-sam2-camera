@@ -22,7 +22,7 @@ project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 sys.path.append(str(project_root / "api-client"))
 
-from myrvm_api_client import MyRVMAPIClient
+from api_client.myrvm_api_client import MyRVMAPIClient
 from utils.timezone_manager import get_timezone_manager, now, format_datetime
 
 class OnDemandCameraManager:
@@ -46,6 +46,7 @@ class OnDemandCameraManager:
         # Initialize components
         self.api_client = MyRVMAPIClient(
             base_url=config.get('myrvm_base_url'),
+            api_token=config.get('remote_access', {}).get('api_key'),
             use_tunnel=config.get('use_tunnel', False)
         )
         

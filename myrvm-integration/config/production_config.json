@@ -44,6 +44,7 @@
     "max_log_size_mb": 10,
     "backup_count": 10
   },
+  "myrvm_base_url": "http://100.123.143.87:8001",
   "remote_access": {
     "server_url": "http://100.123.143.87:8001",
     "api_key": "myrvm-platform-key",
@@ -51,6 +52,7 @@
     "metrics_interval": 30,
     "command_timeout": 30,
     "controller_port": 5000,
+    "camera_port": 5002,
     "host": "0.0.0.0",
     "authentication_required": true,
     "session_timeout": 3600
