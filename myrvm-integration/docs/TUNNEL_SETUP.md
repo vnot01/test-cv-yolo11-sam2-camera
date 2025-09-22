@@ -25,7 +25,51 @@ Follow the detailed steps below.
 
 ## 🔧 **Tunneling Options**
 
-### **1. Cloudflare Tunnel (Recommended)**
+### **1. Tailscale (Primary - Recommended)**
+
+#### **Advantages:**
+- ✅ Easy setup and management
+- ✅ Built-in security and encryption
+- ✅ Works behind NAT/firewall
+- ✅ Mesh networking
+- ✅ Cross-platform support
+
+#### **Setup Steps:**
+```bash
+# 1. Install Tailscale
+curl -fsSL https://tailscale.com/install.sh | sh
+
+# 2. Start Tailscale
+sudo tailscale up
+
+# 3. Get Tailscale IP
+tailscale ip -4
+
+# 4. Configure hostname (optional)
+sudo tailscale set --hostname=myrvm-jetson
+```
+
+### **2. ZeroTier (Emergency Backup)**
+
+#### **Advantages:**
+- ✅ Free tier available
+- ✅ Works behind NAT/firewall
+- ✅ Cross-platform support
+- ✅ Good for emergency situations
+
+#### **Setup Steps:**
+```bash
+# 1. Install ZeroTier
+curl -s https://install.zerotier.com | sudo bash
+
+# 2. Join network
+sudo zerotier-cli join <NETWORK_ID>
+
+# 3. Check status
+sudo zerotier-cli listnetworks
+```
+
+### **3. Cloudflare Tunnel (Alternative)**
 
 #### **Advantages:**
 - ✅ Free and reliable
@@ -103,11 +147,25 @@ hostname -I
 ### **config.json Settings:**
 ```json
 {
-  "myrvm_base_url": "http://localhost:8000",
-  "myrvm_tunnel_url": "https://myrvm-platform.your-domain.com",
+  "server_url": "http://100.123.143.87:8001",
   "use_tunnel": true,
-  "tunnel_type": "cloudflare",
-  "fallback_to_local": true
+  "tunnel_type": "tailscale",
+  "fallback_to_local": true,
+  "tailscale_network": {
+    "rvm_ip": "172.28.93.97",
+    "server_ip": "100.123.143.87",
+    "server_port": 8001,
+    "tailscale_hostname": "myrvm-jetson"
+  },
+  "emergency_tunnel": {
+    "type": "zerotier",
+    "enabled": true,
+    "zerotier_network": {
+      "rvm_ip": "172.28.93.97",
+      "server_ip": "100.123.143.87",
+      "server_port": 8001
+    }
+  }
 }
 ```
 

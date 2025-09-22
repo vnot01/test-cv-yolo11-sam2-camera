@@ -43,14 +43,14 @@ class NetworkInfoCollector:
         return None
     
     def _get_virtual_ip(self) -> Optional[str]:
-        """Get virtual IP (Tailscale/Zerotier)"""
+        """Get virtual IP (Tailscale primary, ZeroTier emergency)"""
         try:
-            # Check for Tailscale
+            # Check for Tailscale (primary tunnel)
             tailscale_ip = self._get_tailscale_ip()
             if tailscale_ip:
                 return tailscale_ip
             
-            # Check for Zerotier
+            # Check for ZeroTier (emergency tunnel)
             zerotier_ip = self._get_zerotier_ip()
             if zerotier_ip:
                 return zerotier_ip

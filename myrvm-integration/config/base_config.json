@@ -14,14 +14,25 @@
   "processing_timeout": 30.0,
   "retry_attempts": 3,
   "retry_delay": 2.0,
-  "use_tunnel": false,
-  "tunnel_type": "zerotier",
+  "use_tunnel": true,
+  "tunnel_type": "tailscale",
   "fallback_to_local": true,
-  "zerotier_network": {
-    "rvm_ip": "172.28.93.97",
+  "tailscale_network": {
+    "rvm_ip": "100.117.234.2",
     "server_ip": "100.123.143.87",
     "server_port": 8001,
-    "server_url": "http://100.123.143.87:8001"
+    "server_url": "http://100.123.143.87:8001",
+    "tailscale_hostname": "myrvm-jetson"
+  },
+  "emergency_tunnel": {
+    "type": "zerotier",
+    "enabled": true,
+    "zerotier_network": {
+      "rvm_ip": "172.28.93.97",
+      "server_ip": "172.28.233.83",
+      "server_port": 8001,
+      "server_url": "http://172.28.233.83:8001"
+    }
   },
   "hardware": {
     "camera_resolution": "1920x1080",
