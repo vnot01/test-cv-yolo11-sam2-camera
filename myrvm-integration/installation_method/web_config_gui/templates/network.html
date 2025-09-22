@@ -127,8 +127,11 @@
                                 <p class="mb-0" id="connectionDetails">No active connection</p>
                             </div>
                             <div class="col-md-4 text-end">
-                                <button class="btn btn-custom" onclick="scanNetworks()">
+                                <button class="btn btn-custom me-2" onclick="scanNetworks()">
                                     <i class="fas fa-search me-2"></i>Scan Networks
+                                </button>
+                                <button class="btn btn-outline-custom" onclick="refreshNetworks()" title="Refresh network list">
+                                    <i class="fas fa-sync-alt me-2"></i>Refresh
                                 </button>
                             </div>
                         </div>
@@ -157,7 +160,7 @@
                         <h4><i class="fas fa-server me-2"></i>Server Configuration</h4>
                         <div class="mb-3">
                             <label class="form-label">Server URL</label>
-                            <input type="text" class="form-control" id="serverUrl" value="http://localhost:8000" placeholder="http://server:port">
+                            <input type="text" class="form-control" id="serverUrl" value="http://100.123.143.87:8001" placeholder="http://server:port">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">API Endpoint</label>
@@ -192,8 +195,9 @@
                         <div class="mb-3">
                             <label class="form-label">Interface</label>
                             <select class="form-select" id="networkInterface">
-                                <option value="wlan0" selected>WiFi (wlan0)</option>
-                                <option value="eth0">Ethernet (eth0)</option>
+                                <option value="wlP1p1s0" selected>WiFi (wlP1p1s0)</option>
+                                <option value="l4tbr0">USB Type-C Bridge (l4tbr0)</option>
+                                <option value="enP8p1s0">Ethernet (enP8p1s0)</option>
                                 <option value="usb0">USB (usb0)</option>
                             </select>
                         </div>
@@ -302,12 +306,34 @@
                 if (data.success) {
                     availableNetworks = data.data;
                     displayNetworks(availableNetworks);
-                    showNotification(`Found ${availableNetworks.length} networks`, 'success');
+                    // Show the message from API (includes explanation for 1 network)
+                    showNotification(data.message, 'success');
                 } else {
                     showNotification('Network scan failed: ' + data.message, 'error');
                 }
             } catch (error) {
                 showNotification('Network scan error: ' + error.message, 'error');
+            }
+        }
+
+        // Refresh networks (same as scan but with different notification)
+        async function refreshNetworks() {
+            showNotification('Refreshing network list...', 'info');
+            
+            try {
+                const response = await fetch('/api/network/scan');
+                const data = await response.json();
+                
+                if (data.success) {
+                    availableNetworks = data.data;
+                    displayNetworks(availableNetworks);
+                    // Show the message from API (includes explanation for 1 network)
+                    showNotification('Refreshed: ' + data.message, 'success');
+                } else {
+                    showNotification('Network refresh failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Network refresh error: ' + error.message, 'error');
             }
         }
 
@@ -623,11 +649,11 @@
         // Reset configuration
         function resetConfiguration() {
             if (confirm('Reset all network configuration to defaults?')) {
-                document.getElementById('serverUrl').value = 'http://localhost:8000';
+                document.getElementById('serverUrl').value = 'http://100.123.143.87:8001';
                 document.getElementById('apiEndpoint').value = '/api/v1';
                 document.getElementById('authToken').value = '';
                 document.getElementById('connectionTimeout').value = '10';
-                document.getElementById('networkInterface').value = 'wlan0';
+                document.getElementById('networkInterface').value = 'wlP1p1s0';
                 document.getElementById('dnsServers').value = '8.8.8.8, 8.8.4.4';
                 document.getElementById('mtuSize').value = '1500';
                 document.getElementById('autoReconnect').checked = true;

@@ -223,7 +223,17 @@
                     
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Available Networks</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Available Networks</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary me-2" onclick="scanNetworks()">
+                                        <i class="fas fa-search me-1"></i>Scan
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshNetworks()" title="Refresh network list">
+                                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                                    </button>
+                                </div>
+                            </div>
                             <div id="available-networks" class="list-group mb-3">
                                 <div class="list-group-item">
                                     <div class="d-flex w-100 justify-content-between">
@@ -236,7 +246,7 @@
                             <h6>Server Configuration</h6>
                             <div class="mb-3">
                                 <label class="form-label">Server URL</label>
-                                <input type="text" class="form-control" id="serverUrl" value="http://localhost:8000">
+                                <input type="text" class="form-control" id="serverUrl" value="http://100.123.143.87:8001">
                             </div>
                             <button class="btn btn-outline-primary" onclick="testServerConnection()">
                                 <i class="fas fa-plug me-2"></i>Test Connection
@@ -494,14 +504,38 @@
             document.getElementById('gpu-info').innerHTML = `
                 <strong>GPU:</strong> ${hardwareInfo.gpu || 'Unknown'}
             `;
-            document.getElementById('camera-info').innerHTML = `
-                <strong>Status:</strong> <span class="badge bg-success">Detected</span><br>
-                <strong>Resolution:</strong> 1920x1080
-            `;
-            document.getElementById('network-info').innerHTML = `
-                <strong>Interface:</strong> wlan0<br>
-                <strong>Status:</strong> <span class="badge bg-warning">Not Connected</span>
-            `;
+            
+            // Camera info
+            if (hardwareInfo.camera && hardwareInfo.camera !== 'Not detected') {
+                document.getElementById('camera-info').innerHTML = `
+                    <strong>Status:</strong> <span class="badge bg-success">Detected</span><br>
+                    <strong>Devices:</strong> ${hardwareInfo.camera}
+                `;
+            } else {
+                document.getElementById('camera-info').innerHTML = `
+                    <strong>Status:</strong> <span class="badge bg-warning">Not Detected</span><br>
+                    <strong>Note:</strong> No camera devices found
+                `;
+            }
+            
+            // Network info - use real data from hardware detection
+            if (hardwareInfo.network) {
+                const network = hardwareInfo.network;
+                const statusClass = network.status === 'connected' ? 'bg-success' : 'bg-warning';
+                const statusText = network.status === 'connected' ? 'Connected' : 'Not Connected';
+                const ipInfo = network.ip_addresses && network.ip_addresses.length > 0 ? 
+                    `<br><strong>IP:</strong> ${network.ip_addresses[0]}` : '';
+                
+                document.getElementById('network-info').innerHTML = `
+                    <strong>Interface:</strong> ${network.interface}<br>
+                    <strong>Status:</strong> <span class="badge ${statusClass}">${statusText}</span>${ipInfo}
+                `;
+            } else {
+                document.getElementById('network-info').innerHTML = `
+                    <strong>Interface:</strong> Unknown<br>
+                    <strong>Status:</strong> <span class="badge bg-warning">Unknown</span>
+                `;
+            }
         }
 
         // Network configuration
@@ -512,11 +546,31 @@
                 
                 if (data.success) {
                     updateNetworksDisplay(data.data);
+                    // Show the message from API (includes explanation for 1 network)
+                    showNotification(data.message, 'success');
                 } else {
                     showNotification('Network scan failed: ' + data.message, 'error');
                 }
             } catch (error) {
                 showNotification('Network scan error: ' + error.message, 'error');
+            }
+        }
+
+        // Refresh networks
+        async function refreshNetworks() {
+            try {
+                const response = await fetch('/api/network/scan');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateNetworksDisplay(data.data);
+                    // Show the message from API (includes explanation for 1 network)
+                    showNotification('Refreshed: ' + data.message, 'success');
+                } else {
+                    showNotification('Network refresh failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Network refresh error: ' + error.message, 'error');
             }
         }
 

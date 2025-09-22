@@ -1,0 +1,39 @@
+{
+  "timestamp": "2025-09-22T18:28:25.286205",
+  "jetson_ip": "192.168.55.1",
+  "myrvm_platform": "http://100.123.143.87:8001",
+  "current_stage": "PLATFORM_ACCESS",
+  "setup_ready": true,
+  "tests": {
+    "usb_connection": {
+      "connected": false,
+      "ip": "192.168.55.1",
+      "error": "Connection refused",
+      "stage": "USB_CONNECTION",
+      "description": "Jetson tidak terhubung via USB Type-C"
+    },
+    "wifi_connection": {
+      "connected": true,
+      "ssid": "Kikimiu",
+      "signal_strength": null,
+      "ip_address": null,
+      "stage": "WIFI_CONNECTION",
+      "description": "WiFi terhubung ke \"Kikimiu\""
+    },
+    "internet_access": {
+      "connected": true,
+      "test_url": "https://www.google.com",
+      "response_time_ms": 381.61,
+      "stage": "INTERNET_ACCESS",
+      "description": "Internet tersedia dan dapat diakses"
+    },
+    "platform_access": {
+      "connected": true,
+      "url": "http://100.123.143.87:8001",
+      "response_time_ms": 55.64,
+      "status_code": 200,
+      "stage": "PLATFORM_ACCESS",
+      "description": "MyRVM Platform dapat diakses"
+    }
+  }
+}
