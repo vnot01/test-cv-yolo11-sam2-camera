@@ -52,7 +52,7 @@ The API client uses configuration from `config.json`:
 
 ```json
 {
-  "myrvm_base_url": "http://172.28.233.83:8001",
+  "server_url": "http://100.123.143.87:8001",
   "myrvm_tunnel_url": "https://your-tunnel-domain.com",
   "api_token": null,
   "jetson_ip": "172.28.93.97",
@@ -61,7 +61,7 @@ The API client uses configuration from `config.json`:
   "fallback_to_local": true,
   "zerotier_network": {
     "rvm_ip": "172.28.93.97",
-    "platform_ip": "172.28.233.83",
+    "server_ip": "100.123.143.87",
     "platform_port": 8001,
     "network_id": "9bee8941b52c05b9"
   }
@@ -590,7 +590,7 @@ def save_config(config, config_path="config.json"):
 # Usage
 config = load_config()
 client = MyRVMAPIClient(
-    base_url=config.get('myrvm_base_url'),
+    base_url=config.get('server_url'),
     use_tunnel=config.get('use_tunnel', False)
 )
 ```

@@ -41,7 +41,7 @@ class RemoteGUIService:
         
         # Initialize components
         self.api_client = MyRVMAPIClient(
-            base_url=config.get('myrvm_base_url'),
+            base_url=config.get('server_url'),
             use_tunnel=config.get('use_tunnel', False)
         )
         

@@ -1,6 +1,6 @@
 {
-  "myrvm_base_url": "http://172.28.233.83:8001",
-  "myrvm_tunnel_url": "https://your-tunnel-domain.com",
+  "server_url": "http://100.123.143.87:8001",
+  "server_tunnel_url": "https://your-tunnel-domain.com",
   "api_token": null,
   "camera_index": 0,
   "rvm_id": 1,
@@ -21,8 +21,8 @@
   "fallback_to_local": true,
   "zerotier_network": {
     "rvm_ip": "172.28.93.97",
-    "platform_ip": "172.28.233.83",
-    "platform_port": 8001,
-    "platform_url": "http://172.28.233.83:8001"
+    "server_ip": "100.123.143.87",
+    "server_port": 8001,
+    "server_url": "http://100.123.143.87:8001"
   }
 }

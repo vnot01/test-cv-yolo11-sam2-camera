@@ -98,7 +98,7 @@ class EnhancedConfigurationManager:
     def _get_fallback_config(self) -> Dict[str, Any]:
         """Get fallback configuration for error recovery"""
         return {
-            "myrvm_base_url": "http://localhost:8000",
+            "server_url": "http://localhost:8000",
             "rvm_id": self.rvm_id,
             "api_key": None,
             "camera_index": 0,
@@ -220,7 +220,7 @@ class EnhancedConfigurationManager:
         
         try:
             # Required fields validation
-            required_fields = ['rvm_id', 'myrvm_base_url', 'api_key']
+            required_fields = ['rvm_id', 'server_url', 'api_key']
             for field in required_fields:
                 if field not in config or config[field] is None:
                     errors.append(f"Required field '{field}' is missing or None")
@@ -238,10 +238,10 @@ class EnhancedConfigurationManager:
                     errors.append("'confidence_threshold' must be a number between 0 and 1")
             
             # URL validation
-            if 'myrvm_base_url' in config:
-                url = config['myrvm_base_url']
+            if 'server_url' in config:
+                url = config['server_url']
                 if not url.startswith(('http://', 'https://')):
-                    errors.append("'myrvm_base_url' must be a valid URL")
+                    errors.append("'server_url' must be a valid URL")
             
             # Port validation
             port_fields = ['jetson_port', 'remote_access_port']

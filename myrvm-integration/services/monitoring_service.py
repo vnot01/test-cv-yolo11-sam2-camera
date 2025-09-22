@@ -37,7 +37,7 @@ class MonitoringService:
         
         # Initialize API client
         self.api_client = MyRVMAPIClient(
-            base_url=config.get('myrvm_base_url'),
+            base_url=config.get('server_url'),
             use_tunnel=config.get('use_tunnel', False)
         )
         
@@ -412,7 +412,7 @@ if __name__ == "__main__":
             'rvm_id': 1,
             'monitoring_interval': 30.0,
             'health_check_interval': 60.0,
-            'myrvm_base_url': 'http://172.28.233.83:8001',
+            'server_url': 'http://100.123.143.87:8001',
             'use_tunnel': False
         }
     
