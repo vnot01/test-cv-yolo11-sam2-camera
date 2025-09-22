@@ -42,8 +42,11 @@ class IntegrationTester:
         self.logger = self._setup_logger()
         self.test_results = []
         
+        # Load configuration
+        self.config = self._load_config()
+        
         # Initialize services
-        self.api_client = MyRVMAPIClient(base_url="http://100.123.143.87:8001")
+        self.api_client = MyRVMAPIClient(base_url=self.config.get('server_url', 'http://100.123.143.87:8001'))
         self.detection_service = DetectionService()
         self.system_monitor = SystemMonitor()
     
@@ -65,6 +68,22 @@ class IntegrationTester:
         logger.addHandler(console_handler)
         
         return logger
+    
+    def _load_config(self) -> dict:
+        """Load configuration from production_config.json"""
+        try:
+            config_path = Path(__file__).parent.parent / "config" / "production_config.json"
+            if config_path.exists():
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    self.logger.info(f"✅ Loaded configuration from {config_path}")
+                    return config
+            else:
+                self.logger.warning(f"⚠️  Configuration file not found: {config_path}")
+                return {}
+        except Exception as e:
+            self.logger.error(f"❌ Failed to load configuration: {e}")
+            return {}
     
     def _record_test(self, test_name: str, success: bool, message: str, details: dict = None):
         """Record test result"""
@@ -264,11 +283,12 @@ class IntegrationTester:
         # Test MyRVM Platform connectivity
         try:
             import requests
-            response = requests.get("http://100.123.143.87:8001/api/v2/deposits", timeout=5)
+            server_url = self.config.get('server_url', 'http://100.123.143.87:8001')
+            response = requests.get(f"{server_url}/api/health-check", timeout=5)
             if response.status_code == 200:
-                self._record_test("MyRVM Platform Connectivity", True, "MyRVM Platform reachable")
+                self._record_test("MyRVM Platform Connectivity", True, f"MyRVM Platform reachable at {server_url}")
             else:
-                self._record_test("MyRVM Platform Connectivity", False, f"HTTP {response.status_code}")
+                self._record_test("MyRVM Platform Connectivity", False, f"HTTP {response.status_code} from {server_url}")
         except Exception as e:
             self._record_test("MyRVM Platform Connectivity", False, f"Connection failed: {e}")
     

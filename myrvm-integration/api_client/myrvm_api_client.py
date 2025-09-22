@@ -200,7 +200,7 @@ class MyRVMAPIClient:
     
     def ping_platform(self) -> Tuple[bool, Dict]:
         """Ping MyRVM Platform to check connectivity"""
-        return self._make_request('GET', '/api/v2/deposits')
+        return self._make_request('GET', '/api/health-check')
     
     def register_processing_engine(self, engine_data: Dict) -> Tuple[bool, Dict]:
         """
