@@ -9,7 +9,7 @@
   "confidence_threshold": 0.5,
   "auto_processing": true,
   "debug_mode": true,
-  "jetson_ip": "172.28.93.97",
+  "jetson_ip": "100.117.234.2",
   "jetson_port": 5000,
   "log_level": "INFO",
   "max_processing_queue": 10,
@@ -20,7 +20,7 @@
   "tunnel_type": "tailscale",
   "fallback_to_local": true,
   "tailscale_network": {
-    "rvm_ip": "172.28.93.97",
+    "rvm_ip": "100.117.234.2",
     "server_ip": "100.123.143.87",
     "server_port": 8001,
     "server_url": "http://100.123.143.87:8001",
@@ -31,9 +31,9 @@
     "enabled": true,
     "zerotier_network": {
       "rvm_ip": "172.28.93.97",
-      "server_ip": "100.123.143.87",
+      "server_ip": "172.28.233.83",
       "server_port": 8001,
-      "server_url": "http://100.123.143.87:8001"
+      "server_url": "http://172.28.233.83:8001"
     }
   }
 }

@@ -13,7 +13,7 @@ from pathlib import Path
 
 # Tailscale Network Configuration (Primary)
 TAILSCALE_CONFIG = {
-    "rvm_ip": "172.28.93.97",
+    "rvm_ip": "100.117.234.2",
     "server_ip": "100.123.143.87",
     "server_port": 8001,
     "server_url": "http://100.123.143.87:8001",
@@ -23,9 +23,9 @@ TAILSCALE_CONFIG = {
 # ZeroTier Network Configuration (Emergency)
 ZEROTIER_CONFIG = {
     "rvm_ip": "172.28.93.97",
-    "server_ip": "100.123.143.87",
+    "server_ip": "172.28.233.83",
     "server_port": 8001,
-    "server_url": "http://100.123.143.87:8001"
+    "server_url": "http://172.28.233.83:8001"
 }
 
 def test_ping_connectivity(ip_address, count=4):
@@ -205,8 +205,8 @@ def test_api_client():
     print("-" * 30)
     
     try:
-        # Add current directory to path for imports
-        sys.path.append(str(Path(__file__).parent))
+        # Add parent directory to path for imports
+        sys.path.append(str(Path(__file__).parent.parent))
         
         from api_client.myrvm_api_client import MyRVMAPIClient
         
