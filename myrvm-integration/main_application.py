@@ -33,6 +33,7 @@ from services.detection_service import DetectionService
 from monitoring.metrics_sender import MetricsSender
 from monitoring.application_metrics_collector import ApplicationMetricsCollector
 from remote.command_receiver import RemoteCommandReceiver
+from services.remote_access_controller import RemoteAccessController
 
 class MyRVMApplication:
     """Main MyRVM Application with full integration"""
@@ -61,6 +62,7 @@ class MyRVMApplication:
         self.metrics_sender = None
         self.app_metrics_collector = None
         self.command_receiver = None
+        self.remote_access_controller = None
         
         # Application state
         self.startup_time = None
@@ -177,7 +179,8 @@ class MyRVMApplication:
                     "user_profile_manager": {"enabled": True, "priority": 6},
                     "detection_service": {"enabled": True, "priority": 7},
                     "metrics_sender": {"enabled": True, "priority": 8},
-                    "command_receiver": {"enabled": True, "priority": 9}
+                    "command_receiver": {"enabled": True, "priority": 9},
+                    "remote_access_controller": {"enabled": True, "priority": 10}
                 },
                 "performance": {
                     "max_memory_usage": "80%",
@@ -265,6 +268,10 @@ class MyRVMApplication:
             # Initialize Remote Command Receiver
             if self.production_config['services']['command_receiver']['enabled']:
                 self._initialize_command_receiver()
+            
+            # Initialize Remote Access Controller
+            if self.production_config['services']['remote_access_controller']['enabled']:
+                self._initialize_remote_access_controller()
             
             self.logger.info("All components initialized successfully")
             
@@ -433,6 +440,19 @@ class MyRVMApplication:
             self.logger.error(f"Failed to initialize Remote Command Receiver: {e}")
             raise
     
+    def _initialize_remote_access_controller(self):
+        """Initialize Remote Access Controller"""
+        try:
+            self.logger.info("Initializing Remote Access Controller...")
+            
+            # Initialize with production config
+            self.remote_access_controller = RemoteAccessController(self.production_config)
+            self.services_status['remote_access_controller'] = 'initialized'
+            self.logger.info("Remote Access Controller initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Remote Access Controller: {e}")
+            raise
+    
     def start_application(self):
         """Start MyRVM Application"""
         try:
@@ -531,6 +551,16 @@ class MyRVMApplication:
                 
             elif service_name == 'command_receiver' and self.command_receiver:
                 self.command_receiver.start()
+                self.services_status[service_name] = 'running'
+                
+            elif service_name == 'remote_access_controller' and self.remote_access_controller:
+                # Start Remote Access Controller in separate thread
+                controller_thread = threading.Thread(
+                    target=self.remote_access_controller.start,
+                    daemon=True,
+                    name="RemoteAccessControllerThread"
+                )
+                controller_thread.start()
                 self.services_status[service_name] = 'running'
             
             self.logger.info(f"{service_name} started successfully")
@@ -758,6 +788,10 @@ class MyRVMApplication:
                 
             elif service_name == 'command_receiver' and self.command_receiver:
                 self.command_receiver.stop()
+                self.services_status[service_name] = 'stopped'
+                
+            elif service_name == 'remote_access_controller' and self.remote_access_controller:
+                self.remote_access_controller.stop()
                 self.services_status[service_name] = 'stopped'
             
             self.logger.info(f"{service_name} stopped successfully")
