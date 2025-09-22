@@ -19,9 +19,9 @@ from flask import Flask, request, jsonify, render_template
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
-sys.path.append(str(project_root / "api-client"))
+sys.path.append(str(project_root / "api_client"))
 
-from myrvm_api_client import MyRVMAPIClient
+from api_client.myrvm_api_client import MyRVMAPIClient
 from services.ondemand_camera_manager import OnDemandCameraManager
 from utils.timezone_manager import get_timezone_manager, now, format_datetime
 

@@ -120,7 +120,7 @@ class MetricsSender:
             
             # Send to server
             response = requests.post(
-                f"{self.server_url}/admin/rvm/{self.rvm_id}/store-metrics",
+                f"{self.server_url}/api/rvm/{self.rvm_id}/store-metrics",
                 json=payload,
                 headers=headers,
                 cookies=csrf_response.cookies,

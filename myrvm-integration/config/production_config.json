@@ -45,11 +45,15 @@
     "backup_count": 10
   },
   "remote_access": {
-    "server_url": "http://172.28.233.83:8001",
-    "api_key": "your_api_key_here",
+    "server_url": "http://100.123.143.87:8001",
+    "api_key": "myrvm-platform-key",
     "rvm_id": 4,
     "metrics_interval": 30,
-    "command_timeout": 30
+    "command_timeout": 30,
+    "controller_port": 5000,
+    "host": "0.0.0.0",
+    "authentication_required": true,
+    "session_timeout": 3600
   },
   "service": {
     "auto_start": true,
