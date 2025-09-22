@@ -35,7 +35,7 @@ class RemoteAccessController:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.config = config
         self.rvm_id = config.get('rvm_id', 1)
-        self.port = config.get('remote_access', {}).get('controller_port', 5001)
+        self.port = config.get('remote_access', {}).get('controller_port', 5000)
         self.host = config.get('remote_access', {}).get('host', '0.0.0.0')
         self.authentication_required = config.get('remote_access', {}).get('authentication_required', True)
         self.session_timeout = config.get('remote_access', {}).get('session_timeout', 3600)
