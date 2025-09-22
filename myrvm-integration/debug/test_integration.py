@@ -180,14 +180,20 @@ class IntegrationTester:
             return  # Skip other tests if platform is not reachable
         
         # Test engine registration
+        # Get Tailscale IP from configuration
+        tailscale_ip = self.config.get('tailscale_network', {}).get('rvm_ip', '100.117.234.2')
+        jetson_port = self.config.get('jetson_port', 5000)
+        
+        self.logger.info(f"🔗 Using Tailscale IP: {tailscale_ip}:{jetson_port}")
+        
         engine_data = {
             'name': 'Jetson Orin Test',
             'type': 'jetson_edge',
             'status': 'active',
             'capabilities': ['object_detection', 'segmentation'],
             'location': 'Test Device',
-            'ip_address': '192.168.1.11',
-            'port': 5000
+            'ip_address': tailscale_ip,
+            'port': jetson_port
         }
         
         success, response = self.api_client.register_processing_engine(engine_data)
