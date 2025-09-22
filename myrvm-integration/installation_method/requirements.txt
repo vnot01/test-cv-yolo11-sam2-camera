@@ -1,0 +1,37 @@
+# RVM-Jetson Installation Method Requirements
+# Core web framework
+Flask==3.1.2
+Flask-SocketIO==5.5.1
+
+# Hardware control
+RPi.GPIO==0.7.1
+opencv-python==4.8.1.78
+
+# System utilities
+psutil==7.1.0
+requests==2.32.5
+
+# Data handling
+numpy==1.24.3
+Pillow==10.0.1
+
+# Audio processing (optional)
+pyaudio==0.2.11
+
+# Network utilities
+netifaces==0.11.0
+
+# Configuration management
+PyYAML==6.0.1
+configparser==5.3.0
+
+# Logging
+colorlog==6.7.0
+
+# Development and testing
+pytest==7.4.3
+pytest-cov==4.1.0
+
+# Additional utilities
+python-dotenv==1.0.0
+schedule==1.2.0
