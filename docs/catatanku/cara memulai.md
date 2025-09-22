@@ -3,10 +3,10 @@ yang anda kerjakan yang ini saja test-cv-yolo11-sam2-camera/myrvm-integration/do
 Tolong jika anda menguji python script khusus yang berhubungan dengan computer vision selalu jalankan script ini ya?
 ```bash
 # Test PyTorch installation
-python -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}'); print(f'CUDA version: {torch.version.cuda}')"
+python3 -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}'); print(f'CUDA version: {torch.version.cuda}')"
 
 # Test TorchVision
-python -c "import torchvision; print(f'TorchVision version: {torchvision.__version__}')"
+python3 -c "import torchvision; print(f'TorchVision version: {torchvision.__version__}')"
 ```
 Jawaban harus seperti ini:
 ```bash
