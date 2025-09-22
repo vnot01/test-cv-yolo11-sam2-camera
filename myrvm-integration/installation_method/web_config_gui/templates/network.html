@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Configuration - RVM-Jetson</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 20px;
+            padding: 30px;
+        }
+        .network-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        .network-card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-indicator.connected {
+            background-color: #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+        .status-indicator.disconnected {
+            background-color: #dc3545;
+        }
+        .status-indicator.connecting {
+            background-color: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .network-item {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        .network-item:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+        }
+        .signal-strength {
+            display: inline-block;
+            width: 20px;
+            height: 15px;
+            position: relative;
+        }
+        .signal-strength::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 3px;
+            background: #28a745;
+            border-radius: 1px;
+        }
+        .signal-strength.excellent::before { height: 15px; }
+        .signal-strength.good::before { height: 12px; }
+        .signal-strength.fair::before { height: 9px; }
+        .signal-strength.poor::before { height: 6px; }
+        .signal-strength.weak::before { height: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h1 class="display-5 fw-bold text-primary">
+                        <i class="fas fa-wifi me-3"></i>
+                        Network Configuration
+                    </h1>
+                    <p class="lead text-muted">Configure WiFi and server connections</p>
+                </div>
+            </div>
+
+            <!-- Current Connection Status -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="network-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h4>
+                                    <span class="status-indicator" id="connectionStatus"></span>
+                                    Connection Status: <span id="connectionStatusText">Disconnected</span>
+                                </h4>
+                                <p class="mb-0" id="connectionDetails">No active connection</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-custom" onclick="scanNetworks()">
+                                    <i class="fas fa-search me-2"></i>Scan Networks
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Configuration -->
+            <div class="row">
+                <!-- WiFi Networks -->
+                <div class="col-md-6 mb-4">
+                    <div class="network-card">
+                        <h4><i class="fas fa-wifi me-2"></i>Available WiFi Networks</h4>
+                        <div id="availableNetworks">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-search fa-2x mb-2"></i>
+                                <p>Click "Scan Networks" to find available WiFi networks</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Server Configuration -->
+                <div class="col-md-6 mb-4">
+                    <div class="network-card">
+                        <h4><i class="fas fa-server me-2"></i>Server Configuration</h4>
+                        <div class="mb-3">
+                            <label class="form-label">Server URL</label>
+                            <input type="text" class="form-control" id="serverUrl" value="http://localhost:8000" placeholder="http://server:port">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">API Endpoint</label>
+                            <input type="text" class="form-control" id="apiEndpoint" value="/api/v1" placeholder="/api/v1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Authentication Token</label>
+                            <input type="password" class="form-control" id="authToken" placeholder="Enter authentication token">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Connection Timeout</label>
+                            <select class="form-select" id="connectionTimeout">
+                                <option value="5">5 seconds</option>
+                                <option value="10" selected>10 seconds</option>
+                                <option value="30">30 seconds</option>
+                                <option value="60">60 seconds</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-custom" onclick="testServerConnection()">
+                            <i class="fas fa-plug me-2"></i>Test Connection
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Settings -->
+            <div class="row">
+                <!-- Network Interface -->
+                <div class="col-md-6 mb-4">
+                    <div class="network-card">
+                        <h4><i class="fas fa-network-wired me-2"></i>Network Interface</h4>
+                        <div class="mb-3">
+                            <label class="form-label">Interface</label>
+                            <select class="form-select" id="networkInterface">
+                                <option value="wlan0" selected>WiFi (wlan0)</option>
+                                <option value="eth0">Ethernet (eth0)</option>
+                                <option value="usb0">USB (usb0)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">IP Address</label>
+                            <input type="text" class="form-control" id="ipAddress" placeholder="Auto-assigned" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Subnet Mask</label>
+                            <input type="text" class="form-control" id="subnetMask" placeholder="Auto-assigned" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Gateway</label>
+                            <input type="text" class="form-control" id="gateway" placeholder="Auto-assigned" readonly>
+                        </div>
+                        <button class="btn btn-outline-primary" onclick="refreshNetworkInfo()">
+                            <i class="fas fa-sync me-2"></i>Refresh Info
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div class="col-md-6 mb-4">
+                    <div class="network-card">
+                        <h4><i class="fas fa-cogs me-2"></i>Advanced Settings</h4>
+                        <div class="mb-3">
+                            <label class="form-label">DNS Servers</label>
+                            <input type="text" class="form-control" id="dnsServers" value="8.8.8.8, 8.8.4.4" placeholder="8.8.8.8, 8.8.4.4">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">MTU Size</label>
+                            <input type="number" class="form-control" id="mtuSize" value="1500" min="576" max="9000">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="autoReconnect" checked>
+                                <label class="form-check-label" for="autoReconnect">
+                                    Auto-reconnect on connection loss
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="powerSave" checked>
+                                <label class="form-check-label" for="powerSave">
+                                    Enable power saving mode
+                                </label>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-secondary" onclick="applyAdvancedSettings()">
+                            <i class="fas fa-save me-2"></i>Apply Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connection History -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="network-card">
+                        <h4><i class="fas fa-history me-2"></i>Connection History</h4>
+                        <div id="connectionHistory">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <p>No connection history available</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button class="btn btn-custom me-2" onclick="saveConfiguration()">
+                        <i class="fas fa-save me-2"></i>Save Configuration
+                    </button>
+                    <button class="btn btn-outline-primary me-2" onclick="exportConfiguration()">
+                        <i class="fas fa-download me-2"></i>Export Config
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="resetConfiguration()">
+                        <i class="fas fa-undo me-2"></i>Reset to Defaults
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Global variables
+        let availableNetworks = [];
+        let currentConnection = null;
+        let connectionHistory = [];
+
+        // Scan for available networks
+        async function scanNetworks() {
+            showNotification('Scanning for WiFi networks...', 'info');
+            
+            try {
+                const response = await fetch('/api/network/scan');
+                const data = await response.json();
+                
+                if (data.success) {
+                    availableNetworks = data.data;
+                    displayNetworks(availableNetworks);
+                    showNotification(`Found ${availableNetworks.length} networks`, 'success');
+                } else {
+                    showNotification('Network scan failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Network scan error: ' + error.message, 'error');
+            }
+        }
+
+        // Display available networks
+        function displayNetworks(networks) {
+            const container = document.getElementById('availableNetworks');
+            
+            if (networks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-wifi-slash fa-2x mb-2"></i>
+                        <p>No networks found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            networks.forEach(network => {
+                const signalClass = getSignalStrengthClass(network.signal);
+                const securityIcon = network.security === 'Open' ? 'unlock' : 'lock';
+                const securityColor = network.security === 'Open' ? 'text-warning' : 'text-success';
+                
+                html += `
+                    <div class="network-item" onclick="selectNetwork('${network.ssid}')">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <h6 class="mb-1">
+                                    <i class="fas fa-wifi me-2"></i>
+                                    ${network.ssid}
+                                </h6>
+                                <small class="text-muted">
+                                    <i class="fas fa-${securityIcon} ${securityColor} me-1"></i>
+                                    ${network.security}
+                                </small>
+                            </div>
+                            <div class="col-4 text-end">
+                                <div class="signal-strength ${signalClass}"></div>
+                                <small class="text-muted">${network.signal} dBm</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Get signal strength class
+        function getSignalStrengthClass(signal) {
+            if (signal >= -50) return 'excellent';
+            if (signal >= -60) return 'good';
+            if (signal >= -70) return 'fair';
+            if (signal >= -80) return 'poor';
+            return 'weak';
+        }
+
+        // Select network for connection
+        function selectNetwork(ssid) {
+            const password = prompt(`Enter password for "${ssid}":`);
+            if (password !== null) {
+                connectToNetwork(ssid, password);
+            }
+        }
+
+        // Connect to network
+        async function connectToNetwork(ssid, password) {
+            showNotification(`Connecting to ${ssid}...`, 'info');
+            updateConnectionStatus('connecting', 'Connecting...');
+            
+            try {
+                const response = await fetch('/api/network/connect', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ssid: ssid,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentConnection = data.data;
+                    updateConnectionStatus('connected', 'Connected');
+                    addToHistory(ssid, 'success');
+                    showNotification(`Connected to ${ssid}`, 'success');
+                    refreshNetworkInfo();
+                } else {
+                    updateConnectionStatus('disconnected', 'Connection Failed');
+                    addToHistory(ssid, 'failed');
+                    showNotification('Connection failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                updateConnectionStatus('disconnected', 'Connection Error');
+                addToHistory(ssid, 'error');
+                showNotification('Connection error: ' + error.message, 'error');
+            }
+        }
+
+        // Update connection status
+        function updateConnectionStatus(status, message) {
+            const statusIndicator = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('connectionStatusText');
+            const connectionDetails = document.getElementById('connectionDetails');
+            
+            statusIndicator.className = 'status-indicator ' + status;
+            statusText.textContent = message;
+            
+            if (currentConnection) {
+                connectionDetails.textContent = `${currentConnection.ssid} - ${currentConnection.ip_address}`;
+            } else {
+                connectionDetails.textContent = 'No active connection';
+            }
+        }
+
+        // Test server connection
+        async function testServerConnection() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const apiEndpoint = document.getElementById('apiEndpoint').value;
+            const authToken = document.getElementById('authToken').value;
+            const timeout = document.getElementById('connectionTimeout').value;
+            
+            showNotification('Testing server connection...', 'info');
+            
+            try {
+                const response = await fetch('/api/server/test', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        server_url: serverUrl,
+                        api_endpoint: apiEndpoint,
+                        auth_token: authToken,
+                        timeout: parseInt(timeout)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Server connection successful', 'success');
+                } else {
+                    showNotification('Server connection failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Server test error: ' + error.message, 'error');
+            }
+        }
+
+        // Refresh network information
+        async function refreshNetworkInfo() {
+            showNotification('Refreshing network information...', 'info');
+            
+            try {
+                // Mock network info refresh
+                // In real implementation, this would get actual network info
+                const networkInfo = {
+                    ip_address: currentConnection ? currentConnection.ip_address : '192.168.1.100',
+                    subnet_mask: '255.255.255.0',
+                    gateway: '192.168.1.1'
+                };
+                
+                document.getElementById('ipAddress').value = networkInfo.ip_address;
+                document.getElementById('subnetMask').value = networkInfo.subnet_mask;
+                document.getElementById('gateway').value = networkInfo.gateway;
+                
+                showNotification('Network information refreshed', 'success');
+            } catch (error) {
+                showNotification('Failed to refresh network info: ' + error.message, 'error');
+            }
+        }
+
+        // Apply advanced settings
+        async function applyAdvancedSettings() {
+            const dnsServers = document.getElementById('dnsServers').value;
+            const mtuSize = document.getElementById('mtuSize').value;
+            const autoReconnect = document.getElementById('autoReconnect').checked;
+            const powerSave = document.getElementById('powerSave').checked;
+            
+            showNotification('Applying advanced settings...', 'info');
+            
+            try {
+                // Mock advanced settings application
+                // In real implementation, this would apply actual network settings
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                showNotification('Advanced settings applied successfully', 'success');
+            } catch (error) {
+                showNotification('Failed to apply advanced settings: ' + error.message, 'error');
+            }
+        }
+
+        // Add to connection history
+        function addToHistory(ssid, status) {
+            const historyEntry = {
+                ssid: ssid,
+                status: status,
+                timestamp: new Date().toISOString(),
+                time: new Date().toLocaleTimeString()
+            };
+            
+            connectionHistory.unshift(historyEntry);
+            
+            // Keep only last 10 entries
+            if (connectionHistory.length > 10) {
+                connectionHistory = connectionHistory.slice(0, 10);
+            }
+            
+            displayConnectionHistory();
+        }
+
+        // Display connection history
+        function displayConnectionHistory() {
+            const container = document.getElementById('connectionHistory');
+            
+            if (connectionHistory.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <p>No connection history available</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            connectionHistory.forEach(entry => {
+                const statusClass = entry.status === 'success' ? 'success' : 
+                                  entry.status === 'failed' ? 'danger' : 'warning';
+                const statusIcon = entry.status === 'success' ? 'check-circle' : 
+                                 entry.status === 'failed' ? 'times-circle' : 'exclamation-circle';
+                
+                html += `
+                    <div class="row align-items-center mb-2">
+                        <div class="col-8">
+                            <h6 class="mb-1">${entry.ssid}</h6>
+                            <small class="text-muted">${entry.time}</small>
+                        </div>
+                        <div class="col-4 text-end">
+                            <span class="badge bg-${statusClass}">
+                                <i class="fas fa-${statusIcon} me-1"></i>
+                                ${entry.status}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Save configuration
+        async function saveConfiguration() {
+            const config = {
+                server_url: document.getElementById('serverUrl').value,
+                api_endpoint: document.getElementById('apiEndpoint').value,
+                auth_token: document.getElementById('authToken').value,
+                connection_timeout: document.getElementById('connectionTimeout').value,
+                network_interface: document.getElementById('networkInterface').value,
+                dns_servers: document.getElementById('dnsServers').value,
+                mtu_size: document.getElementById('mtuSize').value,
+                auto_reconnect: document.getElementById('autoReconnect').checked,
+                power_save: document.getElementById('powerSave').checked
+            };
+            
+            showNotification('Saving configuration...', 'info');
+            
+            try {
+                const response = await fetch('/api/config/save', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Configuration saved successfully', 'success');
+                } else {
+                    showNotification('Failed to save configuration: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Save configuration error: ' + error.message, 'error');
+            }
+        }
+
+        // Export configuration
+        function exportConfiguration() {
+            const config = {
+                timestamp: new Date().toISOString(),
+                server_url: document.getElementById('serverUrl').value,
+                api_endpoint: document.getElementById('apiEndpoint').value,
+                connection_timeout: document.getElementById('connectionTimeout').value,
+                network_interface: document.getElementById('networkInterface').value,
+                dns_servers: document.getElementById('dnsServers').value,
+                mtu_size: document.getElementById('mtuSize').value,
+                auto_reconnect: document.getElementById('autoReconnect').checked,
+                power_save: document.getElementById('powerSave').checked,
+                connection_history: connectionHistory
+            };
+            
+            const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'network-config-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Configuration exported', 'success');
+        }
+
+        // Reset configuration
+        function resetConfiguration() {
+            if (confirm('Reset all network configuration to defaults?')) {
+                document.getElementById('serverUrl').value = 'http://localhost:8000';
+                document.getElementById('apiEndpoint').value = '/api/v1';
+                document.getElementById('authToken').value = '';
+                document.getElementById('connectionTimeout').value = '10';
+                document.getElementById('networkInterface').value = 'wlan0';
+                document.getElementById('dnsServers').value = '8.8.8.8, 8.8.4.4';
+                document.getElementById('mtuSize').value = '1500';
+                document.getElementById('autoReconnect').checked = true;
+                document.getElementById('powerSave').checked = true;
+                
+                connectionHistory = [];
+                displayConnectionHistory();
+                
+                showNotification('Configuration reset to defaults', 'info');
+            }
+        }
+
+        // Utility functions
+        function showNotification(message, type) {
+            const alertClass = type === 'error' ? 'alert-danger' : 
+                              type === 'success' ? 'alert-success' : 'alert-info';
+            
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            displayConnectionHistory();
+            refreshNetworkInfo();
+        });
+    </script>
+</body>
+</html>

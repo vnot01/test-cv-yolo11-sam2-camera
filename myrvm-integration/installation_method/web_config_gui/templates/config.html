@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration - RVM-Jetson</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 20px;
+            padding: 30px;
+        }
+        .config-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        .config-card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .config-section {
+            border-left: 4px solid #007bff;
+            padding-left: 15px;
+            margin-bottom: 20px;
+        }
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .config-item:last-child {
+            border-bottom: none;
+        }
+        .config-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .config-value {
+            color: #666;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .status-badge.valid {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-badge.invalid {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-badge.warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h1 class="display-5 fw-bold text-primary">
+                        <i class="fas fa-cogs me-3"></i>
+                        System Configuration
+                    </h1>
+                    <p class="lead text-muted">Review and validate system configuration</p>
+                </div>
+            </div>
+
+            <!-- Configuration Overview -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="config-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h4>
+                                    <i class="fas fa-clipboard-check me-2"></i>
+                                    Configuration Status
+                                </h4>
+                                <p class="mb-0" id="configStatusMessage">Validating configuration...</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-custom" onclick="validateConfiguration()">
+                                    <i class="fas fa-check me-2"></i>Validate Config
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Sections -->
+            <div class="row">
+                <!-- Hardware Configuration -->
+                <div class="col-md-6 mb-4">
+                    <div class="config-card">
+                        <h4><i class="fas fa-microchip me-2"></i>Hardware Configuration</h4>
+                        <div class="config-section">
+                            <div class="config-item">
+                                <span class="config-label">Camera Resolution</span>
+                                <span class="config-value" id="cameraResolution">1920x1080</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Camera FPS</span>
+                                <span class="config-value" id="cameraFPS">30</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Motor Steps/Rev</span>
+                                <span class="config-value" id="motorSteps">200</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">LED Brightness</span>
+                                <span class="config-value" id="ledBrightness">100%</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Touch Sensitivity</span>
+                                <span class="config-value" id="touchSensitivity">50%</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="editHardwareConfig()">
+                            <i class="fas fa-edit me-2"></i>Edit Hardware
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Network Configuration -->
+                <div class="col-md-6 mb-4">
+                    <div class="config-card">
+                        <h4><i class="fas fa-wifi me-2"></i>Network Configuration</h4>
+                        <div class="config-section">
+                            <div class="config-item">
+                                <span class="config-label">WiFi Network</span>
+                                <span class="config-value" id="wifiNetwork">MyRVM-Network</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">IP Address</span>
+                                <span class="config-value" id="ipAddress">192.168.1.100</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Server URL</span>
+                                <span class="config-value" id="serverUrl">http://localhost:8000</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Connection Status</span>
+                                <span class="status-badge valid" id="connectionStatus">Connected</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">API Endpoint</span>
+                                <span class="config-value" id="apiEndpoint">/api/v1</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="editNetworkConfig()">
+                            <i class="fas fa-edit me-2"></i>Edit Network
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI Models Configuration -->
+                <div class="col-md-6 mb-4">
+                    <div class="config-card">
+                        <h4><i class="fas fa-brain me-2"></i>AI Models Configuration</h4>
+                        <div class="config-section">
+                            <div class="config-item">
+                                <span class="config-label">YOLO Model</span>
+                                <span class="status-badge valid" id="yoloStatus">Loaded</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">SAM Model</span>
+                                <span class="status-badge valid" id="samStatus">Loaded</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Gemini API</span>
+                                <span class="status-badge valid" id="geminiStatus">Connected</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Detection Threshold</span>
+                                <span class="config-value" id="detectionThreshold">0.5</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Processing Mode</span>
+                                <span class="config-value" id="processingMode">Real-time</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="editAIConfig()">
+                            <i class="fas fa-edit me-2"></i>Edit AI Models
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Configuration -->
+                <div class="col-md-6 mb-4">
+                    <div class="config-card">
+                        <h4><i class="fas fa-cog me-2"></i>System Configuration</h4>
+                        <div class="config-section">
+                            <div class="config-item">
+                                <span class="config-label">RVM ID</span>
+                                <span class="config-value" id="rvmId">RVM-001</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Location</span>
+                                <span class="config-value" id="location">Building A, Floor 1</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Timezone</span>
+                                <span class="config-value" id="timezone">UTC+7</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Log Level</span>
+                                <span class="config-value" id="logLevel">INFO</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="config-label">Auto Start</span>
+                                <span class="status-badge valid" id="autoStart">Enabled</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="editSystemConfig()">
+                            <i class="fas fa-edit me-2"></i>Edit System
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Validation -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="config-card">
+                        <h4><i class="fas fa-shield-alt me-2"></i>Configuration Validation</h4>
+                        <div id="validationResults">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                <p>Click "Validate Config" to check configuration</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Actions -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button class="btn btn-custom me-2" onclick="saveConfiguration()">
+                        <i class="fas fa-save me-2"></i>Save Configuration
+                    </button>
+                    <button class="btn btn-outline-primary me-2" onclick="exportConfiguration()">
+                        <i class="fas fa-download me-2"></i>Export Config
+                    </button>
+                    <button class="btn btn-outline-secondary me-2" onclick="importConfiguration()">
+                        <i class="fas fa-upload me-2"></i>Import Config
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="resetConfiguration()">
+                        <i class="fas fa-undo me-2"></i>Reset to Defaults
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Global variables
+        let currentConfig = {};
+        let validationResults = {};
+
+        // Load configuration on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfiguration();
+        });
+
+        // Load configuration
+        async function loadConfiguration() {
+            try {
+                // Mock configuration loading
+                // In real implementation, this would load from API
+                currentConfig = {
+                    hardware: {
+                        camera_resolution: '1920x1080',
+                        camera_fps: 30,
+                        motor_steps: 200,
+                        led_brightness: 100,
+                        touch_sensitivity: 50
+                    },
+                    network: {
+                        wifi_network: 'MyRVM-Network',
+                        ip_address: '192.168.1.100',
+                        server_url: 'http://localhost:8000',
+                        connection_status: 'connected',
+                        api_endpoint: '/api/v1'
+                    },
+                    ai_models: {
+                        yolo_status: 'loaded',
+                        sam_status: 'loaded',
+                        gemini_status: 'connected',
+                        detection_threshold: 0.5,
+                        processing_mode: 'real-time'
+                    },
+                    system: {
+                        rvm_id: 'RVM-001',
+                        location: 'Building A, Floor 1',
+                        timezone: 'UTC+7',
+                        log_level: 'INFO',
+                        auto_start: 'enabled'
+                    }
+                };
+                
+                displayConfiguration();
+                validateConfiguration();
+            } catch (error) {
+                showNotification('Failed to load configuration: ' + error.message, 'error');
+            }
+        }
+
+        // Display configuration
+        function displayConfiguration() {
+            // Hardware
+            document.getElementById('cameraResolution').textContent = currentConfig.hardware.camera_resolution;
+            document.getElementById('cameraFPS').textContent = currentConfig.hardware.camera_fps;
+            document.getElementById('motorSteps').textContent = currentConfig.hardware.motor_steps;
+            document.getElementById('ledBrightness').textContent = currentConfig.hardware.led_brightness + '%';
+            document.getElementById('touchSensitivity').textContent = currentConfig.hardware.touch_sensitivity + '%';
+            
+            // Network
+            document.getElementById('wifiNetwork').textContent = currentConfig.network.wifi_network;
+            document.getElementById('ipAddress').textContent = currentConfig.network.ip_address;
+            document.getElementById('serverUrl').textContent = currentConfig.network.server_url;
+            document.getElementById('connectionStatus').textContent = currentConfig.network.connection_status;
+            document.getElementById('connectionStatus').className = 'status-badge ' + 
+                (currentConfig.network.connection_status === 'connected' ? 'valid' : 'invalid');
+            document.getElementById('apiEndpoint').textContent = currentConfig.network.api_endpoint;
+            
+            // AI Models
+            document.getElementById('yoloStatus').textContent = currentConfig.ai_models.yolo_status;
+            document.getElementById('yoloStatus').className = 'status-badge ' + 
+                (currentConfig.ai_models.yolo_status === 'loaded' ? 'valid' : 'invalid');
+            document.getElementById('samStatus').textContent = currentConfig.ai_models.sam_status;
+            document.getElementById('samStatus').className = 'status-badge ' + 
+                (currentConfig.ai_models.sam_status === 'loaded' ? 'valid' : 'invalid');
+            document.getElementById('geminiStatus').textContent = currentConfig.ai_models.gemini_status;
+            document.getElementById('geminiStatus').className = 'status-badge ' + 
+                (currentConfig.ai_models.gemini_status === 'connected' ? 'valid' : 'invalid');
+            document.getElementById('detectionThreshold').textContent = currentConfig.ai_models.detection_threshold;
+            document.getElementById('processingMode').textContent = currentConfig.ai_models.processing_mode;
+            
+            // System
+            document.getElementById('rvmId').textContent = currentConfig.system.rvm_id;
+            document.getElementById('location').textContent = currentConfig.system.location;
+            document.getElementById('timezone').textContent = currentConfig.system.timezone;
+            document.getElementById('logLevel').textContent = currentConfig.system.log_level;
+            document.getElementById('autoStart').textContent = currentConfig.system.auto_start;
+            document.getElementById('autoStart').className = 'status-badge ' + 
+                (currentConfig.system.auto_start === 'enabled' ? 'valid' : 'warning');
+        }
+
+        // Validate configuration
+        async function validateConfiguration() {
+            showNotification('Validating configuration...', 'info');
+            
+            try {
+                // Mock validation
+                // In real implementation, this would validate actual configuration
+                validationResults = {
+                    hardware: {
+                        camera: { status: 'valid', message: 'Camera configuration is valid' },
+                        motor: { status: 'valid', message: 'Motor configuration is valid' },
+                        led: { status: 'valid', message: 'LED configuration is valid' },
+                        touch: { status: 'valid', message: 'Touch screen configuration is valid' }
+                    },
+                    network: {
+                        wifi: { status: 'valid', message: 'WiFi configuration is valid' },
+                        server: { status: 'valid', message: 'Server connection is valid' },
+                        api: { status: 'valid', message: 'API endpoint is valid' }
+                    },
+                    ai_models: {
+                        yolo: { status: 'valid', message: 'YOLO model is loaded and ready' },
+                        sam: { status: 'valid', message: 'SAM model is loaded and ready' },
+                        gemini: { status: 'valid', message: 'Gemini API is connected' }
+                    },
+                    system: {
+                        rvm_id: { status: 'valid', message: 'RVM ID is valid' },
+                        location: { status: 'valid', message: 'Location is configured' },
+                        timezone: { status: 'valid', message: 'Timezone is set correctly' }
+                    }
+                };
+                
+                displayValidationResults();
+                updateConfigStatus();
+                showNotification('Configuration validation completed', 'success');
+            } catch (error) {
+                showNotification('Configuration validation failed: ' + error.message, 'error');
+            }
+        }
+
+        // Display validation results
+        function displayValidationResults() {
+            const container = document.getElementById('validationResults');
+            
+            let html = '<div class="row">';
+            
+            // Hardware validation
+            html += '<div class="col-md-6 mb-3">';
+            html += '<h6><i class="fas fa-microchip me-2"></i>Hardware</h6>';
+            for (const [component, result] of Object.entries(validationResults.hardware)) {
+                const statusClass = result.status === 'valid' ? 'valid' : 'invalid';
+                html += `
+                    <div class="config-item">
+                        <span class="config-label">${component.charAt(0).toUpperCase() + component.slice(1)}</span>
+                        <span class="status-badge ${statusClass}">${result.status}</span>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            
+            // Network validation
+            html += '<div class="col-md-6 mb-3">';
+            html += '<h6><i class="fas fa-wifi me-2"></i>Network</h6>';
+            for (const [component, result] of Object.entries(validationResults.network)) {
+                const statusClass = result.status === 'valid' ? 'valid' : 'invalid';
+                html += `
+                    <div class="config-item">
+                        <span class="config-label">${component.charAt(0).toUpperCase() + component.slice(1)}</span>
+                        <span class="status-badge ${statusClass}">${result.status}</span>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            
+            // AI Models validation
+            html += '<div class="col-md-6 mb-3">';
+            html += '<h6><i class="fas fa-brain me-2"></i>AI Models</h6>';
+            for (const [component, result] of Object.entries(validationResults.ai_models)) {
+                const statusClass = result.status === 'valid' ? 'valid' : 'invalid';
+                html += `
+                    <div class="config-item">
+                        <span class="config-label">${component.charAt(0).toUpperCase() + component.slice(1)}</span>
+                        <span class="status-badge ${statusClass}">${result.status}</span>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            
+            // System validation
+            html += '<div class="col-md-6 mb-3">';
+            html += '<h6><i class="fas fa-cog me-2"></i>System</h6>';
+            for (const [component, result] of Object.entries(validationResults.system)) {
+                const statusClass = result.status === 'valid' ? 'valid' : 'invalid';
+                html += `
+                    <div class="config-item">
+                        <span class="config-label">${component.charAt(0).toUpperCase() + component.slice(1)}</span>
+                        <span class="status-badge ${statusClass}">${result.status}</span>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Update configuration status
+        function updateConfigStatus() {
+            const statusMessage = document.getElementById('configStatusMessage');
+            
+            const allValid = Object.values(validationResults).every(section => 
+                Object.values(section).every(result => result.status === 'valid')
+            );
+            
+            if (allValid) {
+                statusMessage.textContent = 'All configuration sections are valid and ready for deployment';
+                statusMessage.className = 'mb-0 text-success';
+            } else {
+                statusMessage.textContent = 'Some configuration sections need attention';
+                statusMessage.className = 'mb-0 text-warning';
+            }
+        }
+
+        // Edit configuration functions
+        function editHardwareConfig() {
+            showNotification('Hardware configuration editor would open here', 'info');
+        }
+
+        function editNetworkConfig() {
+            showNotification('Network configuration editor would open here', 'info');
+        }
+
+        function editAIConfig() {
+            showNotification('AI models configuration editor would open here', 'info');
+        }
+
+        function editSystemConfig() {
+            showNotification('System configuration editor would open here', 'info');
+        }
+
+        // Save configuration
+        async function saveConfiguration() {
+            showNotification('Saving configuration...', 'info');
+            
+            try {
+                const response = await fetch('/api/config/save', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(currentConfig)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Configuration saved successfully', 'success');
+                } else {
+                    showNotification('Failed to save configuration: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Save configuration error: ' + error.message, 'error');
+            }
+        }
+
+        // Export configuration
+        function exportConfiguration() {
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                configuration: currentConfig,
+                validation_results: validationResults
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rvm-config-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Configuration exported', 'success');
+        }
+
+        // Import configuration
+        function importConfiguration() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const importedConfig = JSON.parse(e.target.result);
+                            currentConfig = importedConfig.configuration || importedConfig;
+                            displayConfiguration();
+                            showNotification('Configuration imported successfully', 'success');
+                        } catch (error) {
+                            showNotification('Failed to import configuration: ' + error.message, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        // Reset configuration
+        function resetConfiguration() {
+            if (confirm('Reset all configuration to defaults? This will lose all current settings.')) {
+                // Reset to default configuration
+                currentConfig = {
+                    hardware: {
+                        camera_resolution: '1920x1080',
+                        camera_fps: 30,
+                        motor_steps: 200,
+                        led_brightness: 100,
+                        touch_sensitivity: 50
+                    },
+                    network: {
+                        wifi_network: '',
+                        ip_address: '',
+                        server_url: 'http://localhost:8000',
+                        connection_status: 'disconnected',
+                        api_endpoint: '/api/v1'
+                    },
+                    ai_models: {
+                        yolo_status: 'not_loaded',
+                        sam_status: 'not_loaded',
+                        gemini_status: 'disconnected',
+                        detection_threshold: 0.5,
+                        processing_mode: 'real-time'
+                    },
+                    system: {
+                        rvm_id: 'RVM-001',
+                        location: '',
+                        timezone: 'UTC+7',
+                        log_level: 'INFO',
+                        auto_start: 'enabled'
+                    }
+                };
+                
+                displayConfiguration();
+                showNotification('Configuration reset to defaults', 'info');
+            }
+        }
+
+        // Utility functions
+        function showNotification(message, type) {
+            const alertClass = type === 'error' ? 'alert-danger' : 
+                              type === 'success' ? 'alert-success' : 'alert-info';
+            
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

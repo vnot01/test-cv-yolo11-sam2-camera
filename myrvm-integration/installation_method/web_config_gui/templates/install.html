@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RVM-Jetson Installation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .install-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 20px;
+            padding: 30px;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background: #dee2e6;
+            z-index: 1;
+        }
+        .step.active:not(:last-child)::after {
+            background: #007bff;
+        }
+        .step.completed:not(:last-child)::after {
+            background: #28a745;
+        }
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #dee2e6;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            position: relative;
+            z-index: 2;
+            font-weight: bold;
+        }
+        .step.active .step-circle {
+            background: #007bff;
+            color: white;
+        }
+        .step.completed .step-circle {
+            background: #28a745;
+            color: white;
+        }
+        .step-content {
+            display: none;
+        }
+        .step-content.active {
+            display: block;
+        }
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .btn-install {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-install:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .progress-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+        }
+        .log-entry.error {
+            color: #ff6b6b;
+        }
+        .log-entry.warning {
+            color: #ffd93d;
+        }
+        .log-entry.info {
+            color: #4ecdc4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="install-container">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h1 class="display-5 fw-bold text-primary">
+                        <i class="fas fa-download me-3"></i>
+                        RVM-Jetson Installation
+                    </h1>
+                    <p class="lead text-muted">Complete installation and configuration wizard</p>
+                </div>
+            </div>
+
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step-indicator-1">
+                    <div class="step-circle">1</div>
+                    <div class="step-title">Hardware</div>
+                </div>
+                <div class="step" id="step-indicator-2">
+                    <div class="step-circle">2</div>
+                    <div class="step-title">Network</div>
+                </div>
+                <div class="step" id="step-indicator-3">
+                    <div class="step-circle">3</div>
+                    <div class="step-title">AI Models</div>
+                </div>
+                <div class="step" id="step-indicator-4">
+                    <div class="step-circle">4</div>
+                    <div class="step-title">Calibration</div>
+                </div>
+                <div class="step" id="step-indicator-5">
+                    <div class="step-circle">5</div>
+                    <div class="step-title">Deploy</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Hardware Detection -->
+            <div class="step-content active" id="step-content-1">
+                <div class="form-section">
+                    <h4><i class="fas fa-microchip me-2"></i>Hardware Detection</h4>
+                    <p class="text-muted">Detect and validate all hardware components</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-microchip me-2"></i>CPU & Memory</h6>
+                                    <div id="cpu-info">Detecting...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-memory me-2"></i>GPU</h6>
+                                    <div id="gpu-info">Detecting...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-camera me-2"></i>Camera</h6>
+                                    <div id="camera-info">Detecting...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-wifi me-2"></i>Network</h6>
+                                    <div id="network-info">Detecting...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="btn btn-install" onclick="detectHardware()">
+                            <i class="fas fa-search me-2"></i>Detect Hardware
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Network Configuration -->
+            <div class="step-content" id="step-content-2">
+                <div class="form-section">
+                    <h4><i class="fas fa-wifi me-2"></i>Network Configuration</h4>
+                    <p class="text-muted">Configure WiFi connection and server settings</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Available Networks</h6>
+                            <div id="available-networks" class="list-group mb-3">
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Scanning for networks...</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Server Configuration</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Server URL</label>
+                                <input type="text" class="form-control" id="serverUrl" value="http://localhost:8000">
+                            </div>
+                            <button class="btn btn-outline-primary" onclick="testServerConnection()">
+                                <i class="fas fa-plug me-2"></i>Test Connection
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="btn btn-install" onclick="nextStep()">
+                            <i class="fas fa-arrow-right me-2"></i>Next Step
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: AI Models -->
+            <div class="step-content" id="step-content-3">
+                <div class="form-section">
+                    <h4><i class="fas fa-brain me-2"></i>AI Models Testing</h4>
+                    <p class="text-muted">Test and validate AI models for waste detection</p>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-eye fa-3x text-primary mb-3"></i>
+                                    <h6>YOLO Detection</h6>
+                                    <div id="yolo-status" class="badge bg-secondary">Not Tested</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-cut fa-3x text-success mb-3"></i>
+                                    <h6>SAM Segmentation</h6>
+                                    <div id="sam-status" class="badge bg-secondary">Not Tested</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-robot fa-3x text-info mb-3"></i>
+                                    <h6>Gemini AI</h6>
+                                    <div id="gemini-status" class="badge bg-secondary">Not Tested</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <button class="btn btn-install" onclick="testAIModels()">
+                            <i class="fas fa-play me-2"></i>Test AI Models
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Hardware Calibration -->
+            <div class="step-content" id="step-content-4">
+                <div class="form-section">
+                    <h4><i class="fas fa-tools me-2"></i>Hardware Calibration</h4>
+                    <p class="text-muted">Calibrate camera and other hardware components</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Camera Calibration</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Brightness</label>
+                                <input type="range" class="form-range" id="brightness" min="0" max="100" value="50">
+                                <div class="d-flex justify-content-between">
+                                    <small>0</small>
+                                    <small>100</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Contrast</label>
+                                <input type="range" class="form-range" id="contrast" min="0" max="100" value="50">
+                                <div class="d-flex justify-content-between">
+                                    <small>0</small>
+                                    <small>100</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary" onclick="calibrateCamera()">
+                                <i class="fas fa-adjust me-2"></i>Calibrate Camera
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Motor Testing</h6>
+                            <div class="mb-3">
+                                <button class="btn btn-outline-success me-2" onclick="testMotor('forward')">
+                                    <i class="fas fa-arrow-up me-2"></i>Forward
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="testMotor('backward')">
+                                    <i class="fas fa-arrow-down me-2"></i>Backward
+                                </button>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Speed</label>
+                                <input type="range" class="form-range" id="motorSpeed" min="1" max="10" value="5">
+                                <div class="d-flex justify-content-between">
+                                    <small>Slow</small>
+                                    <small>Fast</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="btn btn-install" onclick="nextStep()">
+                            <i class="fas fa-arrow-right me-2"></i>Next Step
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Deployment -->
+            <div class="step-content" id="step-content-5">
+                <div class="form-section">
+                    <h4><i class="fas fa-rocket me-2"></i>Deployment</h4>
+                    <p class="text-muted">Deploy and start RVM services</p>
+                    
+                    <div class="progress-container">
+                        <h6>Installation Progress</h6>
+                        <div class="progress mb-3">
+                            <div class="progress-bar" id="deploymentProgress" style="width: 0%"></div>
+                        </div>
+                        <div id="deploymentStatus">Ready to deploy...</div>
+                    </div>
+                    
+                    <div class="log-container" id="deploymentLogs">
+                        <div class="log-entry info">Installation log will appear here...</div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <button class="btn btn-install" onclick="startDeployment()">
+                            <i class="fas fa-rocket me-2"></i>Start Deployment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button class="btn btn-outline-secondary me-2" onclick="previousStep()" id="prevBtn" disabled>
+                        <i class="fas fa-arrow-left me-2"></i>Previous
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="nextStep()" id="nextBtn">
+                        Next<i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // Global variables
+        let currentStep = 1;
+        const totalSteps = 5;
+        let hardwareInfo = {};
+        let networkInfo = {};
+        let aiModelsInfo = {};
+
+        // Socket event handlers
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            detectHardware();
+        });
+
+        socket.on('deployment_progress', function(data) {
+            updateDeploymentProgress(data);
+        });
+
+        socket.on('deployment_complete', function(data) {
+            showNotification('Deployment completed successfully!', 'success');
+            addLogEntry('Deployment completed successfully!', 'success');
+        });
+
+        socket.on('deployment_error', function(data) {
+            showNotification('Deployment failed: ' + data.message, 'error');
+            addLogEntry('Deployment failed: ' + data.message, 'error');
+        });
+
+        // Step navigation
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateStepDisplay();
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepDisplay();
+            }
+        }
+
+        function updateStepDisplay() {
+            // Update step indicators
+            for (let i = 1; i <= totalSteps; i++) {
+                const indicator = document.getElementById(`step-indicator-${i}`);
+                const content = document.getElementById(`step-content-${i}`);
+                
+                if (i < currentStep) {
+                    indicator.className = 'step completed';
+                    content.className = 'step-content';
+                } else if (i === currentStep) {
+                    indicator.className = 'step active';
+                    content.className = 'step-content active';
+                } else {
+                    indicator.className = 'step';
+                    content.className = 'step-content';
+                }
+            }
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentStep === 1;
+            document.getElementById('nextBtn').style.display = currentStep === totalSteps ? 'none' : 'inline-block';
+        }
+
+        // Hardware detection
+        async function detectHardware() {
+            try {
+                const response = await fetch('/api/hardware/detect');
+                const data = await response.json();
+                
+                if (data.success) {
+                    hardwareInfo = data.data;
+                    updateHardwareDisplay();
+                    showNotification('Hardware detection completed', 'success');
+                } else {
+                    showNotification('Hardware detection failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Hardware detection error: ' + error.message, 'error');
+            }
+        }
+
+        function updateHardwareDisplay() {
+            document.getElementById('cpu-info').innerHTML = `
+                <strong>CPU:</strong> ${hardwareInfo.cpu || 'Unknown'}<br>
+                <strong>Memory:</strong> ${hardwareInfo.memory || 'Unknown'}
+            `;
+            document.getElementById('gpu-info').innerHTML = `
+                <strong>GPU:</strong> ${hardwareInfo.gpu || 'Unknown'}
+            `;
+            document.getElementById('camera-info').innerHTML = `
+                <strong>Status:</strong> <span class="badge bg-success">Detected</span><br>
+                <strong>Resolution:</strong> 1920x1080
+            `;
+            document.getElementById('network-info').innerHTML = `
+                <strong>Interface:</strong> wlan0<br>
+                <strong>Status:</strong> <span class="badge bg-warning">Not Connected</span>
+            `;
+        }
+
+        // Network configuration
+        async function scanNetworks() {
+            try {
+                const response = await fetch('/api/network/scan');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateNetworksDisplay(data.data);
+                } else {
+                    showNotification('Network scan failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Network scan error: ' + error.message, 'error');
+            }
+        }
+
+        function updateNetworksDisplay(networks) {
+            const container = document.getElementById('available-networks');
+            container.innerHTML = '';
+            
+            networks.forEach(network => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item';
+                item.innerHTML = `
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${network.ssid}</h6>
+                        <small>${network.signal} dBm</small>
+                    </div>
+                    <p class="mb-1">Security: ${network.security}</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="connectToNetwork('${network.ssid}')">
+                        Connect
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function connectToNetwork(ssid) {
+            const password = prompt(`Enter password for ${ssid}:`);
+            if (password) {
+                try {
+                    const response = await fetch('/api/network/connect', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ssid: ssid,
+                            password: password
+                        })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showNotification(`Connected to ${ssid}`, 'success');
+                        scanNetworks(); // Refresh list
+                    } else {
+                        showNotification('Connection failed: ' + data.message, 'error');
+                    }
+                } catch (error) {
+                    showNotification('Connection error: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function testServerConnection() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            try {
+                const response = await fetch('/api/server/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        server_url: serverUrl
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Server connection successful', 'success');
+                } else {
+                    showNotification('Server connection failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Server test error: ' + error.message, 'error');
+            }
+        }
+
+        // AI Models testing
+        async function testAIModels() {
+            try {
+                const response = await fetch('/api/ai/test');
+                const data = await response.json();
+                
+                if (data.success) {
+                    aiModelsInfo = data.data;
+                    updateAIModelsDisplay();
+                    showNotification('AI models test completed', 'success');
+                } else {
+                    showNotification('AI models test failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('AI models test error: ' + error.message, 'error');
+            }
+        }
+
+        function updateAIModelsDisplay() {
+            document.getElementById('yolo-status').innerHTML = aiModelsInfo.yolo || 'OK';
+            document.getElementById('yolo-status').className = 'badge bg-success';
+            
+            document.getElementById('sam-status').innerHTML = aiModelsInfo.sam || 'OK';
+            document.getElementById('sam-status').className = 'badge bg-success';
+            
+            document.getElementById('gemini-status').innerHTML = aiModelsInfo.gemini || 'OK';
+            document.getElementById('gemini-status').className = 'badge bg-success';
+        }
+
+        // Hardware calibration
+        async function calibrateCamera() {
+            const brightness = document.getElementById('brightness').value;
+            const contrast = document.getElementById('contrast').value;
+            
+            try {
+                const response = await fetch('/api/calibration/camera', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'calibrate',
+                        brightness: brightness,
+                        contrast: contrast
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Camera calibration completed', 'success');
+                } else {
+                    showNotification('Camera calibration failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Camera calibration error: ' + error.message, 'error');
+            }
+        }
+
+        function testMotor(direction) {
+            showNotification(`Testing motor ${direction}...`, 'info');
+            // Mock motor test
+            setTimeout(() => {
+                showNotification(`Motor ${direction} test completed`, 'success');
+            }, 1000);
+        }
+
+        // Deployment
+        async function startDeployment() {
+            try {
+                const response = await fetch('/api/deploy/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Deployment started', 'info');
+                    addLogEntry('Deployment started...', 'info');
+                } else {
+                    showNotification('Deployment start failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Deployment error: ' + error.message, 'error');
+            }
+        }
+
+        function updateDeploymentProgress(data) {
+            document.getElementById('deploymentProgress').style.width = data.progress + '%';
+            document.getElementById('deploymentStatus').textContent = data.message;
+            addLogEntry(data.message, 'info');
+        }
+
+        function addLogEntry(message, type) {
+            const logContainer = document.getElementById('deploymentLogs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Utility functions
+        function showNotification(message, type) {
+            const alertClass = type === 'error' ? 'alert-danger' : 
+                              type === 'success' ? 'alert-success' : 'alert-info';
+            
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStepDisplay();
+            scanNetworks();
+        });
+    </script>
+</body>
+</html>

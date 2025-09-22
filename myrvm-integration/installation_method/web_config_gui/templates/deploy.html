@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deployment - RVM-Jetson</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 20px;
+            padding: 30px;
+        }
+        .deploy-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        .deploy-card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .btn-deploy {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+        .btn-deploy:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .progress-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .progress-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .progress-step.completed {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        .progress-step.in-progress {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        .progress-step.pending {
+            background-color: #f8f9fa;
+            border-left: 4px solid #dee2e6;
+        }
+        .progress-step.error {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+            color: white;
+        }
+        .step-icon.completed {
+            background-color: #28a745;
+        }
+        .step-icon.in-progress {
+            background-color: #ffc107;
+        }
+        .step-icon.pending {
+            background-color: #6c757d;
+        }
+        .step-icon.error {
+            background-color: #dc3545;
+        }
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        .log-entry.error {
+            color: #ff6b6b;
+        }
+        .log-entry.warning {
+            color: #ffd93d;
+        }
+        .log-entry.info {
+            color: #4ecdc4;
+        }
+        .log-entry.success {
+            color: #51cf66;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-indicator.ready {
+            background-color: #6c757d;
+        }
+        .status-indicator.running {
+            background-color: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        .status-indicator.completed {
+            background-color: #28a745;
+        }
+        .status-indicator.error {
+            background-color: #dc3545;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h1 class="display-5 fw-bold text-primary">
+                        <i class="fas fa-rocket me-3"></i>
+                        System Deployment
+                    </h1>
+                    <p class="lead text-muted">Deploy and start RVM services</p>
+                </div>
+            </div>
+
+            <!-- Deployment Status -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="deploy-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h4>
+                                    <span class="status-indicator" id="deploymentStatus"></span>
+                                    Deployment Status: <span id="deploymentStatusText">Ready</span>
+                                </h4>
+                                <p class="mb-0" id="deploymentMessage">System is ready for deployment</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-deploy" onclick="startDeployment()" id="deployButton">
+                                    <i class="fas fa-rocket me-2"></i>Start Deployment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deployment Progress -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="deploy-card">
+                        <h4><i class="fas fa-tasks me-2"></i>Deployment Progress</h4>
+                        <div class="progress-container">
+                            <div class="progress mb-3">
+                                <div class="progress-bar" id="overallProgress" style="width: 0%"></div>
+                            </div>
+                            
+                            <!-- Deployment Steps -->
+                            <div class="progress-step pending" id="step1">
+                                <div class="step-icon pending">1</div>
+                                <div>
+                                    <h6 class="mb-1">Pre-deployment Checks</h6>
+                                    <p class="mb-0 text-muted">Validating system requirements and configuration</p>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-step pending" id="step2">
+                                <div class="step-icon pending">2</div>
+                                <div>
+                                    <h6 class="mb-1">Service Installation</h6>
+                                    <p class="mb-0 text-muted">Installing and configuring RVM services</p>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-step pending" id="step3">
+                                <div class="step-icon pending">3</div>
+                                <div>
+                                    <h6 class="mb-1">Hardware Initialization</h6>
+                                    <p class="mb-0 text-muted">Initializing and testing hardware components</p>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-step pending" id="step4">
+                                <div class="step-icon pending">4</div>
+                                <div>
+                                    <h6 class="mb-1">AI Models Loading</h6>
+                                    <p class="mb-0 text-muted">Loading YOLO and SAM models</p>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-step pending" id="step5">
+                                <div class="step-icon pending">5</div>
+                                <div>
+                                    <h6 class="mb-1">Network Configuration</h6>
+                                    <p class="mb-0 text-muted">Configuring network and server connections</p>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-step pending" id="step6">
+                                <div class="step-icon pending">6</div>
+                                <div>
+                                    <h6 class="mb-1">Service Startup</h6>
+                                    <p class="mb-0 text-muted">Starting all RVM services</p>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-step pending" id="step7">
+                                <div class="step-icon pending">7</div>
+                                <div>
+                                    <h6 class="mb-1">System Testing</h6>
+                                    <p class="mb-0 text-muted">Running final system tests</p>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-step pending" id="step8">
+                                <div class="step-icon pending">8</div>
+                                <div>
+                                    <h6 class="mb-1">Deployment Complete</h6>
+                                    <p class="mb-0 text-muted">System is ready for operation</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deployment Logs -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="deploy-card">
+                        <h4><i class="fas fa-terminal me-2"></i>Deployment Logs</h4>
+                        <div class="log-container" id="deploymentLogs">
+                            <div class="log-entry info">Deployment log will appear here...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post-Deployment Actions -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="deploy-card">
+                        <h4><i class="fas fa-check-circle me-2"></i>Post-Deployment Actions</h4>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <button class="btn btn-outline-primary w-100" onclick="testSystem()" id="testSystemBtn" disabled>
+                                    <i class="fas fa-vial me-2"></i>Test System
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <button class="btn btn-outline-success w-100" onclick="startServices()" id="startServicesBtn" disabled>
+                                    <i class="fas fa-play me-2"></i>Start Services
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <button class="btn btn-outline-info w-100" onclick="viewStatus()" id="viewStatusBtn" disabled>
+                                    <i class="fas fa-chart-line me-2"></i>View Status
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deployment Actions -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button class="btn btn-custom me-2" onclick="exportDeploymentLog()">
+                        <i class="fas fa-download me-2"></i>Export Logs
+                    </button>
+                    <button class="btn btn-outline-secondary me-2" onclick="resetDeployment()">
+                        <i class="fas fa-undo me-2"></i>Reset Deployment
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="stopDeployment()" id="stopDeploymentBtn" disabled>
+                        <i class="fas fa-stop me-2"></i>Stop Deployment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // Global variables
+        let deploymentInProgress = false;
+        let currentStep = 0;
+        const totalSteps = 8;
+        let deploymentLogs = [];
+
+        // Socket event handlers
+        socket.on('connect', function() {
+            console.log('Connected to server');
+        });
+
+        socket.on('deployment_progress', function(data) {
+            updateDeploymentProgress(data);
+        });
+
+        socket.on('deployment_complete', function(data) {
+            deploymentComplete(data);
+        });
+
+        socket.on('deployment_error', function(data) {
+            deploymentError(data);
+        });
+
+        // Start deployment
+        async function startDeployment() {
+            if (deploymentInProgress) {
+                showNotification('Deployment already in progress', 'warning');
+                return;
+            }
+
+            deploymentInProgress = true;
+            updateDeploymentStatus('running', 'Deployment in progress...');
+            
+            // Disable deploy button and enable stop button
+            document.getElementById('deployButton').disabled = true;
+            document.getElementById('stopDeploymentBtn').disabled = false;
+            
+            // Clear previous logs
+            deploymentLogs = [];
+            document.getElementById('deploymentLogs').innerHTML = '';
+            
+            // Reset all steps
+            for (let i = 1; i <= totalSteps; i++) {
+                updateStepStatus(i, 'pending');
+            }
+            
+            addLogEntry('Starting deployment...', 'info');
+            
+            try {
+                const response = await fetch('/api/deploy/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addLogEntry('Deployment started successfully', 'success');
+                } else {
+                    addLogEntry('Failed to start deployment: ' + data.message, 'error');
+                    deploymentInProgress = false;
+                    updateDeploymentStatus('error', 'Deployment failed to start');
+                    document.getElementById('deployButton').disabled = false;
+                    document.getElementById('stopDeploymentBtn').disabled = true;
+                }
+            } catch (error) {
+                addLogEntry('Deployment start error: ' + error.message, 'error');
+                deploymentInProgress = false;
+                updateDeploymentStatus('error', 'Deployment error');
+                document.getElementById('deployButton').disabled = false;
+                document.getElementById('stopDeploymentBtn').disabled = true;
+            }
+        }
+
+        // Update deployment progress
+        function updateDeploymentProgress(data) {
+            const progress = data.progress || 0;
+            const message = data.message || '';
+            
+            // Update overall progress bar
+            document.getElementById('overallProgress').style.width = progress + '%';
+            
+            // Update deployment message
+            document.getElementById('deploymentMessage').textContent = message;
+            
+            // Add log entry
+            addLogEntry(message, 'info');
+            
+            // Update current step based on progress
+            const stepNumber = Math.ceil((progress / 100) * totalSteps);
+            if (stepNumber > currentStep) {
+                currentStep = stepNumber;
+                updateStepStatus(currentStep, 'in-progress');
+                
+                // Mark previous steps as completed
+                for (let i = 1; i < currentStep; i++) {
+                    updateStepStatus(i, 'completed');
+                }
+            }
+        }
+
+        // Update step status
+        function updateStepStatus(stepNumber, status) {
+            const step = document.getElementById('step' + stepNumber);
+            const icon = step.querySelector('.step-icon');
+            
+            // Remove all status classes
+            step.className = 'progress-step ' + status;
+            icon.className = 'step-icon ' + status;
+            
+            // Update icon content
+            if (status === 'completed') {
+                icon.innerHTML = '<i class="fas fa-check"></i>';
+            } else if (status === 'error') {
+                icon.innerHTML = '<i class="fas fa-times"></i>';
+            } else {
+                icon.innerHTML = stepNumber;
+            }
+        }
+
+        // Deployment complete
+        function deploymentComplete(data) {
+            deploymentInProgress = false;
+            updateDeploymentStatus('completed', 'Deployment completed successfully!');
+            
+            // Mark all steps as completed
+            for (let i = 1; i <= totalSteps; i++) {
+                updateStepStatus(i, 'completed');
+            }
+            
+            // Update progress bar
+            document.getElementById('overallProgress').style.width = '100%';
+            
+            // Add log entry
+            addLogEntry('Deployment completed successfully!', 'success');
+            
+            // Enable post-deployment buttons
+            document.getElementById('testSystemBtn').disabled = false;
+            document.getElementById('startServicesBtn').disabled = false;
+            document.getElementById('viewStatusBtn').disabled = false;
+            
+            // Reset deployment buttons
+            document.getElementById('deployButton').disabled = false;
+            document.getElementById('stopDeploymentBtn').disabled = true;
+            
+            showNotification('Deployment completed successfully!', 'success');
+        }
+
+        // Deployment error
+        function deploymentError(data) {
+            deploymentInProgress = false;
+            updateDeploymentStatus('error', 'Deployment failed');
+            
+            // Mark current step as error
+            if (currentStep > 0) {
+                updateStepStatus(currentStep, 'error');
+            }
+            
+            // Add log entry
+            addLogEntry('Deployment failed: ' + data.message, 'error');
+            
+            // Reset deployment buttons
+            document.getElementById('deployButton').disabled = false;
+            document.getElementById('stopDeploymentBtn').disabled = true;
+            
+            showNotification('Deployment failed: ' + data.message, 'error');
+        }
+
+        // Update deployment status
+        function updateDeploymentStatus(status, message) {
+            const statusIndicator = document.getElementById('deploymentStatus');
+            const statusText = document.getElementById('deploymentStatusText');
+            
+            statusIndicator.className = 'status-indicator ' + status;
+            statusText.textContent = message;
+        }
+
+        // Add log entry
+        function addLogEntry(message, type) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = {
+                timestamp: timestamp,
+                message: message,
+                type: type
+            };
+            
+            deploymentLogs.push(logEntry);
+            
+            const logContainer = document.getElementById('deploymentLogs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Stop deployment
+        async function stopDeployment() {
+            if (!deploymentInProgress) {
+                showNotification('No deployment in progress', 'warning');
+                return;
+            }
+            
+            if (confirm('Are you sure you want to stop the deployment?')) {
+                try {
+                    // In real implementation, this would send stop signal to server
+                    deploymentInProgress = false;
+                    updateDeploymentStatus('error', 'Deployment stopped by user');
+                    
+                    // Mark current step as error
+                    if (currentStep > 0) {
+                        updateStepStatus(currentStep, 'error');
+                    }
+                    
+                    addLogEntry('Deployment stopped by user', 'warning');
+                    
+                    // Reset buttons
+                    document.getElementById('deployButton').disabled = false;
+                    document.getElementById('stopDeploymentBtn').disabled = true;
+                    
+                    showNotification('Deployment stopped', 'warning');
+                } catch (error) {
+                    showNotification('Failed to stop deployment: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Test system
+        async function testSystem() {
+            showNotification('Running system tests...', 'info');
+            addLogEntry('Running system tests...', 'info');
+            
+            try {
+                // Mock system test
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                addLogEntry('System tests completed successfully', 'success');
+                showNotification('System tests passed', 'success');
+            } catch (error) {
+                addLogEntry('System tests failed: ' + error.message, 'error');
+                showNotification('System tests failed', 'error');
+            }
+        }
+
+        // Start services
+        async function startServices() {
+            showNotification('Starting RVM services...', 'info');
+            addLogEntry('Starting RVM services...', 'info');
+            
+            try {
+                // Mock service startup
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                addLogEntry('RVM services started successfully', 'success');
+                showNotification('RVM services started', 'success');
+            } catch (error) {
+                addLogEntry('Failed to start services: ' + error.message, 'error');
+                showNotification('Failed to start services', 'error');
+            }
+        }
+
+        // View status
+        function viewStatus() {
+            showNotification('Opening system status dashboard...', 'info');
+            // In real implementation, this would open status dashboard
+            window.open('/status', '_blank');
+        }
+
+        // Export deployment log
+        function exportDeploymentLog() {
+            const logData = {
+                timestamp: new Date().toISOString(),
+                deployment_logs: deploymentLogs,
+                deployment_status: document.getElementById('deploymentStatusText').textContent
+            };
+            
+            const blob = new Blob([JSON.stringify(logData, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'deployment-log-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Deployment log exported', 'success');
+        }
+
+        // Reset deployment
+        function resetDeployment() {
+            if (confirm('Reset deployment? This will clear all progress and logs.')) {
+                // Reset all steps
+                for (let i = 1; i <= totalSteps; i++) {
+                    updateStepStatus(i, 'pending');
+                }
+                
+                // Reset progress bar
+                document.getElementById('overallProgress').style.width = '0%';
+                
+                // Clear logs
+                deploymentLogs = [];
+                document.getElementById('deploymentLogs').innerHTML = '<div class="log-entry info">Deployment log will appear here...</div>';
+                
+                // Reset status
+                updateDeploymentStatus('ready', 'System is ready for deployment');
+                document.getElementById('deploymentMessage').textContent = 'System is ready for deployment';
+                
+                // Reset buttons
+                document.getElementById('deployButton').disabled = false;
+                document.getElementById('stopDeploymentBtn').disabled = true;
+                document.getElementById('testSystemBtn').disabled = true;
+                document.getElementById('startServicesBtn').disabled = true;
+                document.getElementById('viewStatusBtn').disabled = true;
+                
+                currentStep = 0;
+                deploymentInProgress = false;
+                
+                showNotification('Deployment reset', 'info');
+            }
+        }
+
+        // Utility functions
+        function showNotification(message, type) {
+            const alertClass = type === 'error' ? 'alert-danger' : 
+                              type === 'success' ? 'alert-success' : 
+                              type === 'warning' ? 'alert-warning' : 'alert-info';
+            
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDeploymentStatus('ready', 'System is ready for deployment');
+        });
+    </script>
+</body>
+</html>
