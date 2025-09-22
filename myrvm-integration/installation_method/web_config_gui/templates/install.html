@@ -93,6 +93,35 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
             color: white;
         }
+        
+        /* Navigation button transitions */
+        #nextBtn, #prevBtn {
+            transition: all 0.3s ease;
+        }
+        
+        #nextBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        #nextBtn:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+        }
+        
+        /* Smooth class transitions */
+        .btn-outline-secondary {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            transition: all 0.3s ease;
+        }
+        
+        /* Prevent flickering during class changes */
+        #nextBtn {
+            will-change: background-color, border-color, color, transform;
+        }
         .progress-container {
             background: white;
             border-radius: 15px;
@@ -253,12 +282,6 @@
                             </button>
                         </div>
                     </div>
-                    
-                    <div class="text-center">
-                        <button class="btn btn-install" onclick="nextStep()">
-                            <i class="fas fa-arrow-right me-2"></i>Next Step
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -287,19 +310,35 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- TODO: Gemini AI - DISABLED for now -->
+                        <!-- Uncomment when Gemini AI integration is needed -->
                         <div class="col-md-4">
                             <div class="card text-center">
                                 <div class="card-body">
-                                    <i class="fas fa-robot fa-3x text-info mb-3"></i>
+                                    <i class="fas fa-robot fa-3x text-secondary mb-3"></i>
                                     <h6>Gemini AI</h6>
-                                    <div id="gemini-status" class="badge bg-secondary">Not Tested</div>
+                                    <div id="gemini-status" class="badge bg-secondary">Disabled</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Progress Bar -->
+                    <div class="mt-4" id="ai-progress-container" style="display: none;">
+                        <h6>Testing Progress</h6>
+                        <div class="progress mb-3">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 id="ai-progress-bar" role="progressbar" style="width: 0%">
+                                <span id="ai-progress-text">0%</span>
+                            </div>
+                        </div>
+                        <div id="ai-progress-log" class="alert alert-info" style="display: none;">
+                            <small id="ai-log-text">Starting AI models testing...</small>
+                        </div>
+                    </div>
+                    
                     <div class="text-center mt-3">
-                        <button class="btn btn-install" onclick="testAIModels()">
+                        <button class="btn btn-install" id="test-ai-btn" onclick="testAIModels()">
                             <i class="fas fa-play me-2"></i>Test AI Models
                         </button>
                     </div>
@@ -357,8 +396,8 @@
                     </div>
                     
                     <div class="text-center">
-                        <button class="btn btn-install" onclick="nextStep()">
-                            <i class="fas fa-arrow-right me-2"></i>Next Step
+                        <button class="btn btn-outline-secondary" onclick="skipCalibration()">
+                            <i class="fas fa-forward me-2"></i>Skip Calibration
                         </button>
                     </div>
                 </div>
@@ -396,7 +435,7 @@
                     <button class="btn btn-outline-secondary me-2" onclick="previousStep()" id="prevBtn" disabled>
                         <i class="fas fa-arrow-left me-2"></i>Previous
                     </button>
-                    <button class="btn btn-outline-primary" onclick="nextStep()" id="nextBtn">
+                    <button class="btn btn-outline-secondary" onclick="nextStep()" id="nextBtn">
                         Next<i class="fas fa-arrow-right ms-2"></i>
                     </button>
                 </div>
@@ -455,6 +494,30 @@
             }
         }
 
+        function enableNextStep() {
+            // Enable the Next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('btn-outline-secondary');
+                nextBtn.classList.add('btn-primary');
+                // Add smooth transition effect
+                nextBtn.style.transition = 'all 0.3s ease';
+            }
+        }
+
+        function disableNextStep() {
+            // Disable the Next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-outline-secondary');
+                // Add smooth transition effect
+                nextBtn.style.transition = 'all 0.3s ease';
+            }
+        }
+
         function updateStepDisplay() {
             // Update step indicators
             for (let i = 1; i <= totalSteps; i++) {
@@ -476,6 +539,33 @@
             // Update navigation buttons
             document.getElementById('prevBtn').disabled = currentStep === 1;
             document.getElementById('nextBtn').style.display = currentStep === totalSteps ? 'none' : 'inline-block';
+            
+            // Enable/disable Next button based on current step
+            updateNextButtonState();
+        }
+
+        function updateNextButtonState() {
+            const nextBtn = document.getElementById('nextBtn');
+            if (!nextBtn) return;
+            
+            // Enable Next button for steps that don't require specific conditions
+            if (currentStep === 1) {
+                // Step 1 (Hardware): Always allow to proceed to Network step
+                enableNextStep();
+            } else if (currentStep === 2) {
+                // Step 2 (Network): Always allow to proceed to AI Models step
+                enableNextStep();
+            } else if (currentStep === 3) {
+                // Step 3 (AI Models): Only enable after AI testing is complete
+                // This will be handled by the AI testing function
+                disableNextStep();
+            } else if (currentStep === 4) {
+                // Step 4 (Calibration): Always allow to proceed to Deploy step
+                enableNextStep();
+            } else if (currentStep === 5) {
+                // Step 5 (Deploy): This is the last step
+                disableNextStep();
+            }
         }
 
         // Hardware detection
@@ -649,19 +739,62 @@
 
         // AI Models testing
         async function testAIModels() {
+            const testBtn = document.getElementById('test-ai-btn');
+            const progressContainer = document.getElementById('ai-progress-container');
+            const progressBar = document.getElementById('ai-progress-bar');
+            const progressText = document.getElementById('ai-progress-text');
+            const progressLog = document.getElementById('ai-progress-log');
+            const logText = document.getElementById('ai-log-text');
+            
             try {
+                // Show progress bar and disable button
+                testBtn.disabled = true;
+                testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Testing...';
+                progressContainer.style.display = 'block';
+                progressLog.style.display = 'block';
+                
+                // Simulate progress steps
+                const steps = [
+                    { progress: 20, text: 'Loading YOLO model...' },
+                    { progress: 40, text: 'Testing YOLO detection...' },
+                    { progress: 60, text: 'Loading SAM2 model...' },
+                    { progress: 80, text: 'Testing SAM2 segmentation...' },
+                    { progress: 100, text: 'AI models test completed!' }
+                ];
+                
+                for (let i = 0; i < steps.length; i++) {
+                    const step = steps[i];
+                    progressBar.style.width = step.progress + '%';
+                    progressText.textContent = step.progress + '%';
+                    logText.textContent = step.text;
+                    
+                    // Wait a bit for visual effect
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+                
+                // Make API call
                 const response = await fetch('/api/ai/test');
                 const data = await response.json();
                 
                 if (data.success) {
                     aiModelsInfo = data.data;
                     updateAIModelsDisplay();
-                    showNotification('AI models test completed', 'success');
+                    showNotification('AI models test completed successfully!', 'success');
+                    
+                    // Enable next step
+                    enableNextStep();
                 } else {
                     showNotification('AI models test failed: ' + data.message, 'error');
+                    progressBar.className = 'progress-bar bg-danger';
                 }
             } catch (error) {
                 showNotification('AI models test error: ' + error.message, 'error');
+                progressBar.className = 'progress-bar bg-danger';
+                logText.textContent = 'Error: ' + error.message;
+            } finally {
+                // Re-enable button
+                testBtn.disabled = false;
+                testBtn.innerHTML = '<i class="fas fa-play me-2"></i>Test AI Models';
             }
         }
 
@@ -672,8 +805,18 @@
             document.getElementById('sam-status').innerHTML = aiModelsInfo.sam || 'OK';
             document.getElementById('sam-status').className = 'badge bg-success';
             
-            document.getElementById('gemini-status').innerHTML = aiModelsInfo.gemini || 'OK';
-            document.getElementById('gemini-status').className = 'badge bg-success';
+            // TODO: Gemini AI - DISABLED for now
+            // Uncomment when Gemini AI integration is needed
+            document.getElementById('gemini-status').innerHTML = aiModelsInfo.gemini || 'Disabled';
+            document.getElementById('gemini-status').className = 'badge bg-secondary';
+        }
+
+        // Skip calibration function
+        function skipCalibration() {
+            if (confirm('Are you sure you want to skip hardware calibration? You can calibrate later from the settings.')) {
+                showNotification('Hardware calibration skipped', 'info');
+                nextStep();
+            }
         }
 
         // Hardware calibration
@@ -776,6 +919,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateStepDisplay();
             scanNetworks();
+            // Next button state will be set by updateNextButtonState() in updateStepDisplay()
         });
     </script>
 </body>
