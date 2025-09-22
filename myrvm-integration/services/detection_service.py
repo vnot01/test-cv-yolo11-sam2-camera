@@ -24,6 +24,14 @@ except ImportError:
     print("❌ Ultralytics not found. Please install: pip install ultralytics")
     sys.exit(1)
 
+# Import timezone utilities
+try:
+    from utils.timezone_manager import now
+except ImportError:
+    # Fallback if timezone_manager is not available
+    def now():
+        return datetime.now()
+
 class DetectionService:
     """Service for object detection and segmentation"""
     

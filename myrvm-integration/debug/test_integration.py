@@ -14,13 +14,25 @@ import subprocess
 
 # Add parent directories to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
-sys.path.append(str(Path(__file__).parent.parent / "api-client"))
+sys.path.append(str(Path(__file__).parent.parent / "api_client"))
 sys.path.append(str(Path(__file__).parent.parent / "services"))
 sys.path.append(str(Path(__file__).parent.parent / "debug"))
 
-from myrvm_api_client import MyRVMAPIClient
-from detection_service import DetectionService
-from system_monitor import SystemMonitor
+from api_client.myrvm_api_client import MyRVMAPIClient
+from services.detection_service import DetectionService
+from debug.system_monitor import SystemMonitor
+
+# Import timezone utilities
+try:
+    from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
+except ImportError:
+    # Fallback if timezone_manager is not available
+    def now():
+        return datetime.now()
+    def format_datetime(dt):
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+    def utc_now():
+        return datetime.utcnow()
 
 class IntegrationTester:
     """Integration testing tool"""
@@ -252,7 +264,6 @@ class IntegrationTester:
         # Test MyRVM Platform connectivity
         try:
             import requests
-from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
             response = requests.get("http://localhost:8000/api/health", timeout=5)
             if response.status_code == 200:
                 self._record_test("MyRVM Platform Connectivity", True, "MyRVM Platform reachable")
