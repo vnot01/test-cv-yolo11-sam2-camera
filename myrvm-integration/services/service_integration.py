@@ -756,8 +756,17 @@ class MyRVMServiceIntegration:
 
 # Example usage and testing
 if __name__ == "__main__":
+    # Load configuration
+    import json
+    try:
+        with open('config/production_config.json', 'r') as f:
+            config = json.load(f)
+        rvm_id = config.get('remote_access', {}).get('rvm_id', 1)
+    except:
+        rvm_id = 1
+    
     # Test service integration
-    integration = MyRVMServiceIntegration("4")
+    integration = MyRVMServiceIntegration(str(rvm_id))
     
     try:
         # Start services

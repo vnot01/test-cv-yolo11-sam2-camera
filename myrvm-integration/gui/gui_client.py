@@ -421,8 +421,17 @@ class GUIClient:
 
 # Example usage and testing
 if __name__ == "__main__":
+    # Load configuration
+    import json
+    try:
+        with open('config/production_config.json', 'r') as f:
+            config = json.load(f)
+        rvm_id = config.get('remote_access', {}).get('rvm_id', 1)
+    except:
+        rvm_id = 1
+    
     # Test GUI client
-    gui_client = GUIClient("4")
+    gui_client = GUIClient(str(rvm_id))
     
     try:
         print("Starting GUI Client...")

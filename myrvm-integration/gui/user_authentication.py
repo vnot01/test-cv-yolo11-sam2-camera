@@ -385,8 +385,17 @@ class UserAuthenticationHandler:
 
 # Example usage and testing
 if __name__ == "__main__":
+    # Load configuration
+    import json
+    try:
+        with open('config/production_config.json', 'r') as f:
+            config = json.load(f)
+        rvm_id = config.get('remote_access', {}).get('rvm_id', 1)
+    except:
+        rvm_id = 1
+    
     # Test user authentication handler
-    auth_handler = UserAuthenticationHandler("4")
+    auth_handler = UserAuthenticationHandler(rvm_id=str(rvm_id))
     
     print("User Authentication Handler Test:")
     print("=" * 50)

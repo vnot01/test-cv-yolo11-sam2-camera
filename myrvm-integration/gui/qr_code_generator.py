@@ -264,8 +264,17 @@ class QRCodeGenerator:
 
 # Example usage and testing
 if __name__ == "__main__":
+    # Load configuration
+    import json
+    try:
+        with open('config/production_config.json', 'r') as f:
+            config = json.load(f)
+        rvm_id = config.get('remote_access', {}).get('rvm_id', 1)
+    except:
+        rvm_id = 1
+    
     # Test QR code generator
-    generator = QRCodeGenerator("4")
+    generator = QRCodeGenerator(str(rvm_id))
     
     print("QR Code Generator Test:")
     print("=" * 50)

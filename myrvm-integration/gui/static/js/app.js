@@ -387,8 +387,9 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && window.app.currentScreen === 'login') {
         // Simulate QR code scan for testing
+        // Note: In production, this should be loaded from server configuration
         const mockQRData = {
-            rvm_id: '4',
+            rvm_id: '4', // This should be dynamically loaded from config
             timestamp: Math.floor(Date.now() / 1000),
             action: 'login',
             session_token: 'test_token_' + Date.now(),

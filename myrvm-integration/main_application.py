@@ -277,8 +277,10 @@ class MyRVMApplication:
         """Initialize Configuration Manager"""
         try:
             self.logger.info("Initializing Configuration Manager...")
+            # Get RVM ID from configuration
+            rvm_id = self.production_config.get('remote_access', {}).get('rvm_id', 1)
             # Initialize with None API client first, will be updated later
-            self.config_manager = EnhancedConfigurationManager(api_client=None, rvm_id="4")
+            self.config_manager = EnhancedConfigurationManager(api_client=None, rvm_id=str(rvm_id))
             self.services_status['config_manager'] = 'initialized'
             self.logger.info("Configuration Manager initialized")
         except Exception as e:
@@ -300,8 +302,10 @@ class MyRVMApplication:
         """Initialize Service Integration"""
         try:
             self.logger.info("Initializing Service Integration...")
+            # Get RVM ID from configuration
+            rvm_id = self.production_config.get('remote_access', {}).get('rvm_id', 1)
             self.service_integration = MyRVMServiceIntegration(
-                rvm_id="4",
+                rvm_id=str(rvm_id),
                 config_dir="config"
             )
             self.services_status['service_integration'] = 'initialized'
@@ -356,8 +360,10 @@ class MyRVMApplication:
             gui_config = self.production_config['services']['gui_client']
             port = gui_config.get('port', 5001)
             
+            # Get RVM ID from configuration
+            rvm_id = self.production_config.get('remote_access', {}).get('rvm_id', 1)
             self.gui_client = GUIClient(
-                rvm_id="4",
+                rvm_id=str(rvm_id),
                 host="0.0.0.0",
                 port=port,
                 api_client=self.api_client,

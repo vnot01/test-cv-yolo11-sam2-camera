@@ -750,11 +750,22 @@ class EnhancedMyRVMAPIClient:
 
 # Example usage and testing
 if __name__ == "__main__":
+    # Load configuration
+    import json
+    try:
+        with open('config/production_config.json', 'r') as f:
+            config = json.load(f)
+        rvm_id = config.get('remote_access', {}).get('rvm_id', 1)
+        base_url = config.get('remote_access', {}).get('server_url', 'http://localhost:8000')
+    except:
+        rvm_id = 1
+        base_url = "http://localhost:8000"
+    
     # Initialize Enhanced API client
     client = EnhancedMyRVMAPIClient(
-        base_url="http://localhost:8000",
+        base_url=base_url,
         api_token=None,
-        rvm_id="4"
+        rvm_id=str(rvm_id)
     )
     
     # Test connectivity
