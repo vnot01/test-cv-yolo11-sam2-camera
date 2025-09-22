@@ -43,7 +43,7 @@ class IntegrationTester:
         self.test_results = []
         
         # Initialize services
-        self.api_client = MyRVMAPIClient()
+        self.api_client = MyRVMAPIClient(base_url="http://100.123.143.87:8001")
         self.detection_service = DetectionService()
         self.system_monitor = SystemMonitor()
     
@@ -264,7 +264,7 @@ class IntegrationTester:
         # Test MyRVM Platform connectivity
         try:
             import requests
-            response = requests.get("http://localhost:8000/api/health", timeout=5)
+            response = requests.get("http://100.123.143.87:8001/api/v2/deposits", timeout=5)
             if response.status_code == 200:
                 self._record_test("MyRVM Platform Connectivity", True, "MyRVM Platform reachable")
             else:
