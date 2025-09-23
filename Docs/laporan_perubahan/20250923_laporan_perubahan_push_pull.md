@@ -31,3 +31,7 @@ Push terbaru berisi penambahan dokumentasi Register RVM, perbaikan Dashboard (pr
 ## Penanggung Jawab
 - RVM/Jetson (Edge): UI Dashboard & deployment flow.
 - MyRVM-Platform (Server): API Key & endpoint registrasi.
+
+## Quick Links
+- API Reference: `myrvm-integration/docs/API_REFERENCE.md`
+- Network Configuration: `myrvm-integration/docs/NETWORK_CONFIGURATION.md`
