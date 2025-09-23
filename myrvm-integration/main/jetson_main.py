@@ -39,7 +39,7 @@ class JetsonMain:
         
         # Initialize services
         self.api_client = MyRVMAPIClient(
-            base_url=self.config.get('myrvm_base_url', 'http://localhost:8000'),
+            base_url=self.config.get('server_url', 'http://localhost:8000'),
             api_token=self.config.get('api_token'),
             tunnel_url=self.config.get('myrvm_tunnel_url'),
             use_tunnel=self.config.get('use_tunnel', False)
@@ -66,7 +66,7 @@ class JetsonMain:
         config_path = Path(__file__).parent / config_file
         
         default_config = {
-            'myrvm_base_url': 'http://localhost:8000',
+            'server_url': 'http://localhost:8000',
             'api_token': None,
             'camera_index': 0,
             'rvm_id': 1,

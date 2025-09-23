@@ -4,7 +4,7 @@
       "development": {
         "name": "Development",
         "description": "Development environment for testing and development",
-        "api_url": "http://localhost:8000",
+        "server_url": "http://100.123.143.87:8001",
         "debug_mode": true,
         "log_level": "DEBUG",
         "auto_restart": true,
@@ -14,7 +14,7 @@
       "staging": {
         "name": "Staging",
         "description": "Staging environment for pre-production testing",
-        "api_url": "http://172.28.233.83:8001",
+        "server_url": "http://100.123.143.87:8001",
         "debug_mode": false,
         "log_level": "INFO",
         "auto_restart": true,
@@ -24,7 +24,7 @@
       "production": {
         "name": "Production",
         "description": "Production environment for live deployment",
-        "api_url": "http://172.28.233.83:8001",
+        "server_url": "http://100.123.143.87:8001",
         "debug_mode": false,
         "log_level": "WARNING",
         "auto_restart": true,

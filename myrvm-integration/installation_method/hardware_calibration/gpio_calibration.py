@@ -8,7 +8,59 @@ import time
 import logging
 import json
 from typing import Dict, List, Optional, Any
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    # Mock GPIO for non-Raspberry Pi systems
+    class MockGPIO:
+        BCM = 'BCM'
+        OUT = 'OUT'
+        IN = 'IN'
+        HIGH = 1
+        LOW = 0
+        PUD_UP = 'PUD_UP'
+        PUD_DOWN = 'PUD_DOWN'
+        RISING = 'RISING'
+        FALLING = 'FALLING'
+        BOTH = 'BOTH'
+        
+        @staticmethod
+        def setmode(mode):
+            pass
+        
+        @staticmethod
+        def setwarnings(flag):
+            pass
+        
+        @staticmethod
+        def setup(pin, mode, pull_up_down=None):
+            pass
+        
+        @staticmethod
+        def output(pin, value):
+            pass
+        
+        @staticmethod
+        def input(pin):
+            return MockGPIO.LOW
+        
+        @staticmethod
+        def add_event_detect(pin, edge, bouncetime=None):
+            pass
+        
+        @staticmethod
+        def remove_event_detect(pin):
+            pass
+        
+        @staticmethod
+        def event_detected(pin):
+            return False
+        
+        @staticmethod
+        def cleanup():
+            pass
+    
+    GPIO = MockGPIO()
 
 logger = logging.getLogger(__name__)
 

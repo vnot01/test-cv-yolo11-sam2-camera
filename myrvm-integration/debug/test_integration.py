@@ -14,13 +14,25 @@ import subprocess
 
 # Add parent directories to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
-sys.path.append(str(Path(__file__).parent.parent / "api-client"))
+sys.path.append(str(Path(__file__).parent.parent / "api_client"))
 sys.path.append(str(Path(__file__).parent.parent / "services"))
 sys.path.append(str(Path(__file__).parent.parent / "debug"))
 
-from myrvm_api_client import MyRVMAPIClient
-from detection_service import DetectionService
-from system_monitor import SystemMonitor
+from api_client.myrvm_api_client import MyRVMAPIClient
+from services.detection_service import DetectionService
+from debug.system_monitor import SystemMonitor
+
+# Import timezone utilities
+try:
+    from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
+except ImportError:
+    # Fallback if timezone_manager is not available
+    def now():
+        return datetime.now()
+    def format_datetime(dt):
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+    def utc_now():
+        return datetime.utcnow()
 
 class IntegrationTester:
     """Integration testing tool"""
@@ -30,8 +42,11 @@ class IntegrationTester:
         self.logger = self._setup_logger()
         self.test_results = []
         
+        # Load configuration
+        self.config = self._load_config()
+        
         # Initialize services
-        self.api_client = MyRVMAPIClient()
+        self.api_client = MyRVMAPIClient(base_url=self.config.get('server_url', 'http://100.123.143.87:8001'))
         self.detection_service = DetectionService()
         self.system_monitor = SystemMonitor()
     
@@ -53,6 +68,22 @@ class IntegrationTester:
         logger.addHandler(console_handler)
         
         return logger
+    
+    def _load_config(self) -> dict:
+        """Load configuration from production_config.json"""
+        try:
+            config_path = Path(__file__).parent.parent / "config" / "production_config.json"
+            if config_path.exists():
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    self.logger.info(f"✅ Loaded configuration from {config_path}")
+                    return config
+            else:
+                self.logger.warning(f"⚠️  Configuration file not found: {config_path}")
+                return {}
+        except Exception as e:
+            self.logger.error(f"❌ Failed to load configuration: {e}")
+            return {}
     
     def _record_test(self, test_name: str, success: bool, message: str, details: dict = None):
         """Record test result"""
@@ -149,14 +180,20 @@ class IntegrationTester:
             return  # Skip other tests if platform is not reachable
         
         # Test engine registration
+        # Get Tailscale IP from configuration
+        tailscale_ip = self.config.get('tailscale_network', {}).get('rvm_ip', '100.117.234.2')
+        jetson_port = self.config.get('jetson_port', 5000)
+        
+        self.logger.info(f"🔗 Using Tailscale IP: {tailscale_ip}:{jetson_port}")
+        
         engine_data = {
             'name': 'Jetson Orin Test',
             'type': 'jetson_edge',
             'status': 'active',
             'capabilities': ['object_detection', 'segmentation'],
             'location': 'Test Device',
-            'ip_address': '192.168.1.11',
-            'port': 5000
+            'ip_address': tailscale_ip,
+            'port': jetson_port
         }
         
         success, response = self.api_client.register_processing_engine(engine_data)
@@ -252,12 +289,12 @@ class IntegrationTester:
         # Test MyRVM Platform connectivity
         try:
             import requests
-from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
-            response = requests.get("http://localhost:8000/api/health", timeout=5)
+            server_url = self.config.get('server_url', 'http://100.123.143.87:8001')
+            response = requests.get(f"{server_url}/api/health-check", timeout=5)
             if response.status_code == 200:
-                self._record_test("MyRVM Platform Connectivity", True, "MyRVM Platform reachable")
+                self._record_test("MyRVM Platform Connectivity", True, f"MyRVM Platform reachable at {server_url}")
             else:
-                self._record_test("MyRVM Platform Connectivity", False, f"HTTP {response.status_code}")
+                self._record_test("MyRVM Platform Connectivity", False, f"HTTP {response.status_code} from {server_url}")
         except Exception as e:
             self._record_test("MyRVM Platform Connectivity", False, f"Connection failed: {e}")
     

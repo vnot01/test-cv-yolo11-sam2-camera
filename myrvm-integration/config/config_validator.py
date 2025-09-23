@@ -52,8 +52,8 @@ class ConfigurationValidator:
                 data_type=str,
                 pattern=r'^[a-zA-Z0-9_-]+$'
             ),
-            'myrvm_base_url': ValidationRule(
-                field='myrvm_base_url',
+            'server_url': ValidationRule(
+                field='server_url',
                 required=True,
                 data_type=str,
                 custom_validator=self._validate_url
@@ -592,7 +592,7 @@ if __name__ == "__main__":
     # Test configuration
     test_config = {
         "rvm_id": "4", # This should match production_config.json
-        "myrvm_base_url": "http://172.28.233.83:8001",
+        "server_url": "http://100.123.143.87:8001",
         "api_key": "test_api_key_12345",
         "camera_index": 0,
         "capture_interval": 5.0,

@@ -44,7 +44,7 @@ class CameraService:
         self.camera = None
         self.detection_service = DetectionService()
         self.api_client = MyRVMAPIClient(
-            base_url=config.get('myrvm_base_url'),
+            base_url=config.get('server_url'),
             use_tunnel=config.get('use_tunnel', False)
         )
         
@@ -391,7 +391,7 @@ if __name__ == "__main__":
             'confidence_threshold': 0.5,
             'rvm_id': 1,
             'auto_processing': True,
-            'myrvm_base_url': 'http://172.28.233.83:8001',
+            'server_url': 'http://100.123.143.87:8001',
             'use_tunnel': False,
             'max_processing_queue': 10
         }

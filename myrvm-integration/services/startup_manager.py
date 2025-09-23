@@ -154,7 +154,7 @@ class StartupManager:
                 config = json.load(f)
             
             # Validate required fields
-            required_fields = ['myrvm_base_url', 'rvm_id']
+            required_fields = ['server_url', 'rvm_id']
             for field in required_fields:
                 if field not in config:
                     self.logger.error(f"Required configuration field missing: {field}")
@@ -192,7 +192,7 @@ class StartupManager:
             with open(config_file, 'r') as f:
                 config = json.load(f)
             
-            api_url = config.get('myrvm_base_url', 'http://localhost:8000')
+            api_url = config.get('server_url', 'http://localhost:8000')
             
             # Test API connectivity
             response = requests.get(f"{api_url}/health", timeout=10)

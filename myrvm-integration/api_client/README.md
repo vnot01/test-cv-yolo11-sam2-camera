@@ -52,18 +52,28 @@ The API client uses configuration from `config.json`:
 
 ```json
 {
-  "myrvm_base_url": "http://172.28.233.83:8001",
+  "server_url": "http://100.123.143.87:8001",
   "myrvm_tunnel_url": "https://your-tunnel-domain.com",
   "api_token": null,
   "jetson_ip": "172.28.93.97",
-  "use_tunnel": false,
-  "tunnel_type": "zerotier",
+  "use_tunnel": true,
+  "tunnel_type": "tailscale",
   "fallback_to_local": true,
-  "zerotier_network": {
+  "tailscale_network": {
     "rvm_ip": "172.28.93.97",
-    "platform_ip": "172.28.233.83",
-    "platform_port": 8001,
-    "network_id": "9bee8941b52c05b9"
+    "server_ip": "100.123.143.87",
+    "server_port": 8001,
+    "tailscale_hostname": "myrvm-jetson"
+  },
+  "emergency_tunnel": {
+    "type": "zerotier",
+    "enabled": true,
+    "zerotier_network": {
+      "rvm_ip": "172.28.93.97",
+      "server_ip": "100.123.143.87",
+      "server_port": 8001,
+      "network_id": "9bee8941b52c05b9"
+    }
   }
 }
 ```
@@ -590,7 +600,7 @@ def save_config(config, config_path="config.json"):
 # Usage
 config = load_config()
 client = MyRVMAPIClient(
-    base_url=config.get('myrvm_base_url'),
+    base_url=config.get('server_url'),
     use_tunnel=config.get('use_tunnel', False)
 )
 ```
@@ -979,7 +989,7 @@ if __name__ == '__main__':
 
 ### **Common Issues**
 1. **Authentication Issues:** Check credentials and token format
-2. **Network Connectivity:** Verify ZeroTier network status
+2. **Network Connectivity:** Verify Tailscale network status (ZeroTier as emergency backup)
 3. **Validation Errors:** Ensure all required fields are provided
 4. **Server Errors:** Check server-side logs and configuration
 

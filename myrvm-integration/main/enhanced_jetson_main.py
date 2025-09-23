@@ -128,7 +128,7 @@ from utils.timezone_manager import get_timezone_manager, now, format_datetime, u
             
             # Initialize API client
             self.api_client = MyRVMAPIClient(
-                base_url=self.config.get('myrvm_base_url'),
+                base_url=self.config.get('server_url'),
                 use_tunnel=self.config.get('use_tunnel', False)
             )
             self.services['api_client'] = self.api_client
