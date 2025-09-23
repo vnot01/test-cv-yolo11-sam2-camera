@@ -823,7 +823,6 @@ X-API-Key: {api_key}
 Content-Type: application/json
 
 {
-  "rvm_id": 1,
   "device_name": "RVM-Orin1",
   "software_version": "v1.2.3",
   "timezone": "Asia/Jakarta"
