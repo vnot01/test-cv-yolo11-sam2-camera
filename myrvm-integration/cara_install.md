@@ -1,10 +1,12 @@
 ## �� **Cara Menjalankan Installation Method**
 ### **🌐 Akses Web Interface:**
 
-1. **Installation Wizard:** http://localhost:8080/install
-2. **Dashboard:** http://localhost:8080/
-3. **Network Config:** http://localhost:8080/network
-4. **Hardware Config:** http://localhost:8080/hardware
+1. **Installation Wizard:** http://rvm_ip:8080/install
+2. **Dashboard:** http://rvm_ip:8080/
+3. **Network Config:** http://rvm_ip:8080/network
+4. **Hardware Config:** http://rvm_ip:8080/hardware
+
+**Note:** Ganti `rvm_ip` dengan IP address RVM yang sesungguhnya (contoh: `100.117.234.2` untuk Tailscale atau `172.28.93.97` untuk ZeroTier)
 
 ### **📋 Cara Menjalankan (4 Opsi):**
 #### **🔧 Opsi 1: Script Install Lengkap (Recommended)**

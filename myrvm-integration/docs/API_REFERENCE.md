@@ -220,6 +220,28 @@ ssh -L 5000:100.117.234.2:5000 user@rvm
 curl http://localhost:5000/health
 ```
 
+### **📝 IP Address Placeholders:**
+
+**`rvm_ip`** - Placeholder untuk IP address RVM-Jetson
+- **Ganti dengan:** IP address RVM yang sesungguhnya
+- **Contoh:** `100.117.234.2` (Tailscale) atau `172.28.93.97` (ZeroTier)
+- **Penggunaan:** Semua endpoint RVM-Jetson
+
+**`server_ip`** - Placeholder untuk IP address MyRVM-Platform Server
+- **Ganti dengan:** IP address server yang sesungguhnya
+- **Contoh:** `100.123.143.87` (Tailscale) atau `172.28.233.83` (ZeroTier)
+- **Penggunaan:** Semua endpoint MyRVM-Platform
+
+**`localhost`** - Hanya untuk SSH port forwarding
+- **Penggunaan:** Hanya jika menggunakan SSH tunnel
+- **Contoh:** `ssh -L 8080:rvm_ip:8080 user@rvm`
+- **Akses:** `http://localhost:8080` (setelah port forwarding)
+
+**Note:** 
+- `rvm_ip` = IP address RVM yang sesungguhnya (contoh: `100.117.234.2` untuk Tailscale atau `172.28.93.97` untuk ZeroTier)
+- `server_ip` = IP address MyRVM-Platform Server yang sesungguhnya (contoh: `100.123.143.87` untuk Tailscale atau `172.28.233.83` untuk ZeroTier)
+- `localhost` = Hanya digunakan jika menggunakan SSH port forwarding
+
 ## 🔐 Authentication
 
 ### **Login**
@@ -838,7 +860,7 @@ metadata: {
 ## 🔧 Installation Method APIs
 
 **Provider:** RVM-Jetson (Edge Device)  
-**Base URL:** `http://rvm_ip:8080` atau `http://localhost:8080`  
+**Base URL:** `http://rvm_ip:8080` atau `http://localhost:8080` (jika menggunakan port forwarding)  
 **Purpose:** Installation process, hardware detection, network setup  
 **Access:** Local endpoints (no authentication required)
 
@@ -1010,7 +1032,7 @@ POST /api/deploy/start
 ## 🌐 Remote Access APIs
 
 **Provider:** RVM-Jetson (Edge Device)  
-**Base URL:** `http://rvm_ip:5000` atau `http://localhost:5000`  
+**Base URL:** `http://rvm_ip:5000` atau `http://localhost:5000` (jika menggunakan port forwarding)  
 **Purpose:** Remote control, monitoring, command execution  
 **Access:** Remote endpoints (API key authentication)
 
@@ -1092,7 +1114,7 @@ Content-Type: application/json
 ## 📱 GUI Client APIs
 
 **Provider:** RVM-Jetson (Edge Device)  
-**Base URL:** `http://rvm_ip:5001` atau `http://localhost:5001`  
+**Base URL:** `http://rvm_ip:5001` atau `http://localhost:5001` (jika menggunakan port forwarding)  
 **Purpose:** Touch screen interface, user interaction  
 **Access:** Local endpoints (no authentication required)
 
@@ -1127,7 +1149,7 @@ Content-Type: application/json
 ## 📷 Camera Service APIs
 
 **Provider:** RVM-Jetson (Edge Device)  
-**Base URL:** `http://rvm_ip:5002` atau `http://localhost:5002`  
+**Base URL:** `http://rvm_ip:5002` atau `http://localhost:5002` (jika menggunakan port forwarding)  
 **Purpose:** Camera control, image capture, streaming  
 **Access:** Local endpoints (API key authentication)
 
@@ -1460,15 +1482,15 @@ if success:
 #### **🔧 Installation & Setup:**
 ```bash
 # Hardware detection
-curl http://localhost:8080/api/hardware/detect
+curl http://rvm_ip:8080/api/hardware/detect
 
 # Network scan
-curl http://localhost:8080/api/network/scan
+curl http://rvm_ip:8080/api/network/scan
 
 # Server test
-curl -X POST http://localhost:8080/api/server/test \
+curl -X POST http://rvm_ip:8080/api/server/test \
   -H "Content-Type: application/json" \
-  -d '{"server_url": "http://100.123.143.87:8001"}'
+  -d '{"server_url": "http://server_ip:8001"}'
 ```
 
 #### **🤖 AI Processing:**
