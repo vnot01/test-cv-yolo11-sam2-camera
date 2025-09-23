@@ -270,6 +270,11 @@
                                     </div>
                                 </div>
                             </div>
+                            <div id="network-status" class="mt-2" style="display: none;">
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>Networks detected and ready
+                                </small>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <h6>Server Configuration</h6>
@@ -280,6 +285,11 @@
                             <button class="btn btn-outline-primary" onclick="testServerConnection()">
                                 <i class="fas fa-plug me-2"></i>Test Connection
                             </button>
+                            <div id="server-status" class="mt-2" style="display: none;">
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>Server connection verified
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -638,6 +648,11 @@
                     updateNetworksDisplay(data.data);
                     // Show the message from API (includes explanation for 1 network)
                     showNotification(data.message, 'success');
+                    
+                    // Enable next step if networks are found
+                    if (data.data && data.data.length > 0) {
+                        enableNextStep();
+                    }
                 } else {
                     showNotification('Network scan failed: ' + data.message, 'error');
                 }
@@ -729,8 +744,20 @@
                 
                 if (data.success) {
                     showNotification('Server connection successful', 'success');
+                    // Show visual status
+                    const statusDiv = document.getElementById('server-status');
+                    if (statusDiv) {
+                        statusDiv.style.display = 'block';
+                    }
+                    // Enable next step if server connection is successful
+                    enableNextStep();
                 } else {
                     showNotification('Server connection failed: ' + data.message, 'error');
+                    // Hide visual status
+                    const statusDiv = document.getElementById('server-status');
+                    if (statusDiv) {
+                        statusDiv.style.display = 'none';
+                    }
                 }
             } catch (error) {
                 showNotification('Server test error: ' + error.message, 'error');

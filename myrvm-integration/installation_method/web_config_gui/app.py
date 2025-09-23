@@ -151,6 +151,11 @@ def index():
     """Main dashboard page"""
     return render_template('dashboard.html')
 
+@app.route('/welcome')
+def welcome():
+    """Post-install welcome and API status page"""
+    return render_template('welcome.html')
+
 @app.route('/install')
 def install():
     """Installation page"""

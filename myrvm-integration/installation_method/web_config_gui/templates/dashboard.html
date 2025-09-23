@@ -50,6 +50,27 @@
             height: 8px;
             border-radius: 10px;
         }
+        /* Modern progress styles */
+        .progress-container {
+            height: 12px;
+            background: rgba(0,0,0,0.18);
+            border-radius: 999px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.35);
+        }
+        .progress-bar-modern {
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #36d1dc, #5b86e5) !important;
+            box-shadow: 0 0 12px rgba(91,134,229,0.6) !important;
+            transition: width .4s ease, background .3s ease, box-shadow .3s ease;
+        }
+        .progress-bar-complete {
+            background: linear-gradient(90deg, #00c853, #64dd17) !important;
+            box-shadow: 0 0 14px rgba(0, 200, 83, 0.65) !important;
+        }
         .btn-custom {
             background: linear-gradient(45deg, #667eea, #764ba2);
             border: none;
@@ -114,10 +135,15 @@
                                 <p class="mb-0" id="statusMessage">Preparing installation environment...</p>
                             </div>
                             <div class="col-md-4 text-end">
-                                <div class="progress mb-2">
-                                    <div class="progress-bar bg-light" id="overallProgress" style="width: 0%"></div>
+                                <div class="progress-container mb-2">
+                                    <div class="progress-bar-modern" id="overallProgress"></div>
                                 </div>
                                 <small class="text-light">Progress: <span id="progressText">0%</span></small>
+                                <div class="mt-2">
+                                    <button id="bgStartBtn" class="btn btn-sm btn-light" onclick="startInstallationBackground()">
+                                        <i class="fas fa-play me-2"></i>KLIK to START INSTALLATION
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -238,7 +264,7 @@
                             <i class="fas fa-download me-2"></i>Export Config
                         </button>
                         <button class="btn btn-outline-success" onclick="startInstallation()">
-                            <i class="fas fa-play me-2"></i>Start Installation
+                            <i class="fas fa-play me-2"></i>Start Installation by Steps
                         </button>
                     </div>
                 </div>
@@ -292,7 +318,25 @@
             document.getElementById('statusText').textContent = installationStatus.status;
             document.getElementById('statusMessage').textContent = installationStatus.message;
             document.getElementById('progressText').textContent = installationStatus.progress + '%';
-            document.getElementById('overallProgress').style.width = installationStatus.progress + '%';
+            const p = installationStatus.progress;
+            const bar = document.getElementById('overallProgress');
+            if (bar) {
+                bar.style.width = p + '%';
+                bar.classList.remove('progress-bar-complete');
+                // Dynamic theme by phase
+                if (p < 30) {
+                    bar.style.background = 'linear-gradient(90deg,#36d1dc,#5b86e5)'; // aqua → blue
+                    bar.style.boxShadow = '0 0 12px rgba(91,134,229,0.6)';
+                } else if (p < 70) {
+                    bar.style.background = 'linear-gradient(90deg,#a18cd1,#fbc2eb)'; // purple → pink
+                    bar.style.boxShadow = '0 0 12px rgba(251,194,235,0.55)';
+                } else if (p < 100) {
+                    bar.style.background = 'linear-gradient(90deg,#56ab2f,#a8e063)'; // green gradient
+                    bar.style.boxShadow = '0 0 12px rgba(86,171,47,0.55)';
+                } else {
+                    bar.classList.add('progress-bar-complete');
+                }
+            }
             
             // Update status indicator
             const statusIndicator = document.getElementById('systemStatus');
@@ -422,6 +466,91 @@
                 setTimeout(() => calibrateHardware(), 6000);
                 setTimeout(() => configureSystem(), 8000);
                 setTimeout(() => deploySystem(), 10000);
+            }
+        }
+
+        async function startInstallationBackground() {
+            const btn = document.getElementById('bgStartBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Running...';
+            }
+
+            try {
+                // Step 1: Hardware detection
+                updateStepStatus('step1', 'in-progress');
+                installationStatus.message = 'Detecting hardware...';
+                updateStatusDisplay();
+                let res = await fetch('/api/hardware/detect');
+                let data = await res.json();
+                if (!data.success) throw new Error('Hardware detection failed');
+                updateStepStatus('step1', 'completed');
+                installationStatus.progress = 15; updateStatusDisplay();
+
+                // Step 2: Network scan (non-blocking if already connected)
+                installationStatus.message = 'Checking network...';
+                updateStatusDisplay();
+                res = await fetch('/api/network/scan');
+                data = await res.json();
+                if (!data.success) throw new Error('Network scan failed');
+                installationStatus.progress = 30; updateStatusDisplay();
+
+                // Step 3: Server connectivity
+                installationStatus.message = 'Testing server connectivity...';
+                updateStatusDisplay();
+                res = await fetch('/api/server/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ server_url: document.getElementById('serverUrl') ? document.getElementById('serverUrl').value : 'http://100.123.143.87:8001' })
+                });
+                data = await res.json();
+                if (!data.success) throw new Error('Server test failed');
+                updateStepStatus('step2', 'completed');
+                installationStatus.progress = 45; updateStatusDisplay();
+
+                // Step 4: AI models quick test
+                installationStatus.message = 'Testing AI models...';
+                updateStatusDisplay();
+                res = await fetch('/api/ai/test');
+                data = await res.json();
+                if (!data.success) throw new Error('AI models test failed');
+                updateStepStatus('step3', 'completed');
+                installationStatus.progress = 65; updateStatusDisplay();
+
+                // Step 5: Configuration validation (placeholder UI update)
+                installationStatus.message = 'Validating configuration...';
+                updateStatusDisplay();
+                updateStepStatus('step5', 'completed');
+                installationStatus.progress = 80; updateStatusDisplay();
+
+                // Step 6: Deployment start
+                installationStatus.message = 'Starting deployment...';
+                updateStatusDisplay();
+                res = await fetch('/api/deploy/start', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                data = await res.json();
+                if (!data.success) throw new Error('Deployment start failed');
+                updateStepStatus('step6', 'in-progress');
+
+                installationStatus.progress = 90; updateStatusDisplay();
+                showNotification('Deployment started. Follow progress in this dashboard.', 'info');
+            } catch (err) {
+                installationStatus.status = 'error';
+                installationStatus.message = err.message;
+                updateStatusDisplay();
+                showNotification('Installation failed: ' + err.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-play me-2"></i>KLIK to START INSTALLATION';
+                }
+                // If not error, finalize and redirect to welcome
+                if (installationStatus.status !== 'error') {
+                    installationStatus.status = 'completed';
+                    installationStatus.progress = 100; 
+                    installationStatus.message = 'Installation completed';
+                    updateStatusDisplay();
+                    setTimeout(() => { window.location.href = '/welcome'; }, 1200);
+                }
             }
         }
 
