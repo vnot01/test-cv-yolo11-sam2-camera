@@ -699,28 +699,28 @@ class ServiceManager:
                 "installation_method": {
                     "port": 8080,
                     "process_name": "python3",
-                    "start_command": "cd /opt/myrvm/installation_method && python3 app.py",
+                    "start_command": "cd /opt/myrvm/installation_method && python3 app.py --host=rvm_ip --port=8080",
                     "stop_command": "pkill -f 'python3.*app.py'",
                     "auto_start": True
                 },
                 "remote_access": {
                     "port": 5000,
                     "process_name": "python3",
-                    "start_command": "cd /opt/myrvm/services && python3 remote_access.py",
+                    "start_command": "cd /opt/myrvm/services && python3 remote_access.py --host=rvm_ip --port=5000",
                     "stop_command": "pkill -f 'python3.*remote_access.py'",
                     "auto_start": False
                 },
                 "gui_client": {
                     "port": 5001,
                     "process_name": "python3",
-                    "start_command": "cd /opt/myrvm/services && python3 gui_client.py",
+                    "start_command": "cd /opt/myrvm/services && python3 gui_client.py --host=rvm_ip --port=5001",
                     "stop_command": "pkill -f 'python3.*gui_client.py'",
                     "auto_start": False
                 },
                 "camera_service": {
                     "port": 5002,
                     "process_name": "python3",
-                    "start_command": "cd /opt/myrvm/services && python3 camera_service.py",
+                    "start_command": "cd /opt/myrvm/services && python3 camera_service.py --host=rvm_ip --port=5002",
                     "stop_command": "pkill -f 'python3.*camera_service.py'",
                     "auto_start": False
                 }
@@ -844,7 +844,7 @@ start_installation_mode() {
     
     if [ $? -eq 0 ]; then
         log "INFO" "Installation mode started successfully"
-        log "INFO" "Installation GUI available at: http://localhost:8080"
+        log "INFO" "Installation GUI available at: http://rvm_ip:8080"
         return 0
     else
         log "ERROR" "Failed to start installation mode"
@@ -861,9 +861,9 @@ start_production_mode() {
     
     if [ $? -eq 0 ]; then
         log "INFO" "Production mode started successfully"
-        log "INFO" "Remote Access available at: http://localhost:5000"
-        log "INFO" "GUI Client available at: http://localhost:5001"
-        log "INFO" "Camera Service available at: http://localhost:5002"
+        log "INFO" "Remote Access available at: http://rvm_ip:5000"
+        log "INFO" "GUI Client available at: http://rvm_ip:5001"
+        log "INFO" "Camera Service available at: http://rvm_ip:5002"
         return 0
     else
         log "ERROR" "Failed to start production mode"

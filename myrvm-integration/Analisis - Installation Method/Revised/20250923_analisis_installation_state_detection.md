@@ -295,7 +295,7 @@ class InstallationAPI:
             return {
                 "success": True,
                 "message": "Installation completed. Transitioning to production mode.",
-                "production_url": "http://localhost:5000"
+                "production_url": "http://rvm_ip:5000"
             }
         except Exception as e:
             return {
@@ -319,7 +319,7 @@ class ProductionAPI:
             return {
                 "success": False,
                 "message": "RVM not installed. Please complete installation first.",
-                "installation_url": "http://localhost:8080"
+                "installation_url": "http://rvm_ip:8080"
             }
         return {"success": True, "message": "Production mode ready"}
     
