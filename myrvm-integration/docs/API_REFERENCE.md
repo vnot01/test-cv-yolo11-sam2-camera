@@ -8,6 +8,16 @@
 
 This document provides comprehensive API reference for the MyRVM Platform integration with the Jetson Orin Nano CV system. **Updated to reflect actual endpoint structure.**
 
+### ✅ Updated RVM Registration Flow
+- Admin/Technician pre-registers RVM in Dashboard → API key is auto-generated and displayed immediately after creation (copy and store it)
+- On the RVM UI, Technician presses “Confirm/Activate” → RVM sends its final details (IP, port, timezone, etc.) using the API key to the server
+- Server updates the RVM profile and the device appears on the Admin dashboard
+
+Notes:
+- API key source: Dashboard Admin (shown right after “Add New RVM”)
+- Confirmation is done on the RVM device UI, not in Admin API
+- RVM uses API key authentication for its self-claim/self-update endpoints
+
 ## 🏗️ **API Endpoints Architecture**
 
 ### **📊 Endpoint Categories:**
@@ -36,6 +46,11 @@ This document provides comprehensive API reference for the MyRVM Platform integr
 - **Provider:** MyRVM-Platform (Server)
 - **Purpose:** RVM device management, remote control
 - **Access:** Protected (Bearer token required)
+
+#### **5.a 🔑 RVM Self APIs (API Key Auth) – NEW**
+- **Provider:** MyRVM-Platform (Server)
+- **Purpose:** Allow RVM to claim/update its own details after Admin pre-registration
+- **Access:** API key (X-API-Key)
 
 #### **6. 📁 File Upload APIs**
 - **Provider:** MyRVM-Platform (Server)
@@ -526,14 +541,14 @@ Authorization: Bearer {token}
     "latest_detection_result": {
       "id": 1,
       "image_path": "/storages/images/output/camera_yolo/results/images/detection_20250922_133106.jpg",
-      "detections": [
-        {
-          "class": "plastic_bottle",
-          "confidence": 0.95,
+    "detections": [
+      {
+        "class": "plastic_bottle",
+        "confidence": 0.95,
           "bbox": [100, 100, 200, 200]
-        }
-      ],
-      "status": "processed",
+      }
+    ],
+    "status": "processed",
       "timestamp": "2025-09-22T13:31:06.000000Z"
     },
     "timestamp": "2025-09-22T13:31:06.000000Z"
@@ -777,6 +792,8 @@ Content-Type: application/json
 }
 ```
 
+After creation in Admin Dashboard, the API key is shown to the operator for use on the RVM device UI (copy and store securely).
+
 ### **Update RVM**
 ```http
 PUT /api/v2/rvms/{id}
@@ -798,6 +815,37 @@ Content-Type: application/json
 - `ip_address` (optional): IP address of RVM device (for remote access, maintenance mode)
 - `port` (optional): Port number for RVM services (default: 5000)
 - `api_key` (optional): API key for RVM authentication (auto-generated if not provided)
+
+### **RVM Self-Claim** (NEW)
+```http
+POST /api/v2/rvm/self/claim
+X-API-Key: {api_key}
+Content-Type: application/json
+
+{
+  "rvm_id": 1,
+  "device_name": "RVM-Orin1",
+  "software_version": "v1.2.3",
+  "timezone": "Asia/Jakarta"
+}
+```
+
+### **RVM Self-Update** (NEW)
+```http
+PATCH /api/v2/rvm/self/update
+X-API-Key: {api_key}
+Content-Type: application/json
+
+{
+  "ip_address": "rvm_ip",  // atau "100.117.234.2" (Tailscale)
+  "port": 5000,
+  "timezone": "Asia/Jakarta"
+}
+```
+
+Notes:
+- RVM Self APIs use API key authentication and are meant to be called by the RVM device UI after Admin pre-registration
+- The server updates the RVM record and the changes are reflected on the Admin dashboard
 
 **Response:**
 ```json
