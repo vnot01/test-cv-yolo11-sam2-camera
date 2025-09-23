@@ -380,3 +380,5 @@ class TouchCalibration:
                 'error': str(e),
                 'message': 'Reset touch screen failed'
             }
+
+

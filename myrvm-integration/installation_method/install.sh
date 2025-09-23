@@ -155,6 +155,22 @@ setup_port_forwarding() {
 start_web_gui() {
     log "INFO" "Starting Web Configuration Interface..."
     
+    # Kill any existing Web GUI processes
+    log "INFO" "Checking for existing Web GUI processes..."
+    pkill -f "web_config_gui/app.py" 2>/dev/null || true
+    pkill -f "python3.*app.py" 2>/dev/null || true
+    
+    # Wait for processes to terminate
+    sleep 2
+    
+    # Check if port is still in use
+    if lsof -i :$WEB_GUI_PORT >/dev/null 2>&1; then
+        log "WARN" "Port $WEB_GUI_PORT is still in use, trying to free it..."
+        # Force kill processes using the port
+        fuser -k $WEB_GUI_PORT/tcp 2>/dev/null || true
+        sleep 2
+    fi
+    
     # Activate virtual environment
     source "$PROJECT_DIR/venv/bin/activate"
     
@@ -169,7 +185,7 @@ start_web_gui() {
     echo "$web_gui_pid" > "$PID_FILE"
     
     # Wait for service to start
-    sleep 3
+    sleep 5
     
     # Check if service is running
     if kill -0 "$web_gui_pid" 2>/dev/null; then
@@ -177,6 +193,7 @@ start_web_gui() {
         log "INFO" "Web GUI accessible at: http://localhost:$WEB_GUI_PORT/install"
     else
         log "ERROR" "Failed to start Web GUI"
+        log "ERROR" "Check log file: $LOG_FILE"
         exit 1
     fi
 }
@@ -377,3 +394,5 @@ case "${1:-}" in
         exit 1
         ;;
 esac
+
+

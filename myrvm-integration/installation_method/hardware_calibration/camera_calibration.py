@@ -478,3 +478,5 @@ class CameraCalibration:
         if self.is_camera_open and self.camera is not None:
             self.camera.release()
             self.is_camera_open = False
+
+
