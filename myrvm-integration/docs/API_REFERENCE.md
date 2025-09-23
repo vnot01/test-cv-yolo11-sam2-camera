@@ -825,7 +825,9 @@ Content-Type: application/json
 {
   "device_name": "RVM-Orin1",
   "software_version": "v1.2.3",
-  "timezone": "Asia/Jakarta"
+  "timezone": "Asia/Jakarta",
+  "device_id": "<machine-id>",
+  "mac_address": "<mac>"
 }
 ```
 
@@ -838,13 +840,16 @@ Content-Type: application/json
 {
   "ip_address": "rvm_ip",  // atau "100.117.234.2" (Tailscale)
   "port": 5000,
-  "timezone": "Asia/Jakarta"
+  "timezone": "Asia/Jakarta",
+  "latitude": -7.795,
+  "longitude": 110.366
 }
 ```
 
 Notes:
 - RVM Self APIs use API key authentication and are meant to be called by the RVM device UI after Admin pre-registration
 - The server updates the RVM record and the changes are reflected on the Admin dashboard
+ - Server melakukan mapping API Key → RVM; body self-claim tidak memerlukan `rvm_id`
 
 **Response:**
 ```json

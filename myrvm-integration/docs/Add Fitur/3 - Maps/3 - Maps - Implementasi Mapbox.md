@@ -118,4 +118,8 @@ async function onSelectSuggestion(s) {
 
 ## Referensi
 - Mapbox Search Box API Playground: https://docs.mapbox.com/playground/search-box/suggest-retrieve/?mapbox_id=dXJuOm1ieHBvaTo1OGE1YWQ2MC1lOTc1LTRhZDYtYjk2Ni1kOTUzNGU0NjFjOGM&session_token=0c229e42-3d13-4419-8975-d17672081a9a&endpoint=retrieve
+- Mapbox Search JS Guides: `https://docs.mapbox.com/mapbox-search-js/guides/`
+- Address Autofill (Web): `https://docs.mapbox.com/mapbox-search-js/guides/autofill/web/`
+- Geocoding (Web): `https://docs.mapbox.com/mapbox-search-js/guides/geocoding/web/`
+- Search Box (Web): `https://docs.mapbox.com/mapbox-search-js/guides/search/web/`
 - Mapbox Search Box API Docs: `https://docs.mapbox.com/api/search/search-box`
