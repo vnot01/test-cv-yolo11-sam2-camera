@@ -8,6 +8,65 @@
 
 This document provides comprehensive API reference for the MyRVM Platform integration with the Jetson Orin Nano CV system. **Updated to reflect actual endpoint structure.**
 
+## 🏗️ **API Endpoints Architecture**
+
+### **📊 Endpoint Categories:**
+
+#### **1. 🔐 Authentication APIs**
+- **Provider:** MyRVM-Platform (Server)
+- **Purpose:** User authentication, token management
+- **Access:** Public endpoints
+
+#### **2. 🤖 Processing Engine APIs**
+- **Provider:** MyRVM-Platform (Server)
+- **Purpose:** AI processing engine management, registration
+- **Access:** Protected (Bearer token required)
+
+#### **3. 📸 Detection Results APIs**
+- **Provider:** MyRVM-Platform (Server)
+- **Purpose:** Computer vision results, AI inference data
+- **Access:** Protected (Bearer token required)
+
+#### **4. 💰 Deposit Management APIs**
+- **Provider:** MyRVM-Platform (Server)
+- **Purpose:** Waste deposit processing, reward system
+- **Access:** Protected (Bearer token required)
+
+#### **5. 🏪 RVM Management APIs**
+- **Provider:** MyRVM-Platform (Server)
+- **Purpose:** RVM device management, remote control
+- **Access:** Protected (Bearer token required)
+
+#### **6. 📁 File Upload APIs**
+- **Provider:** MyRVM-Platform (Server)
+- **Purpose:** Image and file upload handling
+- **Access:** Protected (Bearer token required)
+
+#### **7. 🏥 Health Check APIs**
+- **Provider:** MyRVM-Platform (Server)
+- **Purpose:** System health monitoring
+- **Access:** Public endpoints
+
+#### **8. 🔧 Installation Method APIs**
+- **Provider:** RVM-Jetson (Edge Device)
+- **Purpose:** Installation process, hardware detection, network setup
+- **Access:** Local endpoints (port 8080)
+
+#### **9. 🌐 Remote Access APIs**
+- **Provider:** RVM-Jetson (Edge Device)
+- **Purpose:** Remote control, monitoring, command execution
+- **Access:** Remote endpoints (port 5000)
+
+#### **10. 📱 GUI Client APIs**
+- **Provider:** RVM-Jetson (Edge Device)
+- **Purpose:** Touch screen interface, user interaction
+- **Access:** Local endpoints (port 5001)
+
+#### **11. 📷 Camera Service APIs**
+- **Provider:** RVM-Jetson (Edge Device)
+- **Purpose:** Camera control, image capture, streaming
+- **Access:** Local endpoints (port 5002)
+
 ## 📚 Istilah-istilah Umum
 
 ### **🏗️ Arsitektur Sistem:**
@@ -776,6 +835,340 @@ metadata: {
 }
 ```
 
+## 🔧 Installation Method APIs
+
+**Provider:** RVM-Jetson (Edge Device)  
+**Base URL:** `http://rvm_ip:8080` atau `http://localhost:8080`  
+**Purpose:** Installation process, hardware detection, network setup  
+**Access:** Local endpoints (no authentication required)
+
+### **Installation Status**
+```http
+GET /api/status
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "ready",
+    "phase": "initialization",
+    "progress": 0,
+    "current_step": 1,
+    "total_steps": 5
+  }
+}
+```
+
+### **Hardware Detection**
+```http
+GET /api/hardware/detect
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "cpu": "Cortex-A78AE (Jetson Orin)",
+    "memory": "7.4GB",
+    "gpu": "Orin (nvgpu)",
+    "camera": "Not detected",
+    "network": {
+      "interface": "wlP1p1s0",
+      "status": "connected",
+      "ip_address": "192.168.1.11"
+    }
+  }
+}
+```
+
+### **Network Status**
+```http
+GET /api/network/status
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "wifi_connected": true,
+    "current_network": "Kikimiu",
+    "ip_address": "192.168.1.11",
+    "internet_access": true,
+    "myrvm_platform_access": true
+  }
+}
+```
+
+### **WiFi Network Scan**
+```http
+GET /api/network/scan
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "ssid": "Kikimiu",
+      "signal": 89,
+      "security": "WPA2",
+      "frequency": 2412,
+      "bssid": "CC:B1:71:52:B9:D0"
+    }
+  ]
+}
+```
+
+### **WiFi Connection**
+```http
+POST /api/network/connect
+Content-Type: application/json
+
+{
+  "ssid": "Kikimiu",
+  "password": "password123"
+}
+```
+
+### **Server Connectivity Test**
+```http
+POST /api/server/test
+Content-Type: application/json
+
+{
+  "server_url": "http://100.123.143.87:8001"
+}
+```
+
+### **AI Models Testing**
+```http
+GET /api/ai/test
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "yolo": {
+      "status": "available",
+      "model_path": "models/yolo11n.pt",
+      "test_result": "success"
+    },
+    "sam2": {
+      "status": "available", 
+      "model_path": "models/sam2.1_b.pt",
+      "test_result": "success"
+    },
+    "gemini": {
+      "status": "disabled",
+      "reason": "Not available"
+    }
+  }
+}
+```
+
+### **Configuration Save**
+```http
+POST /api/config/save
+Content-Type: application/json
+
+{
+  "network": {
+    "interface": "wlP1p1s0",
+    "server_url": "http://100.123.143.87:8001"
+  },
+  "hardware": {
+    "camera_enabled": true,
+    "motor_enabled": true
+  }
+}
+```
+
+### **Deployment Start**
+```http
+POST /api/deploy/start
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "deployment_id": "deploy_20250923_123456",
+    "status": "started",
+    "estimated_time": "5 minutes"
+  }
+}
+```
+
+## 🌐 Remote Access APIs
+
+**Provider:** RVM-Jetson (Edge Device)  
+**Base URL:** `http://rvm_ip:5000` atau `http://localhost:5000`  
+**Purpose:** Remote control, monitoring, command execution  
+**Access:** Remote endpoints (API key authentication)
+
+### **Remote Access Health Check**
+```http
+GET /health
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "timestamp": "2025-09-23T12:34:56.000000Z",
+    "services": {
+      "remote_access": "operational",
+      "camera_service": "operational",
+      "gui_client": "operational"
+    }
+  }
+}
+```
+
+### **Remote Command Execution**
+```http
+POST /api/remote/command
+X-API-Key: {api_key}
+Content-Type: application/json
+
+{
+  "command": "run_inference",
+  "parameters": {
+    "image_path": "/path/to/image.jpg",
+    "confidence_threshold": 0.5
+  }
+}
+```
+
+### **System Metrics Collection**
+```http
+GET /api/metrics
+X-API-Key: {api_key}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "system": {
+      "cpu_usage": 45.2,
+      "memory_usage": 67.8,
+      "gpu_usage": 23.1,
+      "temperature": 42.5
+    },
+    "network": {
+      "wifi_connected": true,
+      "ip_address": "192.168.1.11",
+      "internet_access": true
+    },
+    "timestamp": "2025-09-23T12:34:56.000000Z"
+  }
+}
+```
+
+### **Remote Maintenance Mode**
+```http
+POST /api/maintenance/start
+X-API-Key: {api_key}
+Content-Type: application/json
+
+{
+  "reason": "Hardware calibration",
+  "estimated_duration": "30 minutes"
+}
+```
+
+## 📱 GUI Client APIs
+
+**Provider:** RVM-Jetson (Edge Device)  
+**Base URL:** `http://rvm_ip:5001` atau `http://localhost:5001`  
+**Purpose:** Touch screen interface, user interaction  
+**Access:** Local endpoints (no authentication required)
+
+### **GUI Status**
+```http
+GET /api/gui/status
+```
+
+### **User Authentication via QR Code**
+```http
+POST /api/gui/authenticate
+Content-Type: application/json
+
+{
+  "qr_code": "base64_encoded_qr_data"
+}
+```
+
+### **Touch Screen Events**
+```http
+POST /api/gui/touch
+Content-Type: application/json
+
+{
+  "x": 150,
+  "y": 200,
+  "action": "tap",
+  "timestamp": "2025-09-23T12:34:56.000000Z"
+}
+```
+
+## 📷 Camera Service APIs
+
+**Provider:** RVM-Jetson (Edge Device)  
+**Base URL:** `http://rvm_ip:5002` atau `http://localhost:5002`  
+**Purpose:** Camera control, image capture, streaming  
+**Access:** Local endpoints (API key authentication)
+
+### **Camera Status**
+```http
+GET /api/camera/status
+X-API-Key: {api_key}
+```
+
+### **Capture Image**
+```http
+POST /api/camera/capture
+X-API-Key: {api_key}
+Content-Type: application/json
+
+{
+  "resolution": "1920x1080",
+  "format": "jpeg",
+  "quality": 95
+}
+```
+
+### **Start Video Stream**
+```http
+POST /api/camera/stream/start
+X-API-Key: {api_key}
+Content-Type: application/json
+
+{
+  "resolution": "1280x720",
+  "fps": 30,
+  "format": "mjpeg"
+}
+```
+
+### **Stop Video Stream**
+```http
+POST /api/camera/stream/stop
+X-API-Key: {api_key}
+```
+
 ## 🏥 Health Check
 
 ### **Server Health Check**
@@ -1009,6 +1402,118 @@ if success:
 ### **Base URL Changes:**
 - ❌ `http://172.28.233.83:8001` → ✅ `http://server_ip:8001` (production)
 
+## 📊 **API Endpoints Summary**
+
+### **📈 Total Endpoints: 50+ APIs**
+
+#### **🏢 MyRVM-Platform (Server) - 35+ APIs**
+- **🔐 Authentication APIs:** 3 endpoints
+- **🤖 Processing Engine APIs:** 8 endpoints  
+- **📸 Detection Results APIs:** 6 endpoints
+- **💰 Deposit Management APIs:** 4 endpoints
+- **🏪 RVM Management APIs:** 5 endpoints
+- **📁 File Upload APIs:** 2 endpoints
+- **🏥 Health Check APIs:** 2 endpoints
+- **📊 Additional APIs:** 5+ endpoints
+
+#### **🔧 RVM-Jetson (Edge Device) - 15+ APIs**
+- **🔧 Installation Method APIs:** 8 endpoints (Port 8080)
+- **🌐 Remote Access APIs:** 4 endpoints (Port 5000)
+- **📱 GUI Client APIs:** 3 endpoints (Port 5001)
+- **📷 Camera Service APIs:** 4 endpoints (Port 5002)
+
+### **🌐 Network Access Summary**
+
+#### **MyRVM-Platform Server:**
+- **Primary:** `100.123.143.87:8001` (Tailscale)
+- **Backup:** `172.28.233.83:8001` (ZeroTier)
+- **Local:** `localhost:8001` (SSH tunnel)
+
+#### **RVM-Jetson Edge Device:**
+- **Primary:** `100.117.234.2` (Tailscale)
+- **Backup:** `172.28.93.97` (ZeroTier)
+- **Local:** `localhost` (SSH tunnel)
+
+#### **Port Configuration:**
+- **8000:** Web Dashboard (Server)
+- **8001:** API Endpoints (Server)
+- **5000:** Remote Access (RVM)
+- **5001:** GUI Client (RVM)
+- **5002:** Camera Service (RVM)
+- **8080:** Installation Method (RVM)
+
+### **🔐 Authentication Summary**
+
+#### **Public Endpoints (No Auth Required):**
+- Health checks
+- Authentication login/register
+- Installation method APIs
+- GUI client APIs
+
+#### **Protected Endpoints (Auth Required):**
+- **Bearer Token:** MyRVM-Platform APIs
+- **API Key:** RVM remote access APIs
+- **X-API-Key Header:** Camera service APIs
+
+### **📋 Usage Examples by Category**
+
+#### **🔧 Installation & Setup:**
+```bash
+# Hardware detection
+curl http://localhost:8080/api/hardware/detect
+
+# Network scan
+curl http://localhost:8080/api/network/scan
+
+# Server test
+curl -X POST http://localhost:8080/api/server/test \
+  -H "Content-Type: application/json" \
+  -d '{"server_url": "http://100.123.143.87:8001"}'
+```
+
+#### **🤖 AI Processing:**
+```bash
+# Register processing engine
+curl -X POST http://100.123.143.87:8001/api/v2/processing-engines \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Jetson Orin Nano", "type": "nvidia_cuda"}'
+
+# Upload detection results
+curl -X POST http://100.123.143.87:8001/api/v2/detection-results \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{"rvm_id": 1, "detections": [...]}'
+```
+
+#### **🌐 Remote Control:**
+```bash
+# Remote command execution
+curl -X POST http://100.117.234.2:5000/api/remote/command \
+  -H "X-API-Key: {api_key}" \
+  -H "Content-Type: application/json" \
+  -d '{"command": "run_inference"}'
+
+# System metrics
+curl http://100.117.234.2:5000/api/metrics \
+  -H "X-API-Key: {api_key}"
+```
+
+#### **📷 Camera Operations:**
+```bash
+# Capture image
+curl -X POST http://100.117.234.2:5002/api/camera/capture \
+  -H "X-API-Key: {api_key}" \
+  -H "Content-Type: application/json" \
+  -d '{"resolution": "1920x1080", "format": "jpeg"}'
+
+# Start video stream
+curl -X POST http://100.117.234.2:5002/api/camera/stream/start \
+  -H "X-API-Key: {api_key}" \
+  -H "Content-Type: application/json" \
+  -d '{"resolution": "1280x720", "fps": 30}'
+```
+
 ## 📚 Related Documentation
 
 - [Changelog](CHANGELOG.md)
@@ -1018,7 +1523,7 @@ if success:
 
 ---
 
-**Last Updated:** September 22, 2025  
-**Next Review:** September 29, 2025  
-**Maintainer:** AI Assistant  
-**Status:** ✅ Production Ready (Updated Endpoints)
+**Last Updated:** September 23, 2025  
+**Next Review:** September 30, 2025  
+**Maintainer:** RVM System (Jetson Orin)  
+**Status:** ✅ Production Ready (Comprehensive API Documentation)
