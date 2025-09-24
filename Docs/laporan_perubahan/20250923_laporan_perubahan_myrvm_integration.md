@@ -50,3 +50,5 @@ Repository: test-cv-yolo11-sam2-camera (myrvm-integration)
 - Web GUI: ✅ Diperbarui untuk alur instalasi  
 - Siap diikuti untuk integrasi lapangan (10 RVM, 100 user)
 
+
+

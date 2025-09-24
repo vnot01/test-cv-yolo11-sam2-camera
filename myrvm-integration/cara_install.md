@@ -78,3 +78,38 @@ cd /home/my/test-cv-yolo11-sam2-camera/myrvm-integration/installation_method
 **Installation Method sudah berjalan dan siap digunakan!** ��
 
 Buka browser ke **http://localhost:8080/install** untuk memulai proses instalasi.
+
+### 🔐 Systemd Auto-start (Sudo Options)
+
+Agar layanan RVM otomatis aktif saat instalasi dan boot, diperlukan hak `sudo` non-interaktif. Urutan prioritas:
+
+1) Disarankan: sudoers NOPASSWD (tanpa simpan password)
+
+- Tambah aturan NOPASSWD untuk user `my` hanya pada perintah yang dibutuhkan:
+
+```bash
+sudo visudo
+```
+
+Tambahkan baris (sesuaikan jika path berbeda):
+
+```
+my ALL=(ALL) NOPASSWD: /bin/systemctl enable rvm-remote-camera.service, /bin/systemctl restart rvm-remote-camera.service, /bin/systemctl enable rvm-remote-gui.service, /bin/systemctl restart rvm-remote-gui.service, /bin/systemctl enable rvm-remote-access.service, /bin/systemctl restart rvm-remote-access.service, /usr/bin/tee /etc/systemd/system/rvm-remote-camera.service, /usr/bin/tee /etc/systemd/system/rvm-remote-gui.service, /usr/bin/tee /etc/systemd/system/rvm-remote-access.service, /bin/systemctl daemon-reload
+```
+
+2) Alternatif (fallback): environment variable `RVM_SUDO_PASS`
+
+- Simpan password sudo dalam variabel environment (gunakan hanya pada perangkat terkontrol):
+
+```bash
+export RVM_SUDO_PASS='password-sudo-anda'
+```
+
+Opsional agar persisten:
+
+```bash
+echo "export RVM_SUDO_PASS='password-sudo-anda'" >> ~/.bashrc
+source ~/.bashrc
+```
+
+Catatan: Installer akan mencoba NOPASSWD lebih dulu. Jika tidak tersedia, backend dapat menggunakan `sudo -S` dengan `RVM_SUDO_PASS` untuk memasang & mengaktifkan unit systemd selama proses instalasi.

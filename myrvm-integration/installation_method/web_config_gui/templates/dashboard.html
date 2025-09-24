@@ -150,6 +150,8 @@
                 </div>
             </div>
 
+            
+
             <!-- Installation Steps -->
             <div class="row">
                 <div class="col-12">
@@ -269,6 +271,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -469,6 +472,57 @@
             }
         }
 
+        // ===== Registration wiring =====
+        function getVal(id){return document.getElementById(id)?.value?.trim()||''}
+        async function testApiKey(){
+            const serverUrl = getVal('regServerUrl') || (window.config?.server_url);
+            const apiKey = getVal('regApiKey');
+            if(!serverUrl||!apiKey){showNotification('Server URL dan API Key wajib diisi','warning');return}
+            try{
+                const res = await fetch('/api/server/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({server_url:serverUrl})});
+                const data = await res.json();
+                if(data.success){
+                    showNotification('Server reachable. API key ready to use.','success');
+                    document.getElementById('regStatus').textContent='Server OK.';
+                }else{showNotification('Server test failed: '+data.message,'error')}
+            }catch(e){showNotification('Error: '+e.message,'error')}
+        }
+        async function tailscaleUp(){
+            const tskey = getVal('regTsKey');
+            if(!tskey){showNotification('AUTH Key Tailscale (tskey-...) wajib diisi','warning');return}
+            const btnText = 'Tailscale Up';
+            try{
+                const res = await fetch('/api/tailscale/up',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({auth_key:tskey})});
+                const data = await res.json();
+                if(data.success){
+                    showNotification('Tailscale up: '+data.data.tailscale_ip,'success');
+                    document.getElementById('regStatus').textContent='Tailscale IP: '+data.data.tailscale_ip;
+                }else{showNotification('Tailscale up failed: '+(data.message||'unknown'),'error')}
+            }catch(e){showNotification('Error: '+e.message,'error')}
+        }
+        async function selfClaim(){
+            const serverUrl = getVal('regServerUrl') || (window.config?.server_url);
+            const apiKey = getVal('regApiKey');
+            if(!serverUrl||!apiKey){showNotification('Server URL dan API Key wajib diisi','warning');return}
+            try{
+                const payload = {api_key:apiKey, server_url:serverUrl, device_id:null, mac_address:null, device_name:null, software_version:null, timezone:null};
+                const res = await fetch('/api/rvm/self/claim',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+                const data = await res.json();
+                if(data.success){showNotification('Self-claim success','success')} else {showNotification('Self-claim failed: '+JSON.stringify(data),'error')}
+            }catch(e){showNotification('Error: '+e.message,'error')}
+        }
+        async function selfUpdate(){
+            const serverUrl = getVal('regServerUrl') || (window.config?.server_url);
+            const apiKey = getVal('regApiKey');
+            if(!serverUrl||!apiKey){showNotification('Server URL dan API Key wajib diisi','warning');return}
+            try{
+                const payload = {api_key:apiKey, server_url:serverUrl, port:5000};
+                const res = await fetch('/api/rvm/self/update',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+                const data = await res.json();
+                if(data.success){showNotification('Self-update success','success')} else {showNotification('Self-update failed: '+JSON.stringify(data),'error')}
+            }catch(e){showNotification('Error: '+e.message,'error')}
+        }
+
         async function startInstallationBackground() {
             const btn = document.getElementById('bgStartBtn');
             if (btn) {
@@ -530,6 +584,19 @@
                 data = await res.json();
                 if (!data.success) throw new Error('Deployment start failed');
                 updateStepStatus('step6', 'in-progress');
+
+                // Start required system services (camera/gui/access) via RVM_SUDO_PASS helper
+                installationStatus.message = 'Starting system services (camera/gui/access)...';
+                updateStatusDisplay();
+                try {
+                    const svcRes = await fetch('/api/services/start', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                    const svcData = await svcRes.json();
+                    if (!svcData.success) throw new Error(svcData.message || 'Failed starting services');
+                    showNotification('Services started: ' + JSON.stringify(svcData.data.states), 'success');
+                } catch (e) {
+                    showNotification('Service start error: ' + e.message, 'error');
+                    throw e;
+                }
 
                 installationStatus.progress = 90; updateStatusDisplay();
                 showNotification('Deployment started. Follow progress in this dashboard.', 'info');

@@ -32,3 +32,5 @@ Status: Siap implementasi pada Dashboard (Installation Method, port 8080)
 ## Catatan
 - AUTH Key Tailscale tidak disimpan permanen; digunakan sebagai variabel runtime saat deployment.
 - Gunakan HTTPS jika tersedia.
+
+

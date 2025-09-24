@@ -88,7 +88,7 @@ Notes:
 
 **`server_ip`** - IP Address dari MyRVM-Platform Server
 - **Deskripsi:** Server utama yang menjalankan MyRVM-Platform (Laravel application)
-- **Port:** 8001 (API), 8000 (Web)
+- **Port:** 8001 (API), 8001 (Web)
 - **Fungsi:** Menyediakan API endpoints, database, dashboard admin, dan manajemen sistem
 - **Primary IP:** `100.123.143.87` (Tailscale)
 - **Backup IP:** `172.28.233.83` (ZeroTier)
@@ -131,7 +131,7 @@ Notes:
 ### ** Port Configuration:**
 
 **Server Ports (MyRVM-Platform):**
-- **8000:** Web Dashboard (Admin Panel)
+- **8001:** Web Dashboard (Admin Panel)
 - **8001:** API Endpoints (REST API)
 
 **Edge Ports (RVM-Jetson):**
@@ -206,10 +206,10 @@ Notes:
 curl http://100.123.143.87:8001/api/health-check
 
 # RVM Remote Access
-curl http://100.117.234.2:5000/health
+# curl http://100.117.234.2:5000/health
 
 # Web Dashboard
-http://100.123.143.87:8000
+http://100.123.143.87:8001
 ```
 
 **ZeroTier Network (Backup):**
@@ -218,10 +218,10 @@ http://100.123.143.87:8000
 curl http://172.28.233.83:8001/api/health-check
 
 # RVM Remote Access
-curl http://172.28.93.97:5000/health
+# curl http://172.28.93.97:5000/health
 
 # Web Dashboard
-http://172.28.233.83:8000
+http://172.28.233.83:8001
 ```
 
 **SSH Tunnel (Local Development):**
@@ -231,8 +231,8 @@ ssh -L 8001:100.123.143.87:8001 user@server
 curl http://localhost:8001/api/health-check
 
 # Forward RVM Access
-ssh -L 5000:100.117.234.2:5000 user@rvm
-curl http://localhost:5000/health
+# ssh -L 5000:100.117.234.2:5000 user@rvm
+# curl http://localhost:5000/health
 ```
 
 ### **📝 IP Address Placeholders:**
@@ -739,7 +739,7 @@ Authorization: Bearer {token}
 **Port Configuration:**
 
 **Server Ports (MyRVM-Platform):**
-- **Port 8000:** Web Dashboard (Admin Panel) - Server menyediakan
+- **Port 8001:** Web Dashboard (Admin Panel) - Server menyediakan
 - **Port 8001:** API Endpoints (REST API) - Server menyediakan
 
 **Edge Ports (RVM-Jetson):**
@@ -1088,10 +1088,10 @@ POST /api/deploy/start
 **Purpose:** Remote control, monitoring, command execution  
 **Access:** Remote endpoints (API key authentication)
 
-### **Remote Access Health Check**
+<!-- ### **Remote Access Health Check**
 ```http
 GET /health
-```
+``` -->
 
 **Response:**
 ```json
@@ -1509,7 +1509,7 @@ if success:
 - **Local:** `localhost` (SSH tunnel)
 
 #### **Port Configuration:**
-- **8000:** Web Dashboard (Server)
+- **8001:** Web Dashboard (Server)
 - **8001:** API Endpoints (Server)
 - **5000:** Remote Access (RVM)
 - **5001:** GUI Client (RVM)

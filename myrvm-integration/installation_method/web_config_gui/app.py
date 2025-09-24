@@ -11,10 +11,12 @@ import logging
 import threading
 import time
 from datetime import datetime
+import socket
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
 import psutil
 import requests
+import subprocess
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -146,6 +148,103 @@ config_data = {
     'calibration': {}
 }
 
+# Helpers
+def _get_server_url_from_config(default: str = "http://100.123.143.87:8001") -> str:
+    try:
+        cfg = config_manager.get_config() if config_manager else {}
+        return cfg.get('server_url', default)
+    except Exception:
+        return default
+
+def _get_machine_id() -> str:
+    try:
+        with open('/etc/machine-id', 'r') as f:
+            return f.read().strip()
+    except Exception:
+        return "unknown-machine-id"
+
+def _get_mac_address(interface: str = 'wlP1p1s0') -> str:
+    """Get MAC address from specified interface (default: wlP1p1s0 for Jetson)."""
+    # Try specified interface first
+    try:
+        result = subprocess.run(['ip', '-o', 'link', 'show', interface], capture_output=True, text=True, timeout=5)
+        if result.returncode == 0 and result.stdout:
+            # Parse MAC address from output: "2: wlP1p1s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP mode DORMANT group default qlen 1000\    link/ether c0:bf:be:93:68:f1 brd ff:ff:ff:ff:ff:ff"
+            lines = result.stdout.strip().split('\n')
+            for line in lines:
+                if 'link/ether' in line:
+                    parts = line.split()
+                    for i, part in enumerate(parts):
+                        if part == 'link/ether' and i + 1 < len(parts):
+                            mac = parts[i + 1]
+                            if len(mac) == 17 and ':' in mac:  # Valid MAC format
+                                logger.info(f"Using MAC from {interface}: {mac}")
+                                return mac
+    except Exception as e:
+        logger.error(f"Error getting MAC from {interface}: {e}")
+    
+    # Fallback to other interfaces
+    fallback_interfaces = ['enP8p1s0', 'eth0', 'wlan0', 'enp0s3', 'ens33']
+    for iface in fallback_interfaces:
+        try:
+            result = subprocess.run(['ip', '-o', 'link', 'show', iface], capture_output=True, text=True, timeout=5)
+            if result.returncode == 0 and result.stdout:
+                lines = result.stdout.strip().split('\n')
+                for line in lines:
+                    if 'link/ether' in line:
+                        parts = line.split()
+                        for i, part in enumerate(parts):
+                            if part == 'link/ether' and i + 1 < len(parts):
+                                mac = parts[i + 1]
+                                if len(mac) == 17 and ':' in mac:
+                                    logger.info(f"Using MAC from fallback {iface}: {mac}")
+                                    return mac
+        except Exception:
+            continue
+    
+    return "00:00:00:00:00:00"
+
+def _get_tailscale_ip() -> str:
+    try:
+        result = subprocess.run(['tailscale', 'ip', '-4'], capture_output=True, text=True, timeout=5)
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip().split('\n')[0]
+    except Exception:
+        pass
+    return ""
+
+# --- Sudo helper using RVM_SUDO_PASS fallback ---
+def _sudo_run(command_args: list[str], timeout: int | None = None) -> subprocess.CompletedProcess:
+    """Run a command with sudo using RVM_SUDO_PASS if available.
+
+    - If RVM_SUDO_PASS is set in environment, uses `sudo -S` piping the password.
+    - Otherwise attempts passwordless sudo (will fail if not allowed).
+    Returns subprocess.CompletedProcess.
+    """
+    env = os.environ.copy()
+    sudo_pass = env.get('RVM_SUDO_PASS', '')
+    try:
+        if sudo_pass:
+            proc = subprocess.run(
+                ['sudo', '-S', *command_args],
+                input=f"{sudo_pass}\n",
+                text=True,
+                capture_output=True,
+                timeout=timeout
+            )
+        else:
+            proc = subprocess.run(
+                ['sudo', '-n', *command_args],
+                text=True,
+                capture_output=True,
+                timeout=timeout
+            )
+        return proc
+    except Exception as e:
+        # Surface error details to logs and callers
+        logger.error(f"sudo run failed: {e}")
+        raise
+
 @app.route('/')
 def index():
     """Main dashboard page"""
@@ -213,6 +312,201 @@ def api_network_status():
             'error': str(e),
             'message': 'Network status check failed'
         }), 500
+
+@app.route('/api/tailscale/up', methods=['POST'])
+def api_tailscale_up():
+    """Bring up Tailscale using AUTH Key and return tailscale0 IPv4 when ready."""
+    try:
+        data = request.get_json(force=True)
+        auth_key = data.get('auth_key', '').strip()
+        if not auth_key:
+            return jsonify({'success': False, 'message': 'auth_key (tskey-...) is required'}), 400
+
+        # Attempt tailscale up (no sudo assumption). TS_AUTHKEY is supported env.
+        env = os.environ.copy()
+        env['TS_AUTHKEY'] = auth_key
+        try:
+            subprocess.run(['tailscale', 'up', '--ssh', '--accept-dns=true', '--advertise-tags=tag:rvm'],
+                           capture_output=True, text=True, timeout=30, env=env)
+        except FileNotFoundError:
+            return jsonify({'success': False, 'message': 'tailscale not installed'}), 500
+
+        # Poll for IP up to 120s
+        ip_addr = ''
+        for _ in range(40):
+            ip_addr = _get_tailscale_ip()
+            if ip_addr:
+                break
+            time.sleep(3)
+
+        if not ip_addr:
+            return jsonify({'success': False, 'message': 'tailscale0 IP not available'}), 504
+
+        config_data.setdefault('network', {})['tailscale_ip'] = ip_addr
+        return jsonify({'success': True, 'data': {'tailscale_ip': ip_addr}})
+    except Exception as e:
+        logger.error(f"tailscale up error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/tailscale/ip', methods=['GET'])
+def api_tailscale_ip():
+    """Get current Tailscale IP address."""
+    try:
+        ip_addr = _get_tailscale_ip()
+        if ip_addr:
+            return jsonify({'success': True, 'data': {'tailscale_ip': ip_addr}})
+        else:
+            return jsonify({'success': False, 'message': 'Tailscale IP not available'}), 404
+    except Exception as e:
+        logger.error(f"tailscale ip error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/services/start', methods=['POST'])
+def api_services_start():
+    """Enable and (re)start RVM services via systemd using RVM_SUDO_PASS.
+
+    Services:
+      - rvm-remote-camera.service (5000)
+      - rvm-remote-gui.service (5001)
+      - rvm-remote-access.service (5002)
+    Also frees ports 5000-5002 before restart to avoid EADDRINUSE.
+    """
+    try:
+        # Ensure unit files exist by invoking installer script (idempotent)
+        try:
+            repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+            installer = os.path.join(repo_root, 'scripts', 'install_systemd_services.sh')
+            if os.path.exists(installer):
+                _sudo_run(['bash', installer], timeout=60)
+        except Exception as e:
+            logger.warning(f"Installer script error (continuing): {e}")
+
+        # daemon-reload
+        _sudo_run(['/usr/bin/systemctl', 'daemon-reload'])
+
+        # Enable all
+        _sudo_run(['/usr/bin/systemctl', 'enable',
+                   'rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service'])
+
+        # Free ports if occupied
+        for port in ('5000', '5001', '5002'):
+            _sudo_run(['fuser', '-k', f'{port}/tcp'])
+
+        # Restart all
+        _sudo_run(['/usr/bin/systemctl', 'restart',
+                   'rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service'])
+
+        # Summarize states
+        states = {}
+        for unit in ('rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service'):
+            try:
+                proc = subprocess.run(['systemctl', 'is-active', unit], text=True, capture_output=True, timeout=5)
+                states[unit] = proc.stdout.strip() or proc.stderr.strip()
+            except Exception as _:
+                states[unit] = 'unknown'
+
+        return jsonify({'success': True, 'data': {'states': states}})
+    except Exception as e:
+        logger.error(f"services start error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/deployment/data', methods=['GET'])
+def api_deployment_data():
+    """Get deployment data including device_id and mac_address."""
+    try:
+        device_id = _get_machine_id()
+        mac_address = _get_mac_address('wlP1p1s0')  # Use WiFi interface for MAC
+        
+        # Get additional data from config if available
+        deployment_data = {
+            'device_id': device_id,
+            'mac_address': mac_address,
+            'software_version': '1.0.0',
+            'device_name': 'RVM-Jetson-Orin'
+        }
+        
+        # Add any stored deployment data
+        if 'deployment' in config_data:
+            deployment_data.update(config_data['deployment'])
+        
+        return jsonify({'success': True, 'data': deployment_data})
+    except Exception as e:
+        logger.error(f"deployment data error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/rvm/self/claim', methods=['POST'])
+def api_rvm_self_claim():
+    """Proxy self-claim to MyRVM-Platform using X-API-Key."""
+    try:
+        body = request.get_json(force=True)
+        api_key = body.get('api_key')
+        if not api_key:
+            return jsonify({'success': False, 'message': 'api_key is required'}), 400
+
+        server_url = body.get('server_url') or _get_server_url_from_config()
+        payload = {
+            'device_name': body.get('device_name'),
+            'software_version': body.get('software_version'),
+            'timezone': body.get('timezone'),
+            'device_id': body.get('device_id') or _get_machine_id(),
+            'mac_address': body.get('mac_address') or _get_mac_address('tailscale0')
+        }
+        logger.info(f"Self-claim payload: {payload}")
+        headers = {'Content-Type': 'application/json', 'X-API-Key': api_key}
+        resp = requests.post(
+            f"{server_url}/api/v2/rvm/self/claim",
+            json=payload,
+            headers={**headers, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+            timeout=15,
+            allow_redirects=False
+        )
+        ok = resp.status_code in (200, 201)
+        parsed = None
+        try:
+            parsed = resp.json()
+        except Exception:
+            parsed = {'raw': resp.text}
+        redirect_to = resp.headers.get('Location')
+        return jsonify({'success': ok, 'status_code': resp.status_code, 'redirect': redirect_to, 'data': parsed}) , (200 if ok else 502)
+    except Exception as e:
+        logger.error(f"self-claim error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/rvm/self/update', methods=['PATCH'])
+def api_rvm_self_update():
+    """Proxy self-update (ip/port/coords) to MyRVM-Platform using X-API-Key."""
+    try:
+        body = request.get_json(force=True)
+        api_key = body.get('api_key')
+        if not api_key:
+            return jsonify({'success': False, 'message': 'api_key is required'}), 400
+        server_url = body.get('server_url') or _get_server_url_from_config()
+        payload = {
+            'ip_address': body.get('ip_address') or _get_tailscale_ip(),
+            'port': body.get('port', 5000),
+            'timezone': body.get('timezone'),
+            'latitude': body.get('latitude'),
+            'longitude': body.get('longitude')
+        }
+        headers = {'Content-Type': 'application/json', 'X-API-Key': api_key}
+        resp = requests.patch(
+            f"{server_url}/api/v2/rvm/self/update",
+            json=payload,
+            headers={**headers, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+            timeout=15,
+            allow_redirects=False
+        )
+        ok = resp.status_code in (200, 201)
+        parsed = None
+        try:
+            parsed = resp.json()
+        except Exception:
+            parsed = {'raw': resp.text}
+        redirect_to = resp.headers.get('Location')
+        return jsonify({'success': ok, 'status_code': resp.status_code, 'redirect': redirect_to, 'data': parsed}) , (200 if ok else 502)
+    except Exception as e:
+        logger.error(f"self-update error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/jetson/status')
 def api_jetson_status():
@@ -1073,6 +1367,38 @@ def deployment_worker():
                 'message': step,
                 'timestamp': datetime.now().isoformat()
             })
+
+            # Inject real actions at certain steps
+            if step == "Starting RVM services...":
+                try:
+                    # Install/refresh unit files and start via systemd using sudo helper
+                    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+                    installer = os.path.join(repo_root, 'scripts', 'install_systemd_services.sh')
+                    if os.path.exists(installer):
+                        _sudo_run(['bash', installer], timeout=60)
+                    _sudo_run(['/usr/bin/systemctl', 'daemon-reload'])
+                    _sudo_run(['/usr/bin/systemctl', 'enable',
+                               'rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service'])
+                    for port in ('5000','5001','5002'):
+                        _sudo_run(['fuser', '-k', f'{port}/tcp'])
+                    _sudo_run(['/usr/bin/systemctl', 'restart',
+                               'rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service'])
+                except Exception as se:
+                    logger.error(f"Failed to start services via systemd: {se}")
+            
+            if step == "Testing integration...":
+                # Quick port probes so UI can flip to Listening if up
+                try:
+                    for port in (5000,5001,5002):
+                        try:
+                            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            s.settimeout(0.5)
+                            s.connect(("127.0.0.1", port))
+                            s.close()
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
         
         # Final status
         installation_status.update({

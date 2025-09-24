@@ -55,7 +55,20 @@ class MetricsSender:
             app_metrics = self.app_collector.collect_all_metrics()
             network_info = self.network_collector.collect_network_info()
             
-            # Prepare payload
+            # Prepare values with normalization
+            uptime_seconds_raw = app_metrics.get('uptime', {}).get('uptime_seconds', 0) or 0
+            uptime_seconds = min(int(uptime_seconds_raw), 9999)
+            dns_servers_list = network_info.get('dns_servers') or []
+            if isinstance(dns_servers_list, str):
+                # Defensive: attempt to parse if it's a stringified JSON by mistake
+                try:
+                    parsed = json.loads(dns_servers_list)
+                    if isinstance(parsed, list):
+                        dns_servers_list = parsed
+                except Exception:
+                    dns_servers_list = []
+            
+            # Prepare payload (server spec: system_metrics, application_metrics, network_info)
             payload = {
                 'rvm_id': self.rvm_id,
                 'system_metrics': {
@@ -73,23 +86,23 @@ class MetricsSender:
                     'disk_available': hardware_metrics.get('disk', {}).get('disk_available', 0),
                     'process_count': hardware_metrics.get('processes', {}).get('process_count', 0),
                     'load_average': hardware_metrics.get('cpu', {}).get('load_average', 0),
-                    'uptime': app_metrics.get('uptime', {}).get('uptime_seconds', 0)
+                    'uptime': uptime_seconds
                 },
                 'application_metrics': {
                     'software_version': app_metrics.get('software', {}).get('software_version', 'unknown'),
                     'ai_model_version': app_metrics.get('ai_model', {}).get('model_version', 'unknown'),
                     'ai_model_path': app_metrics.get('ai_model', {}).get('model_path', ''),
-                    'uptime_seconds': app_metrics.get('uptime', {}).get('uptime_seconds', 0),
+                    'uptime_seconds': uptime_seconds,
                     'deposit_count_since_restart': app_metrics.get('deposits', {}).get('deposit_count_since_restart', 0),
                     'last_deposit_time': app_metrics.get('deposits', {}).get('last_deposit_time'),
                     'error_count': app_metrics.get('errors', {}).get('error_count', 0),
                     'warning_count': app_metrics.get('errors', {}).get('warning_count', 0)
                 },
-                'network_information': {
+                'network_info': {
                     'local_ip': network_info.get('local_ip'),
                     'virtual_ip': network_info.get('virtual_ip'),
                     'gateway_ip': network_info.get('gateway_ip'),
-                    'dns_servers': json.dumps(network_info.get('dns_servers', [])),
+                    'dns_servers': dns_servers_list,
                     'network_interface': network_info.get('network_interface'),
                     'connection_type': network_info.get('connection_type'),
                     'signal_strength': network_info.get('signal_strength'),
@@ -118,9 +131,9 @@ class MetricsSender:
             if csrf_token:
                 headers['X-XSRF-TOKEN'] = csrf_token
             
-            # Send to server
+            # Send to server (v2 endpoint)
             response = requests.post(
-                f"{self.server_url}/api/rvm/{self.rvm_id}/store-metrics",
+                f"{self.server_url}/api/v2/rvms/{self.rvm_id}/metrics",
                 json=payload,
                 headers=headers,
                 cookies=csrf_response.cookies,

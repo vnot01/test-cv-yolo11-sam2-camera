@@ -40,3 +40,5 @@ Tanggung jawab tim Server:
 - Device melakukan self-claim dan self-update menggunakan `X-API-Key` (tanpa Bearer token).
 - Server URL mengikuti konfigurasi produksi (lihat Network Configuration). Hindari localhost kecuali via port forwarding.
 - Validasi API Key dilakukan di sisi Server; tidak perlu approval manual tambahan.
+
+

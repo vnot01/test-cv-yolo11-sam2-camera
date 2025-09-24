@@ -15,14 +15,10 @@ class ApplicationMetricsCollector:
     def collect_software_version(self) -> Dict[str, Any]:
         """Collect software version information"""
         try:
-            # Get Git commit hash
-            git_hash = self._get_git_commit_hash()
-            
-            # Get package versions
+            version = self._get_version_from_production_config() or self._get_git_commit_hash()
             package_versions = self._get_package_versions()
-            
             return {
-                'software_version': git_hash,
+                'software_version': version,
                 'package_versions': package_versions,
                 'build_date': self._get_build_date()
             }
@@ -33,13 +29,22 @@ class ApplicationMetricsCollector:
     def collect_ai_model_info(self) -> Dict[str, Any]:
         """Collect AI model information"""
         try:
-            model_path = os.path.join(os.getcwd(), 'models', 'best.pt')
+            models_dir = os.path.join(os.getcwd(), 'models')
+            model_path = os.path.join(models_dir, 'best.pt')
+            version_file = os.path.join(models_dir, 'best.pt.version')
+            model_version = None
+            if os.path.exists(version_file):
+                try:
+                    with open(version_file, 'r') as vf:
+                        model_version = vf.read().strip()
+                except Exception:
+                    model_version = None
             
             if os.path.exists(model_path):
                 stat = os.stat(model_path)
                 return {
                     'model_name': 'best.pt',
-                    'model_version': self._get_model_version(model_path),
+                    'model_version': model_version or self._get_model_version(model_path),
                     'model_path': model_path,
                     'model_size': stat.st_size,
                     'model_modified': datetime.fromtimestamp(stat.st_mtime).isoformat()
@@ -47,7 +52,7 @@ class ApplicationMetricsCollector:
             else:
                 return {
                     'model_name': 'best.pt',
-                    'model_version': 'not_found',
+                    'model_version': model_version or 'not_found',
                     'model_path': model_path,
                     'model_size': 0,
                     'model_modified': None
@@ -61,6 +66,8 @@ class ApplicationMetricsCollector:
         try:
             current_time = time.time()
             uptime_seconds = current_time - self.start_time
+            # Cap to 9999 as per server guidance
+            uptime_seconds = min(int(uptime_seconds), 9999)
             
             return {
                 'uptime_seconds': uptime_seconds,
@@ -119,6 +126,24 @@ class ApplicationMetricsCollector:
             pass
         return None
     
+    def _get_version_from_production_config(self) -> Optional[str]:
+        """Read application.version from production_config.json if present"""
+        try:
+            cfg_path = os.path.join(os.getcwd(), 'myrvm-integration', 'config', 'production_config.json')
+            # also try relative to this file
+            if not os.path.exists(cfg_path):
+                cfg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config', 'production_config.json')
+            if os.path.exists(cfg_path):
+                with open(cfg_path, 'r') as f:
+                    data = json.load(f)
+                app = data.get('application') or {}
+                version = app.get('version')
+                if version:
+                    return str(version)
+        except Exception:
+            pass
+        return None
+    
     def _get_package_versions(self) -> Dict[str, str]:
         """Get installed package versions"""
         try:
@@ -154,10 +179,8 @@ class ApplicationMetricsCollector:
         return None
     
     def _get_model_version(self, model_path: str) -> str:
-        """Get model version (simplified)"""
+        """Get model version (fallback to modified timestamp)"""
         try:
-            # This would typically involve loading the model and checking metadata
-            # For now, we'll use file modification time as version
             stat = os.stat(model_path)
             return datetime.fromtimestamp(stat.st_mtime).strftime('%Y%m%d_%H%M%S')
         except Exception:

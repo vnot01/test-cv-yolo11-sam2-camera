@@ -22,9 +22,9 @@ from PIL import Image
 # Add parent directories to path for imports
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
-sys.path.append(str(Path(__file__).parent.parent / "api-client"))
+sys.path.append(str(Path(__file__).parent.parent / "api_client"))
 
-from myrvm_api_client import MyRVMAPIClient
+from api_client.myrvm_api_client import MyRVMAPIClient
 
 class RemoteCameraService:
     """Remote camera service with web interface for MyRVM Platform"""
@@ -296,12 +296,16 @@ class RemoteCameraService:
         try:
             self.logger.info(f"Starting Remote Camera Service on {self.host}:{self.port}")
             
-            # Start camera
-            if not self.start_camera():
-                self.logger.error("Failed to start camera")
-                return False
+            # Try to start camera, but do not block server startup
+            try:
+                if not self.start_camera():
+                    self.logger.warning("Camera not started; running service without streaming")
+            except Exception as e:
+                self.logger.warning(f"Camera start error: {e}; continuing without streaming")
+                self.is_streaming = False
+                self.camera = None
             
-            # Start Flask app
+            # Start Flask app regardless, so health/status endpoints are available
             self.app.run(host=self.host, port=self.port, debug=False, threaded=True)
             
         except Exception as e:

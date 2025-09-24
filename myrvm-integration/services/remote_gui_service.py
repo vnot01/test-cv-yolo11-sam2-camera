@@ -19,9 +19,9 @@ import os
 # Add parent directories to path for imports
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
-sys.path.append(str(Path(__file__).parent.parent / "api-client"))
+sys.path.append(str(Path(__file__).parent.parent / "api_client"))
 
-from myrvm_api_client import MyRVMAPIClient
+from api_client.myrvm_api_client import MyRVMAPIClient
 from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
 class RemoteGUIService:
@@ -112,6 +112,57 @@ class RemoteGUIService:
         def system_metrics():
             """Get system metrics"""
             return jsonify(self.get_system_metrics())
+        
+        # OTA Endpoints
+        @self.app.route('/ota/github/pull', methods=['POST'])
+        def ota_github_pull():
+            try:
+                project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+                script_path = os.path.join(project_root, 'scripts', 'ota_git_pull.sh')
+                logs_dir = os.path.join(project_root, 'logs')
+                status_file = os.path.join(logs_dir, 'ota_pull.status')
+                os.makedirs(logs_dir, exist_ok=True)
+                
+                # Allow overriding model URLs
+                env = os.environ.copy()
+                body = request.get_json(silent=True) or {}
+                for key, env_key in [('rvm_model_url','RVM_MODEL_URL'), ('sam2_model_url','SAM2_MODEL_URL'), ('yolo11_model_url','YOLO11_MODEL_URL')]:
+                    if body.get(key):
+                        env[env_key] = body[key]
+                
+                # Run in background
+                def run_script():
+                    with open(os.path.join(logs_dir, 'ota_pull.bg.log'), 'a') as lf:
+                        subprocess.Popen(['bash', script_path], stdout=lf, stderr=lf, env=env)
+                threading.Thread(target=run_script, daemon=True).start()
+                
+                return jsonify({'success': True, 'message': 'OTA pull started', 'status_file': status_file})
+            except Exception as e:
+                self.logger.error(f"OTA pull error: {e}")
+                return jsonify({'success': False, 'message': str(e)}), 500
+        
+        @self.app.route('/ota/status')
+        def ota_status():
+            try:
+                project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+                logs_dir = os.path.join(project_root, 'logs')
+                status_file = os.path.join(logs_dir, 'ota_pull.status')
+                log_file = os.path.join(logs_dir, 'ota_pull.log')
+                status = 'unknown'
+                if os.path.exists(status_file):
+                    with open(status_file, 'r') as f:
+                        status = f.read().strip()
+                log_tail = ''
+                if os.path.exists(log_file):
+                    try:
+                        with open(log_file, 'r') as f:
+                            lines = f.readlines()
+                            log_tail = ''.join(lines[-80:])
+                    except Exception:
+                        log_tail = ''
+                return jsonify({'success': True, 'data': {'status': status, 'log_tail': log_tail}})
+            except Exception as e:
+                return jsonify({'success': False, 'message': str(e)}), 500
         
         @self.app.route('/system/control', methods=['POST'])
         def system_control():

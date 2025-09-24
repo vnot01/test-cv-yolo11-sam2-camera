@@ -1,8 +1,8 @@
 {
   "timezone": "Asia/Jakarta",
   "country": "Indonesia",
-  "city": "Purworejo",
-  "ip": "182.8.225.55",
-  "last_sync": "2025-09-23T03:35:40.168784",
+  "city": "Yogyakarta",
+  "ip": "182.8.227.111",
+  "last_sync": "2025-09-24T03:36:40.307101",
   "sync_method": "automatic_no_sudo"
 }
