@@ -416,21 +416,21 @@ def api_services_start():
         # daemon-reload
         _sudo_run(['/usr/bin/systemctl', 'daemon-reload'])
 
-        # Enable all
+        # Enable all (include metrics sender)
         _sudo_run(['/usr/bin/systemctl', 'enable',
-                   'rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service'])
+                   'rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service', 'rvm-metrics-sender.service'])
 
         # Free ports if occupied
         for port in ('5000', '5001', '5002'):
             _sudo_run(['fuser', '-k', f'{port}/tcp'])
 
-        # Restart all
+        # Restart all (include metrics sender)
         _sudo_run(['/usr/bin/systemctl', 'restart',
-                   'rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service'])
+                   'rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service', 'rvm-metrics-sender.service'])
 
         # Summarize states
         states = {}
-        for unit in ('rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service'):
+        for unit in ('rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service', 'rvm-metrics-sender.service'):
             try:
                 proc = subprocess.run(['systemctl', 'is-active', unit], text=True, capture_output=True, timeout=5)
                 states[unit] = proc.stdout.strip() or proc.stderr.strip()

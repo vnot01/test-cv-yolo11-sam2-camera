@@ -23,6 +23,7 @@ sys.path.append(str(Path(__file__).parent.parent / "api_client"))
 
 from api_client.myrvm_api_client import MyRVMAPIClient
 from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
+from utils.timezone_converter import TimezoneConverter
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -49,7 +50,9 @@ class RemoteGUIService:
         )
         
         # Setup Flask app
-        self.app = Flask(__name__)
+        self.app = Flask(__name__, 
+                        template_folder='../templates',
+                        static_folder='../static')
         self.setup_routes()
         
         # Setup logging
@@ -206,6 +209,37 @@ class RemoteGUIService:
         def api_status():
             """API connectivity status"""
             return jsonify(self.get_api_status())
+
+        # Timezone helper endpoints (for UI/diagnostics)
+        @self.app.route('/timezone/info')
+        def timezone_info():
+            try:
+                return jsonify(TimezoneConverter().get_local_timezone_info())
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        @self.app.route('/timezone/convert', methods=['POST'])
+        def timezone_convert():
+            try:
+                data = request.get_json(silent=True) or {}
+                server_time = data.get('server_time')
+                if not server_time:
+                    return jsonify({'error': 'server_time is required'}), 400
+                conv = TimezoneConverter()
+                return jsonify({
+                    'server_time': server_time,
+                    'local_time': conv.convert_server_time(server_time),
+                    'local_time_iso': conv.convert_server_time_iso(server_time),
+                    'relative_time': conv.format_relative_time(server_time),
+                    'timezone_info': conv.get_local_timezone_info()
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+
+        # Comprehensive RVM status for polling
+        @self.app.route('/rvm/status')
+        def rvm_status():
+            return jsonify(self.get_rvm_status())
         
         @self.app.route('/api/v2/rvms/<int:rvm_id>/metrics', methods=['POST'])
         def api_v2_rvms_metrics(rvm_id):
@@ -432,6 +466,43 @@ class RemoteGUIService:
         except Exception as e:
             return {'error': str(e)}
     
+    def get_rvm_status(self) -> Dict:
+        """Aggregate RVM status suitable for server polling."""
+        try:
+            system = self.get_system_status()
+            metrics = self.get_system_metrics()
+            api_stat = self.get_api_status()
+            camera = self.get_camera_status()
+
+            # Map service listening flags for 5000/5001 presence
+            services_listen = {
+                'camera_service_5000': self.check_port(5000),
+                'gui_client_5001': self.check_port(self.port),
+            }
+
+            overall = 'active'
+            if isinstance(api_stat, dict) and not api_stat.get('connected', False):
+                overall = 'inactive'
+
+            return {
+                'rvm_id': self.rvm_id,
+                'overall_status': overall,
+                'system': system,
+                'metrics': metrics,
+                'api_connectivity': api_stat,
+                'camera': camera,
+                'services': services_listen,
+                'timestamp': now().isoformat(),
+                'timezone_info': TimezoneConverter().get_local_timezone_info()
+            }
+        except Exception as e:
+            return {
+                'rvm_id': self.rvm_id,
+                'overall_status': 'error',
+                'error': str(e),
+                'timestamp': now().isoformat()
+            }
+
     def check_port(self, port: int) -> bool:
         """Check if port is open"""
         try:

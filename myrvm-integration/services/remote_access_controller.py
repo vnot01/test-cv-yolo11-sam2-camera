@@ -9,6 +9,8 @@ import sys
 import json
 import time
 import logging
+import socket
+import subprocess
 import threading
 import uuid
 from datetime import datetime, timedelta
@@ -52,6 +54,8 @@ class RemoteAccessController:
         # Session management
         self.active_sessions = {}
         self.session_lock = threading.Lock()
+        # Service start time for uptime tracking
+        self.start_time = time.time()
         
         # Setup Flask app
         self.app = Flask(__name__, template_folder=str(project_root / "templates"))
@@ -387,20 +391,181 @@ class RemoteAccessController:
                 self.logger.error(f"Extend session error: {e}")
                 return jsonify({'success': False, 'error': str(e)}), 500
         
-        @self.app.route('/health', methods=['GET'])
-        def health_check():
-            """Health check endpoint."""
+        # Note: /health deprecated; use /rvm-health
+
+        @self.app.route('/pulse', methods=['GET'])
+        def pulse_heartbeat():
+            """Simplified pulse/heartbeat endpoint for server monitoring"""
             try:
-                return jsonify({
-                    'status': 'healthy',
-                    'timestamp': now().isoformat(),
-                    'active_sessions': len(self.active_sessions),
-                    'camera_manager_status': self.camera_manager.get_status()
-                })
+                def is_port_open(host: str, port: int, timeout: float = 0.5) -> bool:
+                    try:
+                        with socket.create_connection((host, port), timeout=timeout):
+                            return True
+                    except Exception:
+                        return False
+
+                host = '127.0.0.1'
+                uptime_service_seconds = int(max(0, time.time() - self.start_time))
                 
+                return jsonify({
+                    'status': 'ok',
+                    'services': {
+                        'camera_service_5000': is_port_open(host, 5000),
+                        'gui_client_5001': is_port_open(host, 5001),
+                        'remote_access_5002': is_port_open(host, 5002)
+                    },
+                    'current_time_iso': now().isoformat(),
+                    'uptime_service_seconds': uptime_service_seconds
+                })
             except Exception as e:
-                self.logger.error(f"Health check error: {e}")
-                return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
+                self.logger.error(f"Pulse heartbeat error: {e}")
+                return jsonify({'status': 'error', 'error': str(e)}), 500
+
+        @self.app.route('/rvm-health', methods=['GET'])
+        def rvm_health():
+            """Lightweight health endpoint for server checks (port 5002)."""
+            try:
+                def is_port_open(host: str, port: int, timeout: float = 0.5) -> bool:
+                    try:
+                        with socket.create_connection((host, port), timeout=timeout):
+                            return True
+                    except Exception:
+                        return False
+
+                host = '127.0.0.1'
+                uptime_service_seconds = int(max(0, time.time() - self.start_time))
+                # Get timezone info
+                timezone_info = self._get_timezone_info()
+                
+                # Get GUI Client status
+                gui_client_status = self._get_gui_client_status()
+                
+                status = {
+                    'status': 'ok',
+                    'timestamp': now().isoformat(),
+                    'last_update': now().isoformat(),
+                    'uptime_service_seconds': uptime_service_seconds,
+                    'active_sessions': len(self.active_sessions),
+                    'camera_manager_status': self.camera_manager.get_status(),
+                    'gui_client_status': gui_client_status,
+                    'services': {
+                        'remote_access_5002': is_port_open(host, 5002),
+                        'gui_client_5001': is_port_open(host, 5001),
+                        'camera_service_5000': is_port_open(host, 5000)
+                    },
+                    'timezone_info': timezone_info
+                }
+                return jsonify(status)
+            except Exception as e:
+                self.logger.error(f"rvm-health error: {e}")
+                return jsonify({'status': 'error', 'error': str(e)}), 500
+
+        @self.app.route('/api/restart_services', methods=['POST'])
+        def api_restart_services():
+            """Restart core RVM services (5000/5001/5002)."""
+            try:
+                def run_cmd(cmd):
+                    import subprocess, os
+                    env = os.environ.copy()
+                    sudo_pass = env.get('RVM_SUDO_PASS')
+                    if sudo_pass:
+                        proc = subprocess.run(['sudo', '-S'] + cmd, input=f"{sudo_pass}\n", text=True,
+                                              capture_output=True, timeout=30)
+                    else:
+                        proc = subprocess.run(['sudo', '-n'] + cmd, text=True,
+                                              capture_output=True, timeout=30)
+                    return proc.returncode, proc.stdout, proc.stderr
+
+                units = ['rvm-remote-camera.service', 'rvm-remote-gui.service', 'rvm-remote-access.service', 'rvm-metrics-sender.service']
+                results = {}
+                for unit in units:
+                    rc, out, err = run_cmd(['/usr/bin/systemctl', 'restart', unit])
+                    results[unit] = 'restarted' if rc == 0 else f'error: {err or out}'
+
+                # brief wait then report states
+                time.sleep(0.8)
+                states = {}
+                for unit in units:
+                    import subprocess
+                    try:
+                        p = subprocess.run(['systemctl', 'is-active', unit], capture_output=True, text=True, timeout=5)
+                        states[unit] = (p.stdout or p.stderr).strip()
+                    except Exception:
+                        states[unit] = 'unknown'
+
+                return jsonify({'success': True, 'results': results, 'states': states})
+            except Exception as e:
+                self.logger.error(f"restart_services error: {e}")
+                return jsonify({'success': False, 'message': str(e)}), 500
+    
+    def _get_timezone_info(self) -> Dict[str, Any]:
+        """Get timezone information for RVM"""
+        try:
+            from utils.timezone_converter import TimezoneConverter
+            return TimezoneConverter().get_local_timezone_info()
+        except Exception as e:
+            self.logger.error(f"Error getting timezone info: {e}")
+            return {
+                'timezone': 'Asia/Jakarta',
+                'offset': '+0700',
+                'offset_hours': 7.0,
+                'current_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S WIB'),
+                'current_time_iso': datetime.now().isoformat(),
+                'error': str(e)
+            }
+    
+    def _get_gui_client_status(self) -> Dict[str, Any]:
+        """Get GUI Client status information"""
+        try:
+            # Check if GUI Client service is running
+            result = subprocess.run(['systemctl', 'is-active', 'rvm-gui-client.service'], 
+                                  capture_output=True, text=True, timeout=2)
+            service_status = result.stdout.strip()
+            
+            # Check if port 5001 is accessible
+            port_open = self._is_port_open('127.0.0.1', 5001)
+            
+            # Try to get GUI Client status via API
+            gui_api_status = None
+            try:
+                import requests
+                response = requests.get('http://127.0.0.1:5001/api/status', timeout=2)
+                if response.status_code == 200:
+                    gui_api_status = response.json()
+            except Exception:
+                pass
+            
+            return {
+                'service_status': service_status,
+                'port_open': port_open,
+                'gui_client_port': 5001,
+                'gui_client_url': 'http://100.117.234.2:5001',
+                'current_status': 'active' if service_status == 'active' and port_open else 'inactive',
+                'api_accessible': gui_api_status is not None,
+                'api_status': gui_api_status,
+                'timestamp': now().isoformat()
+            }
+        except Exception as e:
+            self.logger.error(f"Error getting GUI Client status: {e}")
+            return {
+                'service_status': 'unknown',
+                'port_open': False,
+                'gui_client_port': 5001,
+                'gui_client_url': 'http://100.117.234.2:5001',
+                'current_status': 'error',
+                'api_accessible': False,
+                'error': str(e),
+                'timestamp': now().isoformat()
+            }
+    
+    def _is_port_open(self, host: str, port: int, timeout: float = 0.5) -> bool:
+        """Check if port is open"""
+        try:
+            import socket
+            with socket.create_connection((host, port), timeout=timeout):
+                return True
+        except Exception:
+            return False
     
     def start(self):
         """Start the remote access controller."""

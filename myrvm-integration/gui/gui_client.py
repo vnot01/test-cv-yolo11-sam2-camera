@@ -28,7 +28,7 @@ from gui.user_authentication import UserAuthenticationHandler, UserSession
 class GUIClient:
     """Main GUI Client for LED Touch Screen"""
     
-    def __init__(self, rvm_id: str = "4", 
+    def __init__(self, rvm_id: str = "1", 
                  host: str = "0.0.0.0", port: int = 5001,
                  api_client=None, service_integration=None):
         """
@@ -110,10 +110,31 @@ class GUIClient:
         
         @self.app.route('/')
         def index():
-            """Main page"""
-            return render_template('index.html', 
-                                 rvm_id=self.rvm_id,
-                                 current_screen=self.current_screen)
+            """Main page (supports screen override via ?screen=login|main|profile|settings)"""
+            try:
+                requested = request.args.get('screen')
+                allowed = {'login', 'main', 'profile', 'settings'}
+                if requested in allowed:
+                    self.current_screen = requested
+            except Exception:
+                pass
+            return render_template(
+                'index.html',
+                rvm_id=self.rvm_id,
+                current_screen=self.current_screen
+            )
+
+        # Convenience route to switch screen without POST (e.g., /screen/main)
+        @self.app.route('/screen/<screen_name>')
+        def set_screen(screen_name: str):
+            allowed = {'login', 'main', 'profile', 'settings'}
+            if screen_name in allowed:
+                self.current_screen = screen_name
+            return render_template(
+                'index.html',
+                rvm_id=self.rvm_id,
+                current_screen=self.current_screen
+            )
         
         @self.app.route('/api/qr-code')
         def get_qr_code():

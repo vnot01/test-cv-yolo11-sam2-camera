@@ -1,0 +1,19 @@
+[Unit]
+Description=RVM GUI Client for User Interaction
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=my
+Group=my
+WorkingDirectory=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration
+Environment=PATH=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration/venv/bin
+ExecStart=/home/my/test-cv-yolo11-sam2-camera/myrvm-integration/venv/bin/python3 /home/my/test-cv-yolo11-sam2-camera/myrvm-integration/scripts/run_gui_client.py
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

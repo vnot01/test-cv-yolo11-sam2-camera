@@ -59,15 +59,13 @@ class MetricsSender:
             uptime_seconds_raw = app_metrics.get('uptime', {}).get('uptime_seconds', 0) or 0
             uptime_seconds = min(int(uptime_seconds_raw), 9999)
             
-            # Get system uptime for system_metrics
+            # Get system uptime for system_metrics (read from /proc/uptime)
             try:
-                import psutil
-                boot_time = psutil.boot_time()
-                current_time = time.time()
-                system_uptime = int(current_time - boot_time)
-                system_uptime = min(system_uptime, 9999)  # Cap to 9999
+                with open('/proc/uptime', 'r') as f:
+                    first = f.read().split()[0]
+                system_uptime = int(float(first))
             except Exception as e:
-                print(f"Error calculating system uptime: {e}")
+                print(f"Error reading /proc/uptime: {e}")
                 system_uptime = 0
             dns_servers_list = network_info.get('dns_servers') or []
             if isinstance(dns_servers_list, str):

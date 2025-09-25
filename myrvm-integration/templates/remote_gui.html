@@ -85,6 +85,9 @@
         .status-inactive {
             background-color: #e74c3c;
         }
+        /* Text status colors */
+        .text-ok { color: #27ae60; font-weight: 600; }
+        .text-down { color: #e74c3c; font-weight: 600; }
         
         .status-maintenance {
             background-color: #f39c12;
@@ -120,6 +123,7 @@
         .btn-danger:hover {
             background: linear-gradient(45deg, #c0392b, #a93226);
         }
+        .btn-row { display: flex; gap: 10px; align-items: center; }
         
         .btn-success {
             background: linear-gradient(45deg, #27ae60, #229954);
@@ -198,6 +202,8 @@
             color: #7f8c8d;
             font-size: 0.9em;
         }
+        /* Make uptime and last-update slightly smaller for proportional look */
+        #uptime, #last-update { font-size: 1.4em; }
         
         .alert {
             padding: 15px;
@@ -311,12 +317,16 @@
                 <h3>📊 System Status</h3>
                 <div id="system-status">
                     <div>
-                        <span class="status-indicator status-active"></span>
-                        Remote Access Controller: <span id="controller-status">Active</span>
+                        <span id="controller-ind" class="status-indicator status-inactive"></span>
+                        Remote Access: <span id="controller-status">Unknown</span>
                     </div>
                     <div style="margin-top: 10px;">
-                        <span class="status-indicator status-inactive"></span>
-                        Camera Manager: <span id="manager-status">Inactive</span>
+                        <span id="gui-ind" class="status-indicator status-inactive"></span>
+                        GUI Client: <span id="gui-status">Unknown</span>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <span id="camera-ind" class="status-indicator status-inactive"></span>
+                        Camera Service: <span id="camera-svc-status">Unknown</span>
                     </div>
                 </div>
                 <div class="stats-grid">
@@ -329,10 +339,9 @@
                         <div class="stat-label">Last Update</div>
                     </div>
                 </div>
-                <div>
-                    <button class="btn" onclick="refreshStatus()">
-                        Refresh Status
-                    </button>
+                <div class="btn-row">
+                    <button class="btn" onclick="refreshStatus()">Refresh Status</button>
+                    <button class="btn btn-danger" onclick="restartServices()">Restart Services</button>
                 </div>
             </div>
         </div>
@@ -570,25 +579,63 @@
         
         async function refreshStatus() {
             try {
-                const response = await fetch('/health');
+                const response = await fetch('/rvm-health');
                 const data = await response.json();
                 
-                if (data.status === 'healthy') {
-                    document.getElementById('controller-status').textContent = 'Active';
-                    document.querySelector('#system-status .status-indicator').className = 'status-indicator status-active';
+                if (data.status === 'healthy' || data.status === 'ok') {
+                    const controllerUp = !!(data.services && data.services.remote_access_5002);
+                    const ctrlText = document.getElementById('controller-status');
+                    ctrlText.textContent = controllerUp ? 'Listening' : 'Down';
+                    ctrlText.className = controllerUp ? 'text-ok' : 'text-down';
+                    const ctrlInd = document.getElementById('controller-ind');
+                    if (ctrlInd) ctrlInd.className = `status-indicator ${controllerUp ? 'status-active' : 'status-inactive'}`;
                     
-                    if (data.camera_manager_status) {
-                        const managerStatus = data.camera_manager_status.camera_running ? 'Active' : 'Inactive';
-                        document.getElementById('manager-status').textContent = managerStatus;
-                        
-                        const managerIndicator = document.querySelectorAll('#system-status .status-indicator')[1];
-                        managerIndicator.className = `status-indicator ${data.camera_manager_status.camera_running ? 'status-active' : 'status-inactive'}`;
-                    }
+                    // GUI Client and Camera Service indicators
+                    const svc = data.services || {};
+                    const guiUp = !!svc.gui_client_5001;
+                    const camUp = !!svc.camera_service_5000;
+                    const guiText = document.getElementById('gui-status');
+                    const camText = document.getElementById('camera-svc-status');
+                    guiText.textContent = guiUp ? 'Listening' : 'Down';
+                    camText.textContent = camUp ? 'Listening' : 'Down';
+                    guiText.className = guiUp ? 'text-ok' : 'text-down';
+                    camText.className = camUp ? 'text-ok' : 'text-down';
+                    const guiIndicator = document.getElementById('gui-ind');
+                    const camIndicator = document.getElementById('camera-ind');
+                    if (guiIndicator) guiIndicator.className = `status-indicator ${guiUp ? 'status-active' : 'status-inactive'}`;
+                    if (camIndicator) camIndicator.className = `status-indicator ${camUp ? 'status-active' : 'status-inactive'}`;
                     
+                    // Uptime formatting HH:MM:SS
+                    const secs = Number(data.uptime_service_seconds) || 0;
+                    const h = String(Math.floor(secs/3600)).padStart(2,'0');
+                    const m = String(Math.floor((secs%3600)/60)).padStart(2,'0');
+                    const s = String(secs%60).padStart(2,'0');
+                    document.getElementById('uptime').textContent = `${h}:${m}:${s}`;
+
+                    // Last update
                     document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
                 }
             } catch (error) {
                 console.error('Error refreshing status:', error);
+            }
+        }
+
+        async function restartServices() {
+            try {
+                const btnText = 'Restart Services';
+                showAlert('Restarting services...', 'warning');
+                const res = await fetch('/api/restart_services', { method: 'POST' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('Services restarted: ' + JSON.stringify(data.states), 'success');
+                } else {
+                    showAlert('Restart failed: ' + (data.message || 'Unknown error'), 'error');
+                }
+            } catch (e) {
+                showAlert('Restart error: ' + e.message, 'error');
+            } finally {
+                setTimeout(() => refreshStatus(), 1200);
             }
         }
         
