@@ -22,8 +22,9 @@ sys.path.append(str(project_root))
 from config.enhanced_config_manager import EnhancedConfigurationManager
 import importlib.util
 
-# Import enhanced API client
-spec = importlib.util.spec_from_file_location('enhanced_myrvm_api_client', 'api_client/enhanced_myrvm_api_client.py')
+# Import enhanced API client using absolute path to project root
+api_client_path = Path(__file__).parent.parent / 'api_client' / 'enhanced_myrvm_api_client.py'
+spec = importlib.util.spec_from_file_location('enhanced_myrvm_api_client', str(api_client_path))
 enhanced_api_client = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(enhanced_api_client)
 

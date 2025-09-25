@@ -31,3 +31,6 @@ GET /api/camera/status @5002 → 404
   - 5001: GET /api/gui/status → {"success":true}
   - 5002: GET /api/camera/status (X-API-Key) → {"success":true}
   Lalu update dokumen ini dengan hasil baru.
+
+
+

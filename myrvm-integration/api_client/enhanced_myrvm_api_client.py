@@ -58,7 +58,7 @@ class WebSocketConfig:
 class EnhancedMyRVMAPIClient:
     """Enhanced API client with real-time communication and advanced features"""
     
-    def __init__(self, base_url: str = "http://localhost:8000", api_token: str = None, 
+    def __init__(self, base_url: str = "http://100.123.143.87:8001", api_token: str = None, 
                  tunnel_url: str = None, use_tunnel: bool = False, rvm_id: str = None):
         """
         Initialize Enhanced API client
@@ -756,10 +756,10 @@ if __name__ == "__main__":
         with open('config/production_config.json', 'r') as f:
             config = json.load(f)
         rvm_id = config.get('remote_access', {}).get('rvm_id', 1)
-        base_url = config.get('remote_access', {}).get('server_url', 'http://localhost:8000')
+        base_url = config.get('remote_access', {}).get('server_url', 'http://100.123.143.87:8001')
     except:
         rvm_id = 1
-        base_url = "http://localhost:8000"
+        base_url = "http://100.123.143.87:8001"
     
     # Initialize Enhanced API client
     client = EnhancedMyRVMAPIClient(

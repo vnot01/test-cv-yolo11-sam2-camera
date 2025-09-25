@@ -245,6 +245,38 @@ def _sudo_run(command_args: list[str], timeout: int | None = None) -> subprocess
         logger.error(f"sudo run failed: {e}")
         raise
 
+def _production_config_path() -> str:
+    try:
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+        return os.path.join(project_root, 'config', 'production_config.json')
+    except Exception:
+        return 'config/production_config.json'
+
+
+def _persist_rvm_id(rvm_id: int) -> bool:
+    try:
+        cfg_path = _production_config_path()
+        os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
+        data = {}
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path, 'r') as f:
+                    data = json.load(f)
+            except Exception:
+                data = {}
+        # ensure nested keys
+        data.setdefault('application', data.get('application', {}))
+        data['rvm_id'] = rvm_id
+        ra = data.get('remote_access', {})
+        ra['rvm_id'] = rvm_id
+        data['remote_access'] = ra
+        with open(cfg_path, 'w') as f:
+            json.dump(data, f, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to persist rvm_id: {e}")
+        return False
+
 @app.route('/')
 def index():
     """Main dashboard page"""
@@ -467,6 +499,33 @@ def api_rvm_self_claim():
         except Exception:
             parsed = {'raw': resp.text}
         redirect_to = resp.headers.get('Location')
+        # Persist rvm_id when available (handle nested structures)
+        try:
+            if ok and isinstance(parsed, dict):
+                rid = None
+                # Try common shapes
+                # 1) { data: { rvm_id: 1 } }
+                rid = (parsed.get('data') or {}).get('rvm_id') if rid is None else rid
+                # 2) { data: { id: 1 } }
+                if rid is None:
+                    rid = (parsed.get('data') or {}).get('id')
+                # 3) { data: { data: { rvm_id: 1 } } }
+                if rid is None:
+                    rid = ((parsed.get('data') or {}).get('data') or {}).get('rvm_id')
+                # 4) { data: { data: { id: 1 } } }
+                if rid is None:
+                    rid = ((parsed.get('data') or {}).get('data') or {}).get('id')
+                # 5) flat fields
+                if rid is None:
+                    rid = parsed.get('rvm_id') or parsed.get('id')
+                if isinstance(rid, int):
+                    if _persist_rvm_id(rid):
+                        try:
+                            _sudo_run(['/usr/bin/systemctl', 'restart', 'rvm-metrics-sender.service'])
+                        except Exception as _e:
+                            logger.warning(f"Could not restart metrics sender: {_e}")
+        except Exception as _e:
+            logger.warning(f"Persist rvm_id error: {_e}")
         return jsonify({'success': ok, 'status_code': resp.status_code, 'redirect': redirect_to, 'data': parsed}) , (200 if ok else 502)
     except Exception as e:
         logger.error(f"self-claim error: {e}")
@@ -503,6 +562,31 @@ def api_rvm_self_update():
         except Exception:
             parsed = {'raw': resp.text}
         redirect_to = resp.headers.get('Location')
+        
+        # Also persist rvm_id on successful self-update (in case it wasn't done in self-claim)
+        if ok:
+            try:
+                # Try to get rvm_id from the response or use the one from production_config.json
+                rid = None
+                if isinstance(parsed, dict):
+                    rid = (parsed.get('data') or {}).get('rvm_id') or (parsed.get('data') or {}).get('id')
+                if rid is None:
+                    # Fallback: read from production_config.json
+                    try:
+                        cfg_path = _production_config_path()
+                        if os.path.exists(cfg_path):
+                            with open(cfg_path, 'r') as f:
+                                cfg_data = json.load(f)
+                                rid = cfg_data.get('rvm_id')
+                    except Exception:
+                        pass
+                
+                if isinstance(rid, int):
+                    _persist_rvm_id(rid)
+                    logger.info(f"Persisted rvm_id {rid} after self-update")
+            except Exception as _e:
+                logger.warning(f"Could not persist rvm_id after self-update: {_e}")
+        
         return jsonify({'success': ok, 'status_code': resp.status_code, 'redirect': redirect_to, 'data': parsed}) , (200 if ok else 502)
     except Exception as e:
         logger.error(f"self-update error: {e}")

@@ -1,85 +1,58 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# Install/enable systemd services for RVM components, including metrics sender
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PYTHON_BIN="$REPO_ROOT/venv/bin/python3"
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+SERVICE_DIR="/etc/systemd/system"
+PYTHON_BIN="$(command -v python3)"
+USER_NAME="${SUDO_USER:-${USER:-my}}"
+GROUP_NAME="$USER_NAME"
 
-# Service names
-CAMERA_UNIT="rvm-remote-camera.service"
-GUI_UNIT="rvm-remote-gui.service"
-ACCESS_UNIT="rvm-remote-access.service"
+sudo_run() {
+  if [ -n "${RVM_SUDO_PASS:-}" ]; then
+    echo "$RVM_SUDO_PASS" | sudo -S "$@"
+  else
+    sudo "$@"
+  fi
+}
 
-SYSTEMD_DIR="/etc/systemd/system"
-
-create_unit_files() {
-  sudo tee "$SYSTEMD_DIR/$CAMERA_UNIT" >/dev/null <<UNIT
+create_service() {
+  local name="$1"
+  local exec_start="$2"
+  local after_services="$3"
+  local file="$SERVICE_DIR/$name.service"
+  cat <<EOF | sudo_run tee "$file" >/dev/null
 [Unit]
-Description=RVM Remote Camera Service (port 5000)
-After=network.target
+Description=$name
+After=network.target network-online.target $after_services
+Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=$REPO_ROOT
-Environment=PYTHONUNBUFFERED=1
-ExecStart=$PYTHON_BIN services/remote_camera_service.py
-Restart=on-failure
+User=$USER_NAME
+Group=$GROUP_NAME
+WorkingDirectory=$REPO_DIR
+ExecStart=$exec_start
+Restart=always
 RestartSec=3
-User=my
+Environment=PYTHONPATH=$REPO_DIR
 
 [Install]
 WantedBy=multi-user.target
-UNIT
-
-  sudo tee "$SYSTEMD_DIR/$GUI_UNIT" >/dev/null <<UNIT
-[Unit]
-Description=RVM Remote GUI Service (port 5001)
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=$REPO_ROOT
-Environment=PYTHONUNBUFFERED=1
-ExecStart=$PYTHON_BIN services/remote_gui_service.py
-Restart=on-failure
-RestartSec=3
-User=my
-
-[Install]
-WantedBy=multi-user.target
-UNIT
-
-  sudo tee "$SYSTEMD_DIR/$ACCESS_UNIT" >/dev/null <<UNIT
-[Unit]
-Description=RVM Remote Access Controller (port 5002)
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=$REPO_ROOT
-Environment=PYTHONUNBUFFERED=1
-ExecStart=$PYTHON_BIN services/remote_access_controller.py --port 5002
-Restart=on-failure
-RestartSec=3
-User=my
-
-[Install]
-WantedBy=multi-user.target
-UNIT
+EOF
+  sudo_run chmod 644 "$file"
 }
 
-enable_and_start() {
-  sudo systemctl daemon-reload
-  sudo systemctl enable "$CAMERA_UNIT" "$GUI_UNIT" "$ACCESS_UNIT"
-  sudo systemctl restart "$CAMERA_UNIT" "$GUI_UNIT" "$ACCESS_UNIT"
-}
+# Create metrics sender service
+METRICS_EXEC="$PYTHON_BIN $REPO_DIR/scripts/run_metrics_sender.py"
+create_service "rvm-metrics-sender" "$METRICS_EXEC" ""
 
-main() {
-  create_unit_files
-  enable_and_start
-  echo "Systemd services installed and started: $CAMERA_UNIT, $GUI_UNIT, $ACCESS_UNIT"
-}
+# Reload and enable
+sudo_run systemctl daemon-reload
+sudo_run systemctl enable rvm-metrics-sender.service
+sudo_run systemctl restart rvm-metrics-sender.service || true
 
-main "$@"
+echo "Metrics sender service installed and started: rvm-metrics-sender.service"
 
 
 

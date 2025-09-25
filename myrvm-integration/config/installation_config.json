@@ -1,6 +1,6 @@
 {
   "server_url": "http://100.123.143.87:8001",
-  "api_endpoint": "/api/v1",
+  "api_endpoint": "/api/v2",
   "auth_token": "",
   "connection_timeout": "10",
   "network_interface": "wlP1p1s0",

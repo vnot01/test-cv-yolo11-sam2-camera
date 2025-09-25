@@ -24,6 +24,9 @@ sys.path.append(str(Path(__file__).parent.parent / "api_client"))
 from api_client.myrvm_api_client import MyRVMAPIClient
 from utils.timezone_manager import get_timezone_manager, now, format_datetime, utc_now
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
 class RemoteGUIService:
     """Remote GUI service with web interface for RVM control"""
     
@@ -203,6 +206,48 @@ class RemoteGUIService:
         def api_status():
             """API connectivity status"""
             return jsonify(self.get_api_status())
+        
+        @self.app.route('/api/v2/rvms/<int:rvm_id>/metrics', methods=['POST'])
+        def api_v2_rvms_metrics(rvm_id):
+            """API endpoint for metrics collection (v2 format)"""
+            try:
+                # Verify rvm_id matches our configured ID
+                if rvm_id != self.rvm_id:
+                    return jsonify({
+                        'success': False, 
+                        'message': f'RVM ID mismatch. Expected {self.rvm_id}, got {rvm_id}'
+                    }), 400
+                
+                # Get metrics data from request
+                metrics_data = request.get_json()
+                if not metrics_data:
+                    return jsonify({
+                        'success': False,
+                        'message': 'No metrics data provided'
+                    }), 400
+                
+                # Add timestamp and rvm_id to metrics
+                metrics_data['rvm_id'] = rvm_id
+                metrics_data['timestamp'] = now().isoformat()
+                
+                # Log the received metrics
+                logger.info(f"Received metrics for RVM {rvm_id}: {metrics_data}")
+                
+                # Here you could process/store the metrics data
+                # For now, just acknowledge receipt
+                return jsonify({
+                    'success': True,
+                    'message': 'Metrics received successfully',
+                    'rvm_id': rvm_id,
+                    'timestamp': metrics_data['timestamp']
+                })
+                
+            except Exception as e:
+                logger.error(f"Metrics endpoint error: {e}")
+                return jsonify({
+                    'success': False,
+                    'message': f'Error processing metrics: {str(e)}'
+                }), 500
         
         @self.app.route('/logs')
         def logs():

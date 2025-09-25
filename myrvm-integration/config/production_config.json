@@ -7,15 +7,43 @@
     "log_level": "INFO"
   },
   "services": {
-    "config_manager": {"enabled": true, "priority": 1},
-    "api_client": {"enabled": true, "priority": 2},
-    "service_integration": {"enabled": true, "priority": 3},
-    "gui_client": {"enabled": true, "priority": 4, "port": 5001},
-    "led_screen_interface": {"enabled": true, "priority": 5},
-    "user_profile_manager": {"enabled": true, "priority": 6},
-    "detection_service": {"enabled": true, "priority": 7},
-    "metrics_sender": {"enabled": true, "priority": 8},
-    "command_receiver": {"enabled": true, "priority": 9}
+    "config_manager": {
+      "enabled": true,
+      "priority": 1
+    },
+    "api_client": {
+      "enabled": true,
+      "priority": 2
+    },
+    "service_integration": {
+      "enabled": true,
+      "priority": 3
+    },
+    "gui_client": {
+      "enabled": true,
+      "priority": 4,
+      "port": 5001
+    },
+    "led_screen_interface": {
+      "enabled": true,
+      "priority": 5
+    },
+    "user_profile_manager": {
+      "enabled": true,
+      "priority": 6
+    },
+    "detection_service": {
+      "enabled": true,
+      "priority": 7
+    },
+    "metrics_sender": {
+      "enabled": true,
+      "priority": 8
+    },
+    "command_receiver": {
+      "enabled": true,
+      "priority": 9
+    }
   },
   "performance": {
     "max_memory_usage": "80%",
@@ -45,11 +73,11 @@
     "backup_count": 10
   },
   "server_url": "http://100.123.143.87:8001",
-  "rvm_id": 4,
+  "rvm_id": 1,
   "remote_access": {
     "server_url": "http://100.123.143.87:8001",
     "api_key": "myrvm-platform-key",
-    "rvm_id": 4,
+    "rvm_id": 1,
     "metrics_interval": 30,
     "command_timeout": 30,
     "controller_port": 5000,

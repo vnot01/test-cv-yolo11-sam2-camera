@@ -22,7 +22,7 @@ from utils.timezone_manager import get_timezone_manager, now, format_datetime
 class MyRVMAPIClient:
     """API Client for MyRVM Platform communication"""
     
-    def __init__(self, base_url: str = "http://localhost:8000", api_token: str = None, 
+    def __init__(self, base_url: str = "http://100.123.143.87:8001", api_token: str = None, 
                  tunnel_url: str = None, use_tunnel: bool = False):
         """
         Initialize API client
@@ -384,7 +384,7 @@ class MyRVMAPIClient:
 if __name__ == "__main__":
     # Initialize API client
     client = MyRVMAPIClient(
-        base_url="http://localhost:8000",
+        base_url="http://100.123.143.87:8001",
         api_token=None  # Add token if needed
     )
     

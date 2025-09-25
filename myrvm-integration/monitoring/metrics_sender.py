@@ -58,6 +58,17 @@ class MetricsSender:
             # Prepare values with normalization
             uptime_seconds_raw = app_metrics.get('uptime', {}).get('uptime_seconds', 0) or 0
             uptime_seconds = min(int(uptime_seconds_raw), 9999)
+            
+            # Get system uptime for system_metrics
+            try:
+                import psutil
+                boot_time = psutil.boot_time()
+                current_time = time.time()
+                system_uptime = int(current_time - boot_time)
+                system_uptime = min(system_uptime, 9999)  # Cap to 9999
+            except Exception as e:
+                print(f"Error calculating system uptime: {e}")
+                system_uptime = 0
             dns_servers_list = network_info.get('dns_servers') or []
             if isinstance(dns_servers_list, str):
                 # Defensive: attempt to parse if it's a stringified JSON by mistake
@@ -86,7 +97,7 @@ class MetricsSender:
                     'disk_available': hardware_metrics.get('disk', {}).get('disk_available', 0),
                     'process_count': hardware_metrics.get('processes', {}).get('process_count', 0),
                     'load_average': hardware_metrics.get('cpu', {}).get('load_average', 0),
-                    'uptime': uptime_seconds
+                    'uptime': system_uptime
                 },
                 'application_metrics': {
                     'software_version': app_metrics.get('software', {}).get('software_version', 'unknown'),
@@ -122,7 +133,7 @@ class MetricsSender:
             # Prepare headers
             headers = {
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {self.api_key}',
+                'X-API-Key': self.api_key,
                 'X-RVM-ID': str(self.rvm_id),
                 'X-Requested-With': 'XMLHttpRequest'
             }

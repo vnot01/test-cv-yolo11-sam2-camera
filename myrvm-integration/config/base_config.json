@@ -1,6 +1,6 @@
 {
   "server_url": "http://100.123.143.87:8001",
-  "rvm_id": "4",
+  "rvm_id": "1",
   "api_key": "your_api_key_here",
   "camera_index": 0,
   "models_dir": "../models",
