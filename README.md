@@ -140,8 +140,9 @@ pip install https://github.com/ultralytics/assets/releases/download/v0.0.0/torch
 #### Verify PyTorch Installation
 
 ```bash
-# Test PyTorch installation
-python -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}'); print(f'CUDA version: {torch.version.cuda}')"
+# Test PyTorch & TorchVision installation
+python -c "import torch; import torchvision; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}'); print(f'CUDA version: {torch.version.cuda}'); print(f'TorchVision version: {torchvision.__version__}'); print(f'CUDA device - {torch.cuda.get_device_name(0)}');
+print(f'GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB')"
 
 # Test TorchVision
 python -c "import torchvision; print(f'TorchVision version: {torchvision.__version__}')"

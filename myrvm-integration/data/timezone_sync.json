@@ -1,8 +1,8 @@
 {
   "timezone": "Asia/Jakarta",
-  "country": "ID",
+  "country": "Indonesia",
   "city": "Yogyakarta",
-  "ip": "182.8.225.191",
-  "last_sync": "2025-09-27T11:36:01.309259",
+  "ip": "182.8.227.149",
+  "last_sync": "2025-10-04T14:17:05.616970",
   "sync_method": "automatic_no_sudo"
 }

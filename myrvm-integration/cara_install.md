@@ -62,7 +62,7 @@ cd /home/my/test-cv-yolo11-sam2-camera/myrvm-integration/installation_method
 
 ### **🔌 API Endpoints Available:**
 - `GET /api/status` - System status
-- `GET /api/hardware/detect` - Hardware detection
+- `GET /api/c/detect` - Hardware detection
 - `GET /api/network/scan` - WiFi scanning
 - `POST /api/network/connect` - WiFi connection
 - `POST /api/server/test` - Server testing
